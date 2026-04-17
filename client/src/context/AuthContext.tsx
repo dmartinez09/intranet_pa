@@ -25,10 +25,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const MODULE_MAP: Record<string, string[]> = {
-  Admin: ['dashboard_ventas', 'cartera', 'alertas', 'admin'],
-  'Jefe de Venta': ['dashboard_ventas', 'cartera', 'alertas'],
-  Vendedor: ['dashboard_ventas', 'alertas'],
-  Finanzas: ['dashboard_ventas', 'cartera'],
+  Admin: ['dashboard_ventas', 'cartera', 'alertas', 'admin', 'logistica', 'presupuesto', 'venta_rc'],
+  'Jefe de Venta': ['dashboard_ventas', 'cartera', 'alertas', 'logistica', 'presupuesto', 'venta_rc'],
+  Vendedor: ['dashboard_ventas', 'alertas', 'venta_rc'],
+  Finanzas: ['dashboard_ventas', 'cartera', 'logistica', 'presupuesto', 'venta_rc'],
   Viewer: ['dashboard_ventas'],
 };
 

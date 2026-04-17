@@ -358,7 +358,13 @@ export const dbService = {
         Maestro_Tipo                     AS maestro_tipo,
         [Tipo de Cliente]                AS tipo_de_cliente,
         Clasificacion_BCG                AS clasificacion_bcg,
-        [UPPER(Origen_Producto)]         AS origen_producto
+        [UPPER(Origen_Producto)]         AS origen_producto,
+        [Costo Total _Presentación]      AS costo_total,
+        [Costo_unitario_Presentación]    AS costo_unitario,
+        Magen_Unitario                   AS margen_unitario,
+        [Porcentaje_Unitario_Ganancia (%)] AS porcentaje_ganancia_unitario,
+        Departamento_Despacho            AS departamento_despacho,
+        Distrito_Despacho                AS distrito_despacho
       FROM dbo.stg_rpt_ventas_detallado
       WHERE ${where.join(' AND ')}
     `;
@@ -371,7 +377,10 @@ export const dbService = {
     const totalVenta = ventas.reduce((sum: number, v: any) => sum + (Number(v.valor_venta_dolares) || 0), 0);
     const totalKL = ventas.reduce((sum: number, v: any) => sum + (Number(v.cantidad_kg_lt) || 0), 0);
     const totalUnidades = ventas.reduce((sum: number, v: any) => sum + (Number(v.unidades_presentacion) || 0), 0);
+    const totalCosto = ventas.reduce((sum: number, v: any) => sum + (Number(v.costo_total) || 0), 0);
+    const totalGanancia = ventas.reduce((sum: number, v: any) => sum + (Number(v.ganancia) || 0), 0);
     const clientesUnicos = new Set(ventas.map((v: any) => v.ruc_cliente).filter(Boolean)).size;
+    const margenPromedio = totalVenta > 0 ? (totalGanancia / totalVenta) * 100 : 0;
 
     return {
       total_venta_usd: Math.round(totalVenta * 100) / 100,
@@ -382,6 +391,9 @@ export const dbService = {
       ticket_promedio: ventas.length > 0 ? Math.round((totalVenta / ventas.length) * 100) / 100 : 0,
       meta_mensual_usd: 1500000,
       porcentaje_avance: Math.round((totalVenta / 1500000) * 10000) / 100,
+      total_costo: Math.round(totalCosto * 100) / 100,
+      total_ganancia: Math.round(totalGanancia * 100) / 100,
+      margen_promedio: Math.round(margenPromedio * 100) / 100,
     };
   },
 
@@ -468,6 +480,43 @@ export const dbService = {
     })).sort((a, b) => b.total_venta_usd - a.total_venta_usd);
   },
 
+  async getVentasPorProductoZona(filtros: any) {
+    const ventas = await this.getVentas(filtros);
+    const agrupado: Record<string, { producto: string; zona: string; familia: string; total_venta_usd: number; total_kg_lt: number; total_unidades: number; transacciones: number }> = {};
+    for (const v of ventas) {
+      const producto = v.nombre_producto || v.producto_formulado || 'SIN PRODUCTO';
+      const zona = v.zona || 'SIN ZONA';
+      const key = `${producto}|${zona}`;
+      if (!agrupado[key]) agrupado[key] = { producto, zona, familia: v.familia || '', total_venta_usd: 0, total_kg_lt: 0, total_unidades: 0, transacciones: 0 };
+      agrupado[key].total_venta_usd += Number(v.valor_venta_dolares) || 0;
+      agrupado[key].total_kg_lt += Number(v.cantidad_kg_lt) || 0;
+      agrupado[key].total_unidades += Number(v.unidades_presentacion) || 0;
+      agrupado[key].transacciones++;
+    }
+    return Object.values(agrupado).map(p => ({
+      ...p,
+      total_venta_usd: Math.round(p.total_venta_usd * 100) / 100,
+      total_kg_lt: Math.round(p.total_kg_lt * 100) / 100,
+    })).sort((a, b) => b.total_venta_usd - a.total_venta_usd);
+  },
+
+  async getVentasPorSubFamilia(filtros: any) {
+    const ventas = await this.getVentas(filtros);
+    const agrupado: Record<string, { sub_familia: string; total_venta_usd: number; total_unidades: number }> = {};
+    for (const v of ventas) {
+      const sf = v.sub_familia || 'SIN SUB-FAMILIA';
+      if (!agrupado[sf]) agrupado[sf] = { sub_familia: sf, total_venta_usd: 0, total_unidades: 0 };
+      agrupado[sf].total_venta_usd += Number(v.valor_venta_dolares) || 0;
+      agrupado[sf].total_unidades += Number(v.unidades_presentacion) || 0;
+    }
+    const total = Object.values(agrupado).reduce((s, f) => s + f.total_venta_usd, 0);
+    return Object.values(agrupado).map(f => ({
+      ...f,
+      total_venta_usd: Math.round(f.total_venta_usd * 100) / 100,
+      porcentaje: total ? Math.round((f.total_venta_usd / total) * 10000) / 100 : 0,
+    })).sort((a, b) => b.total_venta_usd - a.total_venta_usd);
+  },
+
   async getVentasDiarias(filtros: any) {
     const ventas = await this.getVentas(filtros);
     const agrupado: Record<string, { fecha: string; total_venta_usd: number; cantidad_documentos: number }> = {};
@@ -484,6 +533,36 @@ export const dbService = {
     return Object.values(agrupado).sort((a, b) => a.fecha.localeCompare(b.fecha));
   },
 
+  async getVentasPorDepartamento(filtros: any) {
+    const ventas = await this.getVentas(filtros);
+    const agrupado: Record<string, { departamento: string; total_venta_usd: number; total_costo: number; total_ganancia: number; transacciones: number; vendedores: Set<string>; grupos: Set<string> }> = {};
+    for (const v of ventas) {
+      const dep = (v.departamento_despacho || 'SIN DEPARTAMENTO').toUpperCase().trim();
+      if (!agrupado[dep]) agrupado[dep] = { departamento: dep, total_venta_usd: 0, total_costo: 0, total_ganancia: 0, transacciones: 0, vendedores: new Set(), grupos: new Set() };
+      agrupado[dep].total_venta_usd += Number(v.valor_venta_dolares) || 0;
+      agrupado[dep].total_costo += Number(v.costo_total) || 0;
+      agrupado[dep].total_ganancia += Number(v.ganancia) || 0;
+      agrupado[dep].transacciones++;
+      if (v.vendedor) agrupado[dep].vendedores.add(v.vendedor);
+      if (v.grupo_cliente) agrupado[dep].grupos.add(v.grupo_cliente);
+    }
+    return Object.values(agrupado).map((d) => {
+      const venta = Math.round(d.total_venta_usd * 100) / 100;
+      const costo = Math.round(d.total_costo * 100) / 100;
+      const ganancia = Math.round(d.total_ganancia * 100) / 100;
+      return {
+        departamento: d.departamento,
+        total_venta_usd: venta,
+        total_costo: costo,
+        total_ganancia: ganancia,
+        margen_pct: venta > 0 ? Math.round((ganancia / venta) * 10000) / 100 : 0,
+        transacciones: d.transacciones,
+        vendedores: [...d.vendedores],
+        grupos_cliente: [...d.grupos],
+      };
+    }).sort((a, b) => b.total_venta_usd - a.total_venta_usd);
+  },
+
   async getFiltrosOpciones() {
     if (USE_MOCK_VENTAS) {
       return {
@@ -496,10 +575,11 @@ export const dbService = {
         series_documentos: ['AGRO', 'BIOS', 'COST', 'DESA', 'ONL', 'SISE'],
         divisiones: ['AGROCHEM', 'BIOSCIENCE'],
         maestro_tipos: ['FOCO', 'EN VIVO', 'OTROS'],
+        grupos_cliente: ['AGROINDUSTRIAS', 'DIST. COSTA', 'DIST. SIERRA / SELVA', 'ONLINE'],
       };
     }
     const pool = await getDbPool();
-    const [fam, sf, ia, vend, zon, td, div, mt] = await Promise.all([
+    const [fam, sf, ia, vend, zon, td, div, mt, gc] = await Promise.all([
       pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Familia IS NOT NULL ORDER BY Familia`),
       pool.request().query(`SELECT DISTINCT [Sub Familia] AS sub_familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [Sub Familia] IS NOT NULL ORDER BY [Sub Familia]`),
       pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
@@ -508,6 +588,7 @@ export const dbService = {
       pool.request().query(`SELECT DISTINCT [Tipo Documento] AS tipo_documento FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [Tipo Documento] IS NOT NULL ORDER BY [Tipo Documento]`),
       pool.request().query(`SELECT DISTINCT [División] AS division FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [División] IS NOT NULL AND [División] != '' ORDER BY [División]`),
       pool.request().query(`SELECT DISTINCT Maestro_Tipo FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Maestro_Tipo IS NOT NULL ORDER BY Maestro_Tipo`),
+      pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
     ]);
     return {
       familias: fam.recordset.map((r: any) => r.Familia),
@@ -518,6 +599,7 @@ export const dbService = {
       tipos_documento: td.recordset.map((r: any) => r.tipo_documento),
       divisiones: div.recordset.map((r: any) => r.division),
       maestro_tipos: mt.recordset.map((r: any) => r.Maestro_Tipo),
+      grupos_cliente: gc.recordset.map((r: any) => r.Grupo_Cliente),
     };
   },
 
@@ -566,73 +648,183 @@ export const dbService = {
     return result.recordset;
   },
 
-  // ---- CARTERA (Mock) ----
+  // ---- CARTERA (SQL Real — AL004, AL006, AL007) ----
   async getCarteraKPIs() {
-    return {
-      total_cartera: 2850000,
-      cartera_vencida: 485000,
-      cartera_vigente: 2365000,
-      porcentaje_recaudo: 78.5,
-      dias_promedio_cobro: 42,
-      clientes_morosos: 18,
-    };
+    try {
+      const pool = await getDbPool();
+      const result = await pool.request().query(`
+        SELECT
+          SUM(CASE WHEN [Importe Pendiente] > 0 THEN [Importe Pendiente] ELSE 0 END) AS total_cartera_positiva,
+          SUM(CASE WHEN [Importe Pendiente] < 0 THEN [Importe Pendiente] ELSE 0 END) AS total_notas_credito,
+          SUM(CASE WHEN [Importe Pendiente] > 0 AND [Fecha Vencimiento] < GETDATE() THEN [Importe Pendiente] ELSE 0 END) AS cartera_vencida,
+          SUM(CASE WHEN [Importe Pendiente] > 0 AND [Fecha Vencimiento] >= GETDATE() THEN [Importe Pendiente] ELSE 0 END) AS cartera_vigente,
+          SUM(ABS([Pago a Cuenta])) AS total_recaudado,
+          SUM(ABS([Importe Facturado])) AS total_facturado,
+          COUNT(DISTINCT CASE WHEN [Importe Pendiente] > 0 AND [Fecha Vencimiento] < GETDATE() THEN Ruc END) AS clientes_morosos,
+          COUNT(DISTINCT CASE WHEN [Importe Pendiente] > 0 THEN Ruc END) AS total_clientes_con_deuda
+        FROM dbo.stg_al004_letras_facturas
+        WHERE [Importe Pendiente] != 0
+      `);
+      const r = result.recordset[0];
+      const totalCartera = Math.round((r.total_cartera_positiva || 0) * 100) / 100;
+      const carteraVencida = Math.round((r.cartera_vencida || 0) * 100) / 100;
+      const carteraVigente = Math.round((r.cartera_vigente || 0) * 100) / 100;
+      const totalFacturado = Math.abs(r.total_facturado || 1);
+      const totalRecaudado = Math.abs(r.total_recaudado || 0);
+      const porcentajeRecaudo = totalFacturado > 0 ? Math.round((totalRecaudado / totalFacturado) * 10000) / 100 : 0;
+
+      // Días promedio de cobro
+      const diasRes = await pool.request().query(`
+        SELECT AVG(CAST(DATEDIFF(day, [Fecha Emisión], GETDATE()) AS FLOAT)) AS dias_promedio
+        FROM dbo.stg_al004_letras_facturas
+        WHERE [Importe Pendiente] > 0 AND [Fecha Emisión] IS NOT NULL
+      `);
+      const diasPromedio = Math.round(diasRes.recordset[0].dias_promedio || 0);
+
+      return {
+        total_cartera: totalCartera,
+        cartera_vencida: carteraVencida,
+        cartera_vigente: carteraVigente,
+        porcentaje_recaudo: porcentajeRecaudo,
+        dias_promedio_cobro: diasPromedio,
+        clientes_morosos: r.clientes_morosos || 0,
+      };
+    } catch (error) {
+      console.error('Error in getCarteraKPIs:', error);
+      return { total_cartera: 0, cartera_vencida: 0, cartera_vigente: 0, porcentaje_recaudo: 0, dias_promedio_cobro: 0, clientes_morosos: 0 };
+    }
   },
 
   async getCarteraPorEdad() {
-    return [
-      { rango: '0-30 días', monto: 1250000, cantidad_documentos: 145, porcentaje: 43.9 },
-      { rango: '31-60 días', monto: 780000, cantidad_documentos: 89, porcentaje: 27.4 },
-      { rango: '61-90 días', monto: 420000, cantidad_documentos: 52, porcentaje: 14.7 },
-      { rango: '91-120 días', monto: 250000, cantidad_documentos: 28, porcentaje: 8.8 },
-      { rango: '>120 días', monto: 150000, cantidad_documentos: 15, porcentaje: 5.3 },
-    ];
+    try {
+      const pool = await getDbPool();
+      const result = await pool.request().query(`
+        SELECT rango, orden, SUM(monto) AS monto, SUM(docs) AS cantidad_documentos
+        FROM (
+          SELECT
+            CASE
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) <= 0 THEN 'Vigente'
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) BETWEEN 1 AND 30 THEN '1-30 dias'
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) BETWEEN 31 AND 60 THEN '31-60 dias'
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) BETWEEN 61 AND 90 THEN '61-90 dias'
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) BETWEEN 91 AND 120 THEN '91-120 dias'
+              ELSE '>120 dias'
+            END AS rango,
+            CASE
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) <= 0 THEN 0
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) BETWEEN 1 AND 30 THEN 1
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) BETWEEN 31 AND 60 THEN 2
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) BETWEEN 61 AND 90 THEN 3
+              WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) BETWEEN 91 AND 120 THEN 4
+              ELSE 5
+            END AS orden,
+            [Importe Pendiente] AS monto,
+            1 AS docs
+          FROM dbo.stg_al004_letras_facturas
+          WHERE [Importe Pendiente] > 0
+        ) sub
+        GROUP BY rango, orden
+        ORDER BY orden
+      `);
+      const total = result.recordset.reduce((s: number, r: any) => s + (Number(r.monto) || 0), 0);
+      return result.recordset.map((r: any) => ({
+        rango: r.rango,
+        monto: Math.round((Number(r.monto) || 0) * 100) / 100,
+        cantidad_documentos: r.cantidad_documentos,
+        porcentaje: total > 0 ? Math.round(((Number(r.monto) || 0) / total) * 1000) / 10 : 0,
+      }));
+    } catch (error) {
+      console.error('Error in getCarteraPorEdad:', error);
+      return [];
+    }
   },
 
   async getCarteraPorVendedor() {
-    const vendedores = MOCK_VENDEDORES;
-    return vendedores.map((v) => {
-      const carteraTotal = Math.round(Math.random() * 400000 + 50000);
-      const vencido = Math.round(carteraTotal * (Math.random() * 0.3));
-      const recaudado = Math.round(carteraTotal * (Math.random() * 0.5 + 0.3));
-      return {
-        vendedor: v.nombre,
-        zona: v.zona,
-        equipo: v.series,
-        cartera_total: carteraTotal,
-        cartera_vencida: vencido,
-        cartera_vigente: carteraTotal - vencido,
-        recaudado,
-        porcentaje_recaudo: Math.round((recaudado / carteraTotal) * 10000) / 100,
-        clientes_con_deuda: Math.floor(Math.random() * 20 + 5),
-        dias_promedio_cobro: Math.floor(Math.random() * 60 + 15),
-      };
-    }).sort((a, b) => b.cartera_total - a.cartera_total);
+    try {
+      const pool = await getDbPool();
+      const result = await pool.request().query(`
+        SELECT
+          Vendedor AS vendedor,
+          MAX(Zona) AS zona,
+          MAX([Grupo Cliente]) AS equipo,
+          SUM(CASE WHEN [Importe Pendiente] > 0 THEN [Importe Pendiente] ELSE 0 END) AS cartera_total,
+          SUM(CASE WHEN [Importe Pendiente] > 0 AND [Fecha Vencimiento] < GETDATE() THEN [Importe Pendiente] ELSE 0 END) AS cartera_vencida,
+          SUM(CASE WHEN [Importe Pendiente] > 0 AND [Fecha Vencimiento] >= GETDATE() THEN [Importe Pendiente] ELSE 0 END) AS cartera_vigente,
+          SUM(ABS([Pago a Cuenta])) AS recaudado,
+          COUNT(DISTINCT CASE WHEN [Importe Pendiente] > 0 THEN Ruc END) AS clientes_con_deuda,
+          AVG(CASE WHEN [Importe Pendiente] > 0 AND [Fecha Emisión] IS NOT NULL
+              THEN CAST(DATEDIFF(day, [Fecha Emisión], GETDATE()) AS FLOAT) END) AS dias_promedio_cobro
+        FROM dbo.stg_al004_letras_facturas
+        WHERE Vendedor IS NOT NULL AND Vendedor != ''
+        GROUP BY Vendedor
+        HAVING SUM(CASE WHEN [Importe Pendiente] > 0 THEN [Importe Pendiente] ELSE 0 END) > 0
+        ORDER BY cartera_total DESC
+      `);
+      return result.recordset.map((r: any) => {
+        const ct = Number(r.cartera_total) || 0;
+        const rec = Number(r.recaudado) || 0;
+        return {
+          vendedor: r.vendedor,
+          zona: r.zona || '',
+          equipo: r.equipo || '',
+          cartera_total: Math.round(ct * 100) / 100,
+          cartera_vencida: Math.round((Number(r.cartera_vencida) || 0) * 100) / 100,
+          cartera_vigente: Math.round((Number(r.cartera_vigente) || 0) * 100) / 100,
+          recaudado: Math.round(rec * 100) / 100,
+          porcentaje_recaudo: ct > 0 ? Math.round((rec / (ct + rec)) * 10000) / 100 : 0,
+          clientes_con_deuda: r.clientes_con_deuda || 0,
+          dias_promedio_cobro: Math.round(Number(r.dias_promedio_cobro) || 0),
+        };
+      });
+    } catch (error) {
+      console.error('Error in getCarteraPorVendedor:', error);
+      return [];
+    }
   },
 
   async getCarteraTransacciones() {
-    const clientes = MOCK_CLIENTES;
-    const transacciones = [];
-    for (let i = 0; i < 30; i++) {
-      const vendedor = MOCK_VENDEDORES[i % MOCK_VENDEDORES.length];
-      const monto = Math.round(Math.random() * 50000 + 1000);
-      const pagado = Math.round(monto * (Math.random() * 0.8));
-      const diasMora = Math.floor(Math.random() * 150);
-      transacciones.push({
-        numero_doc: `FC${String(i + 1000).padStart(6, '0')}`,
-        cliente: clientes[i % clientes.length],
-        vendedor: vendedor.nombre,
-        zona: vendedor.zona,
-        fecha_emision: `2026-0${Math.floor(Math.random() * 3) + 1}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
-        fecha_vencimiento: `2026-0${Math.floor(Math.random() * 3) + 3}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
-        monto_original: monto,
-        monto_pagado: pagado,
-        saldo_pendiente: monto - pagado,
-        dias_mora: diasMora,
-        condicion_pago: ['Crédito 30d', 'Crédito 60d', 'Crédito 90d', 'Letras 120d'][Math.floor(Math.random() * 4)],
-        estado: diasMora > 90 ? 'Vencido Crítico' : diasMora > 30 ? 'Vencido' : diasMora > 0 ? 'Por Vencer' : 'Vigente',
-      });
+    try {
+      const pool = await getDbPool();
+      const result = await pool.request().query(`
+        SELECT TOP 500
+          [Número Documento]                        AS numero_doc,
+          Cliente                                    AS cliente,
+          Ruc                                        AS ruc,
+          Vendedor                                   AS vendedor,
+          Zona                                       AS zona,
+          [Fecha Emisión]                            AS fecha_emision,
+          [Fecha Vencimiento]                        AS fecha_vencimiento,
+          [Importe Facturado]                        AS monto_original,
+          [Pago a Cuenta]                            AS monto_pagado,
+          [Importe Pendiente]                        AS saldo_pendiente,
+          DATEDIFF(day, [Fecha Vencimiento], GETDATE()) AS dias_mora,
+          [Condición de Pago]                        AS condicion_pago,
+          [Tipo Documento]                           AS tipo_documento,
+          Moneda                                     AS moneda,
+          [Estado Letra / Factura Negociable]        AS estado_letra,
+          [Grupo Cliente]                            AS grupo_cliente,
+          CASE
+            WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) > 90 THEN 'Vencido Crítico'
+            WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) > 30 THEN 'Vencido'
+            WHEN DATEDIFF(day, [Fecha Vencimiento], GETDATE()) > 0  THEN 'Por Vencer'
+            ELSE 'Vigente'
+          END AS estado
+        FROM dbo.stg_al004_letras_facturas
+        WHERE [Importe Pendiente] != 0
+        ORDER BY ABS([Importe Pendiente]) DESC
+      `);
+      return result.recordset.map((r: any) => ({
+        ...r,
+        monto_original: Math.round((Number(r.monto_original) || 0) * 100) / 100,
+        monto_pagado: Math.round(Math.abs(Number(r.monto_pagado) || 0) * 100) / 100,
+        saldo_pendiente: Math.round((Number(r.saldo_pendiente) || 0) * 100) / 100,
+        fecha_emision: r.fecha_emision ? new Date(r.fecha_emision).toISOString().split('T')[0] : '',
+        fecha_vencimiento: r.fecha_vencimiento ? new Date(r.fecha_vencimiento).toISOString().split('T')[0] : '',
+      }));
+    } catch (error) {
+      console.error('Error in getCarteraTransacciones:', error);
+      return [];
     }
-    return transacciones.sort((a, b) => b.saldo_pendiente - a.saldo_pendiente);
   },
 
   // ---- ALERTAS (Mock completo basado en las 55 alertas SAP) ----
@@ -722,16 +914,18 @@ export const dbService = {
         zonas: [...new Set(MOCK_VENDEDORES.map(v => v.zona))],
         lineas_negocio: ['Agroquímicos', 'Nutricionales', 'Bioestimulantes', 'Especialidades', 'Semillas'],
         centros_costo: ['CC001 - Ventas Lima', 'CC002 - Ventas Norte', 'CC003 - Ventas Sur', 'CC004 - Ventas Centro', 'CC005 - Ventas Oriente', 'CC006 - Marketing', 'CC007 - Logística'],
+        grupos_cliente: ['AGROINDUSTRIAS', 'DIST. COSTA', 'DIST. SIERRA / SELVA', 'ONLINE'],
       };
     }
     const pool = await getDbPool();
-    const [familias, subFam, ia, vendedores, zonas, divisiones] = await Promise.all([
+    const [familias, subFam, ia, vendedores, zonas, divisiones, gc] = await Promise.all([
       pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Familia IS NOT NULL ORDER BY Familia`),
       pool.request().query(`SELECT DISTINCT [Sub Familia] AS sf FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [Sub Familia] IS NOT NULL ORDER BY [Sub Familia]`),
       pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
       pool.request().query(`SELECT DISTINCT Codigo_Vendedor, Vendedor, Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Vendedor IS NOT NULL AND Vendedor != '' AND Zona IS NOT NULL AND Zona != '' ORDER BY Vendedor`),
       pool.request().query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Zona IS NOT NULL AND Zona != '' ORDER BY Zona`),
       pool.request().query(`SELECT DISTINCT [División] AS div FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [División] IS NOT NULL AND [División] != '' ORDER BY [División]`),
+      pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
     ]);
     return {
       familias: familias.recordset.map((r: any) => r.Familia),
@@ -741,6 +935,7 @@ export const dbService = {
       zonas: zonas.recordset.map((r: any) => r.Zona),
       lineas_negocio: divisiones.recordset.map((r: any) => r.div),
       centros_costo: [],
+      grupos_cliente: gc.recordset.map((r: any) => r.Grupo_Cliente),
     };
   },
 

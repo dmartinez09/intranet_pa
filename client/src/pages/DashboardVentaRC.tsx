@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import MultiSelect from '../components/filters/MultiSelect';
 import DateRangeFilter from '../components/filters/DateRangeFilter';
 import { ventaRCApi } from '../services/api';
-import { formatUSD, formatNumber, formatPercent } from '../lib/utils';
+import { formatUSD, formatNumber, formatPercent, getGrupoFromSlug } from '../lib/utils';
 import {
   DollarSign,
   Droplets,
@@ -16,9 +17,6 @@ import {
   Filter,
   X,
   ChevronDown,
-  Store,
-  Truck,
-  Mountain,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -30,13 +28,6 @@ import {
 const CHART_COLORS = ['#00A651', '#008C44', '#007038', '#34D67B', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 const PIE_COLORS = ['#003D1F', '#00572C', '#007038', '#008C44', '#00A651', '#34D67B', '#6EE7A8', '#F59E0B'];
 
-const GRUPOS = [
-  { id: 'AGROINDUSTRIAS',    label: 'Agroindustrias',     icon: Store,    color: 'brand' },
-  { id: 'DIST. SIERRA SELVA', label: 'Dist. Sierra Selva', icon: Mountain, color: 'purple' },
-  { id: 'DISTRIBUCION COSTA', label: 'Distribución Costa', icon: Truck,    color: 'teal' },
-] as const;
-
-type GrupoId = typeof GRUPOS[number]['id'];
 
 interface KPIs {
   total_venta_usd: number;
@@ -60,7 +51,9 @@ interface Filtros {
 }
 
 export default function DashboardVentaRC() {
-  const [activeGrupo, setActiveGrupo] = useState<GrupoId>('AGROINDUSTRIAS');
+  const { grupo: grupoSlug } = useParams<{ grupo: string }>();
+  const grupoInfo = getGrupoFromSlug(grupoSlug);
+  const grupoCliente = grupoInfo.db;
   const [kpis, setKpis] = useState<KPIs | null>(null);
   const [ventasCliente, setVentasCliente] = useState<any[]>([]);
   const [ventasIA, setVentasIA] = useState<any[]>([]);
@@ -89,13 +82,13 @@ export default function DashboardVentaRC() {
   }, []);
 
   useEffect(() => {
-    loadData({ year: currentYear, month_start: currentMonth, month_end: currentMonth, grupo_cliente: activeGrupo });
-  }, [activeGrupo]); // eslint-disable-line react-hooks/exhaustive-deps
+    clearFilters();
+  }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadData(params?: any) {
     setLoading(true);
     try {
-      const p = { ...params, grupo_cliente: activeGrupo };
+      const p = { ...params, grupo_cliente: grupoCliente };
       const [kpiRes, clienteRes, iaRes, familiaRes, diariaRes, vendedorRes] = await Promise.all([
         ventaRCApi.getKPIs(p),
         ventaRCApi.getPorCliente(p),
@@ -127,7 +120,7 @@ export default function DashboardVentaRC() {
   }
 
   function applyFilters() {
-    const params: any = { grupo_cliente: activeGrupo, year, month_start: monthStart, month_end: monthEnd };
+    const params: any = { grupo_cliente: grupoCliente, year, month_start: monthStart, month_end: monthEnd };
     if (filtros.familias.length) params.familia = filtros.familias.join(',');
     if (filtros.sub_familias.length) params.sub_familia = filtros.sub_familias.join(',');
     if (filtros.ingredientes_activos.length) params.ingrediente_activo = filtros.ingredientes_activos.join(',');
@@ -144,16 +137,9 @@ export default function DashboardVentaRC() {
     setYear(currentYear);
     setMonthStart(currentMonth);
     setMonthEnd(currentMonth);
-    loadData({ year: currentYear, month_start: currentMonth, month_end: currentMonth, grupo_cliente: activeGrupo });
+    loadData({ year: currentYear, month_start: currentMonth, month_end: currentMonth, grupo_cliente: grupoCliente });
   }
 
-  function handleGrupoChange(g: GrupoId) {
-    setActiveGrupo(g);
-    setFiltros({ familias: [], sub_familias: [], ingredientes_activos: [], vendedores: [], zonas: [], tipos_documento: [], series_documentos: [], maestro_tipos: [] });
-    setYear(currentYear);
-    setMonthStart(currentMonth);
-    setMonthEnd(currentMonth);
-  }
 
   const activeFilterCount = Object.values(filtros).filter((v) => v.length > 0).length;
 
@@ -168,12 +154,12 @@ export default function DashboardVentaRC() {
     ? `${MONTHS_SHORT[monthStart - 1]} ${year}`
     : `${MONTHS_SHORT[monthStart - 1]} — ${MONTHS_SHORT[monthEnd - 1]} ${year}`;
 
-  const grupoActivo = GRUPOS.find(g => g.id === activeGrupo)!;
+  const grupoLabel = grupoInfo.label;
 
   if (loading && !kpis) {
     return (
       <div className="min-h-screen">
-        <Header title="Dashboard Venta RC" subtitle={`${grupoActivo.label} — ${periodLabel}`} />
+        <Header title="Dashboard Venta RC" subtitle={`${grupoLabel} — ${periodLabel}`} />
         <div className="flex items-center justify-center h-96">
           <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
         </div>
@@ -183,31 +169,9 @@ export default function DashboardVentaRC() {
 
   return (
     <div className="min-h-screen">
-      <Header title="Dashboard Venta RC" subtitle={`${grupoActivo.label} — ${periodLabel} - Peru`} />
+      <Header title="Dashboard Venta RC" subtitle={`${grupoLabel} — ${periodLabel} - Peru`} />
 
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-
-        {/* Group Tabs */}
-        <div className="flex flex-wrap gap-2">
-          {GRUPOS.map((g) => {
-            const Icon = g.icon;
-            const isActive = activeGrupo === g.id;
-            return (
-              <button
-                key={g.id}
-                onClick={() => handleGrupoChange(g.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border
-                  ${isActive
-                    ? 'bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-200'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-brand-400 hover:text-brand-600'
-                  }`}
-              >
-                <Icon className="w-4 h-4" />
-                {g.label}
-              </button>
-            );
-          })}
-        </div>
 
         {/* Filter Toggle Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -229,7 +193,7 @@ export default function DashboardVentaRC() {
             )}
           </div>
           <p className="text-xs sm:text-sm text-gray-400">
-            Grupo: <span className="font-semibold text-gray-700">{grupoActivo.label}</span>
+            Grupo: <span className="font-semibold text-gray-700">{grupoLabel}</span>{' '}
             {' '}| Fecha base: <span className="font-semibold text-gray-600">Fecha de Emisión</span>
           </p>
         </div>
@@ -277,7 +241,7 @@ export default function DashboardVentaRC() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="chart-container">
             <h3 className="text-base font-bold text-gray-900 mb-1">Pareto — Ventas por Cliente</h3>
-            <p className="text-xs text-gray-400 mb-4">Top 15 clientes | {grupoActivo.label}</p>
+            <p className="text-xs text-gray-400 mb-4">Top 15 clientes | {grupoLabel}</p>
             <ResponsiveContainer width="100%" height={320}>
               <ComposedChart data={paretoData} margin={{ top: 5, right: 30, left: 0, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -293,7 +257,7 @@ export default function DashboardVentaRC() {
 
           <div className="chart-container">
             <h3 className="text-base font-bold text-gray-900 mb-1">Tendencia de Ventas Diarias</h3>
-            <p className="text-xs text-gray-400 mb-4">{periodLabel} | {grupoActivo.label}</p>
+            <p className="text-xs text-gray-400 mb-4">{periodLabel} | {grupoLabel}</p>
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={ventasDiarias} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                 <defs>
@@ -317,7 +281,7 @@ export default function DashboardVentaRC() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="chart-container">
             <h3 className="text-base font-bold text-gray-900 mb-1">Ventas por Familia</h3>
-            <p className="text-xs text-gray-400 mb-4">Distribución porcentual — {grupoActivo.label}</p>
+            <p className="text-xs text-gray-400 mb-4">Distribución porcentual — {grupoLabel}</p>
             <div className="flex flex-col sm:flex-row items-center">
               <ResponsiveContainer width="100%" height={280} className="sm:!w-[55%]">
                 <PieChart>
@@ -359,7 +323,7 @@ export default function DashboardVentaRC() {
         {/* Table: Ranking Vendedores — sin margen */}
         <div className="chart-container">
           <h3 className="text-base font-bold text-gray-900 mb-1">Ranking de Vendedores RC</h3>
-          <p className="text-xs text-gray-400 mb-4">{grupoActivo.label} | Ordenado por venta total USD</p>
+          <p className="text-xs text-gray-400 mb-4">{grupoLabel} | Ordenado por venta total USD</p>
           <div className="overflow-x-auto">
             <table className="table-modern">
               <thead>

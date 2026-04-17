@@ -103,6 +103,7 @@
   /* Multi-select dropdown */
   .multi-select-container {
     @apply relative;
+    z-index: auto;
   }
   .multi-select-trigger {
     @apply flex items-center justify-between h-10 rounded-lg border border-gray-200
@@ -111,7 +112,9 @@
   }
   .multi-select-dropdown {
     @apply absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200
-           rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto p-2;
+           rounded-xl shadow-xl max-h-64 overflow-y-auto p-2;
+    z-index: 9999;
+    pointer-events: auto;
   }
   .multi-select-option {
     @apply flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm cursor-pointer

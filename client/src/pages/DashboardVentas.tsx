@@ -16,6 +16,9 @@ import {
   Filter,
   X,
   ChevronDown,
+  Percent,
+  Wallet,
+  Receipt,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -37,6 +40,9 @@ interface KPIs {
   ticket_promedio: number;
   meta_mensual_usd: number;
   porcentaje_avance: number;
+  total_costo: number;
+  total_ganancia: number;
+  margen_promedio: number;
 }
 
 interface Filtros {
@@ -50,10 +56,13 @@ interface Filtros {
   maestro_tipos: string[];
 }
 
+
 export default function DashboardVentas() {
+  const [grupoCliente, setGrupoCliente] = useState('');
+
   const [kpis, setKpis] = useState<KPIs | null>(null);
   const [ventasCliente, setVentasCliente] = useState<any[]>([]);
-  const [ventasIA, setVentasIA] = useState<any[]>([]);
+  const [ventasSubFamilia, setVentasSubFamilia] = useState<any[]>([]);
   const [ventasFamilia, setVentasFamilia] = useState<any[]>([]);
   const [ventasDiarias, setVentasDiarias] = useState<any[]>([]);
   const [ventasVendedor, setVentasVendedor] = useState<any[]>([]);
@@ -81,25 +90,37 @@ export default function DashboardVentas() {
     maestro_tipos: [],
   });
 
+  const [initialized, setInitialized] = useState(false);
+
   useEffect(() => {
     loadFiltros();
     loadData({ year: currentYear, month_start: currentMonth, month_end: currentMonth });
+    setInitialized(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (initialized) {
+      // Only reload when grupo changes after initial load
+      loadData({ year, month_start: monthStart, month_end: monthEnd });
+    }
+  }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadData(params?: any) {
     setLoading(true);
     try {
+      const p = { ...params };
+      if (grupoCliente) p.grupo_cliente = grupoCliente;
       const [kpiRes, clienteRes, iaRes, familiaRes, diariaRes, vendedorRes] = await Promise.all([
-        ventasApi.getKPIs(params),
-        ventasApi.getPorCliente(params),
-        ventasApi.getPorIA(params),
-        ventasApi.getPorFamilia(params),
-        ventasApi.getDiarias(params),
-        ventasApi.getPorVendedor(params),
+        ventasApi.getKPIs(p),
+        ventasApi.getPorCliente(p),
+        ventasApi.getPorSubFamilia(p),
+        ventasApi.getPorFamilia(p),
+        ventasApi.getDiarias(p),
+        ventasApi.getPorVendedor(p),
       ]);
       setKpis(kpiRes.data.data);
       setVentasCliente(clienteRes.data.data);
-      setVentasIA(iaRes.data.data);
+      setVentasSubFamilia(iaRes.data.data);
       setVentasFamilia(familiaRes.data.data);
       setVentasDiarias(diariaRes.data.data);
       setVentasVendedor(vendedorRes.data.data);
@@ -197,9 +218,21 @@ export default function DashboardVentas() {
               </button>
             )}
           </div>
-          <p className="text-xs sm:text-sm text-gray-400">
-            Fecha base: <span className="font-semibold text-gray-600">Fecha de Emisión</span> | País: Peru
-          </p>
+          <div className="flex items-center gap-3">
+            <select
+              value={grupoCliente}
+              onChange={(e) => setGrupoCliente(e.target.value)}
+              className="input-field text-sm py-1.5 px-3 pr-8 min-w-[200px]"
+            >
+              <option value="">Todos los Grupos</option>
+              {(opcionesFiltro?.grupos_cliente || []).map((g: string) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+            <p className="text-xs sm:text-sm text-gray-400">
+              Fecha base: <span className="font-semibold text-gray-600">Fecha de Emisión</span> | País: Peru
+            </p>
+          </div>
         </div>
 
         {/* Filter Panel */}
@@ -283,11 +316,11 @@ export default function DashboardVentas() {
         {kpis && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <KpiCard icon={DollarSign} label="Venta Total USD" value={formatUSD(kpis.total_venta_usd)} trend={12.5} color="brand" />
-            <KpiCard icon={Target} label="Avance Meta" value={formatPercent(kpis.porcentaje_avance)} subtext={`Meta: ${formatUSD(kpis.meta_mensual_usd)}`} color="accent" />
-            <KpiCard icon={Droplets} label="Unidades Vendidas" value={formatNumber(kpis.total_kilolitros)} trend={8.2} color="teal" />
+            <KpiCard icon={Receipt} label="Costo Total" value={formatUSD(kpis.total_costo || 0)} color="red" />
+            <KpiCard icon={Wallet} label="Ganancia" value={formatUSD(kpis.total_ganancia || 0)} color="teal" />
+            <KpiCard icon={Percent} label="Margen %" value={formatPercent(kpis.margen_promedio || 0)} color="accent" />
             <KpiCard icon={UsersRound} label="Clientes Activos" value={String(kpis.total_clientes)} color="purple" />
             <KpiCard icon={FileText} label="Transacciones" value={formatNumber(kpis.total_transacciones)} color="cyan" />
-            <KpiCard icon={TrendingUp} label="Ticket Promedio" value={formatUSD(kpis.ticket_promedio)} color="amber" />
           </div>
         )}
 
@@ -296,8 +329,8 @@ export default function DashboardVentas() {
           <div className="chart-container">
             <h3 className="text-base font-bold text-gray-900 mb-1">Diagrama de Pareto - Ventas por Cliente</h3>
             <p className="text-xs text-gray-400 mb-4">Top 15 clientes | Barra = venta USD, Línea = % acumulado</p>
-            <ResponsiveContainer width="100%" height={320}>
-              <ComposedChart data={paretoData} margin={{ top: 5, right: 30, left: 0, bottom: 60 }}>
+            <ResponsiveContainer width="100%" height={340}>
+              <ComposedChart data={paretoData} margin={{ top: 5, right: 30, left: 0, bottom: 80 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" tick={{ fontSize: 10 }} interval={0} />
                 <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
@@ -367,21 +400,36 @@ export default function DashboardVentas() {
           </div>
 
           <div className="chart-container">
-            <h3 className="text-base font-bold text-gray-900 mb-1">Ventas por Ingrediente Activo</h3>
-            <p className="text-xs text-gray-400 mb-4">Top ingredientes | USD</p>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={ventasIA.slice(0, 8)} layout="vertical" margin={{ left: 80 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="ingrediente_activo" tick={{ fontSize: 11 }} width={80} />
-                <Tooltip formatter={(value: any) => [formatUSD(value), 'Venta USD']} />
-                <Bar dataKey="total_venta_usd" radius={[0, 6, 6, 0]}>
-                  {ventasIA.slice(0, 8).map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <h3 className="text-base font-bold text-gray-900 mb-1">Ventas por Sub-Familia</h3>
+            <p className="text-xs text-gray-400 mb-4">Distribución porcentual</p>
+            <div className="flex flex-col sm:flex-row items-center">
+              <ResponsiveContainer width="100%" height={280} className="sm:!w-[55%]">
+                <PieChart>
+                  <Pie
+                    data={ventasSubFamilia.slice(0, 10)}
+                    dataKey="total_venta_usd"
+                    nameKey="sub_familia"
+                    cx="50%" cy="50%"
+                    outerRadius={100} innerRadius={55}
+                    paddingAngle={2} stroke="none"
+                  >
+                    {ventasSubFamilia.slice(0, 10).map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: any) => formatUSD(value as number)} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex-1 space-y-2">
+                {ventasSubFamilia.slice(0, 10).map((f, i) => (
+                  <div key={f.sub_familia} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                    <span className="text-xs text-gray-600 truncate flex-1">{f.sub_familia}</span>
+                    <span className="text-xs font-bold text-gray-800">{formatPercent(f.porcentaje)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -411,7 +459,7 @@ export default function DashboardVentas() {
                         {i + 1}
                       </span>
                     </td>
-                    <td className="font-semibold">{v.vendedor}</td>
+                    <td className="font-semibold whitespace-normal break-words">{v.vendedor}</td>
                     <td className="text-gray-500">{v.zona}</td>
                     <td className="text-right">{formatNumber(v.total_kg_lt)}</td>
                     <td className="text-right font-bold text-brand-700">{formatUSD(v.total_venta_usd)}</td>

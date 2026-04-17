@@ -11,6 +11,7 @@ import {
   MapPin,
   Briefcase,
   Hash,
+  Users2,
 } from 'lucide-react';
 
 interface Vendedor {
@@ -27,6 +28,7 @@ interface DiccionarioData {
   zonas: string[];
   lineas_negocio: string[];
   centros_costo: string[];
+  grupos_cliente: string[];
 }
 
 const TAB_CONFIG = [
@@ -36,6 +38,7 @@ const TAB_CONFIG = [
   { key: 'vendedores', label: 'Vendedores', icon: UserCheck },
   { key: 'zonas', label: 'Zonas', icon: MapPin },
   { key: 'lineas_negocio', label: 'Lineas de Negocio', icon: Briefcase },
+  { key: 'grupos_cliente', label: 'Grupos de Cliente', icon: Users2 },
 ] as const;
 
 type TabKey = (typeof TAB_CONFIG)[number]['key'];
@@ -80,6 +83,7 @@ export default function Diccionario() {
       zonas: data.zonas.filter((z) => z.toLowerCase().includes(q)),
       lineas_negocio: data.lineas_negocio.filter((l) => l.toLowerCase().includes(q)),
       centros_costo: data.centros_costo.filter((c) => c.toLowerCase().includes(q)),
+      grupos_cliente: (data.grupos_cliente || []).filter((g) => g.toLowerCase().includes(q)),
     };
   }, [data, search]);
 
@@ -177,6 +181,8 @@ export default function Diccionario() {
                   ? filtered?.ingredientes_activos ?? []
                   : activeTab === 'zonas'
                   ? filtered?.zonas ?? []
+                  : activeTab === 'grupos_cliente'
+                  ? filtered?.grupos_cliente ?? []
                   : filtered?.lineas_negocio ?? []
               }
               total={getTotalCount(activeTab)}

@@ -52,6 +52,16 @@ export const ventasController = {
     }
   },
 
+  async getPorSubFamilia(req: Request, res: Response) {
+    try {
+      const data = await dbService.getVentasPorSubFamilia(req.query);
+      return res.json({ success: true, data });
+    } catch (error) {
+      console.error('[Ventas] PorSubFamilia error:', error);
+      return res.status(500).json({ success: false, message: 'Error al obtener ventas por sub-familia' });
+    }
+  },
+
   async getDiarias(req: Request, res: Response) {
     try {
       const data = await dbService.getVentasDiarias(req.query);
@@ -69,6 +79,26 @@ export const ventasController = {
     } catch (error) {
       console.error('[Ventas] Filtros error:', error);
       return res.status(500).json({ success: false, message: 'Error al obtener opciones de filtro' });
+    }
+  },
+
+  async getPorProductoZona(req: Request, res: Response) {
+    try {
+      const data = await dbService.getVentasPorProductoZona(req.query);
+      return res.json({ success: true, data });
+    } catch (error) {
+      console.error('[Ventas] PorProductoZona error:', error);
+      return res.status(500).json({ success: false, message: 'Error al obtener productos por zona' });
+    }
+  },
+
+  async getPorDepartamento(req: Request, res: Response) {
+    try {
+      const data = await dbService.getVentasPorDepartamento(req.query);
+      return res.json({ success: true, data });
+    } catch (error) {
+      console.error('[Ventas] PorDepartamento error:', error);
+      return res.status(500).json({ success: false, message: 'Error al obtener ventas por departamento' });
     }
   },
 };

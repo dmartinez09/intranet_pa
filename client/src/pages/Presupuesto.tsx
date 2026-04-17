@@ -21,22 +21,30 @@ interface BudgetEntry {
   monto_usd: number;
 }
 
+
 export default function Presupuesto() {
+  const [grupoCliente, setGrupoCliente] = useState('');
+
   const [budget, setBudget] = useState<BudgetEntry[]>([]);
   const [ventasData, setVentasData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gruposDisponibles, setGruposDisponibles] = useState<string[]>([]);
   const [year] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    loadData();
+    ventasApi.getFiltros().then(res => setGruposDisponibles(res.data.data?.grupos_cliente || [])).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadData() {
     setLoading(true);
     try {
       const [budgetRes, ventasRes] = await Promise.all([
         fetch('/api/budget/2026', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()),
-        ventasApi.getPorVendedor({ year: 2026, month_start: 1, month_end: 12 }),
+        ventasApi.getPorVendedor({ year: 2026, month_start: 1, month_end: 12, ...(grupoCliente && { grupo_cliente: grupoCliente }) }),
       ]);
       setBudget(budgetRes.data || []);
       setVentasData(ventasRes.data.data || []);
@@ -61,7 +69,7 @@ export default function Presupuesto() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await ventasApi.getDiarias({ year: 2026, month_start: 1, month_end: 12 });
+        const res = await ventasApi.getDiarias({ year: 2026, month_start: 1, month_end: 12, ...(grupoCliente && { grupo_cliente: grupoCliente }) });
         const diarias = res.data.data || [];
         const monthly: Record<number, number> = {};
         for (const d of diarias) {
@@ -166,9 +174,21 @@ export default function Presupuesto() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Presupuesto {year}</h1>
-        <p className="text-gray-500 text-sm mt-1">Avance de ventas vs presupuesto anual</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Presupuesto {year}</h1>
+          <p className="text-gray-500 text-sm mt-1">Avance de ventas vs presupuesto anual</p>
+        </div>
+        <select
+          value={grupoCliente}
+          onChange={(e) => setGrupoCliente(e.target.value)}
+          className="input-field text-sm py-1.5 px-3 pr-8 min-w-[200px]"
+        >
+          <option value="">Todos los Grupos</option>
+          {gruposDisponibles.map((g) => (
+            <option key={g} value={g}>{g}</option>
+          ))}
+        </select>
       </div>
 
       {/* KPI Cards */}

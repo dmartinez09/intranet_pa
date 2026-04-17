@@ -9,6 +9,8 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "composite": true,
+    "emitDeclarationOnly": true,
+    "types": ["node"],
     "strict": true
   },
   "include": ["vite.config.ts"]

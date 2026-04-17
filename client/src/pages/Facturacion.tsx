@@ -42,6 +42,7 @@ interface EmailDoc {
   subject: string;
   to: string[];
   cc: string[];
+  destinatarios: string[];
   sentDateTime: string;
   tipoDocumento: string;
   numeroDocumento: string;
@@ -65,6 +66,7 @@ export default function Facturacion() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [filteredCount, setFilteredCount] = useState(0);
   const pageSize = 25;
 
   // Filters
@@ -110,6 +112,7 @@ export default function Facturacion() {
       const res = await facturacionApi.getEmails(params);
       setEmails(res.data.data || []);
       setTotalCount(res.data.totalCount || 0);
+      setFilteredCount(res.data.filteredCount ?? (res.data.data?.length || 0));
     } catch (err) {
       console.error('Error loading facturacion emails:', err);
     } finally {
@@ -223,7 +226,7 @@ export default function Facturacion() {
             </button>
           </div>
           <p className="text-xs sm:text-sm text-gray-400">
-            <span className="font-medium text-gray-600">{totalCount}</span> comprobantes encontrados
+            <span className="font-medium text-gray-600">{filteredCount}</span> comprobantes encontrados{activeFilterCount > 0 && totalCount > 0 ? ` (de ${totalCount} en buzón)` : ''}
           </p>
         </div>
 
@@ -375,9 +378,9 @@ export default function Facturacion() {
                             <span className="text-xs text-gray-300">—</span>
                           )}
                         </td>
-                        <td className="max-w-[180px]">
-                          <div className="truncate text-xs text-gray-500" title={email.to.join(', ')}>
-                            {email.to[0] || '-'}
+                        <td className="max-w-[220px]">
+                          <div className="truncate text-xs text-gray-500" title={(email.destinatarios || email.to || []).join('; ')}>
+                            {(email.destinatarios || email.to || []).join('; ') || '-'}
                           </div>
                         </td>
                         <td className="text-sm text-gray-600">{formatDate(email.fechaEmision)}</td>
@@ -422,7 +425,7 @@ export default function Facturacion() {
                     {email.vendedor && (
                       <p className="text-xs text-brand-600 font-medium truncate">{email.vendedor} {email.zonaVendedor ? `· ${email.zonaVendedor}` : ''}</p>
                     )}
-                    <p className="text-xs text-gray-400 truncate">{email.to[0] || ''}</p>
+                    <p className="text-xs text-gray-400 truncate">{(email.destinatarios || email.to || []).join('; ') || ''}</p>
                     {email.hasAttachments && (
                       <button
                         onClick={() => openAttachments(email)}

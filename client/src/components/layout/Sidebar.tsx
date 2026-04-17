@@ -22,6 +22,9 @@ import {
   FileCheck,
   ScrollText,
   Users,
+  Store,
+  Mountain,
+  MapPin,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { configApi } from '../../services/api';
@@ -41,13 +44,64 @@ interface NavChild {
   label: string;
 }
 
+interface SubGroup {
+  id: string;
+  label: string;
+  icon: any;
+  children: NavChild[];
+}
+
 interface NavModule {
   id: string;
   icon: any;
   label: string;
   module: string; // permission module
-  children: NavChild[];
+  children?: NavChild[];
+  subGroups?: SubGroup[];
 }
+
+const grupoChildren = (base: string): SubGroup[] => [
+  {
+    id: `${base}_agro`,
+    label: 'Agroindustrias',
+    icon: Store,
+    children: [
+      { to: `/${base}/agroindustrias/dashboard`, icon: TrendingUp, label: 'Dashboard' },
+      { to: `/${base}/agroindustrias/presupuesto`, icon: Target, label: 'Presupuesto' },
+      { to: `/${base}/agroindustrias/avance-comercial`, icon: Users, label: 'Avance Comercial' },
+    ],
+  },
+  {
+    id: `${base}_sierra`,
+    label: 'Dist. Sierra / Selva',
+    icon: Mountain,
+    children: [
+      { to: `/${base}/sierra-selva/dashboard`, icon: TrendingUp, label: 'Dashboard' },
+      { to: `/${base}/sierra-selva/presupuesto`, icon: Target, label: 'Presupuesto' },
+      { to: `/${base}/sierra-selva/avance-comercial`, icon: Users, label: 'Avance Comercial' },
+    ],
+  },
+  {
+    id: `${base}_costa`,
+    label: 'Dist. Costa',
+    icon: Truck,
+    children: [
+      { to: `/${base}/costa/dashboard`, icon: TrendingUp, label: 'Dashboard' },
+      { to: `/${base}/costa/presupuesto`, icon: Target, label: 'Presupuesto' },
+      { to: `/${base}/costa/avance-comercial`, icon: Users, label: 'Avance Comercial' },
+    ],
+  },
+  {
+    id: `${base}_online`,
+    label: 'Online',
+    icon: Package,
+    children: [
+      { to: `/${base}/online/dashboard`, icon: TrendingUp, label: 'Dashboard' },
+      { to: `/${base}/online/presupuesto`, icon: Target, label: 'Presupuesto' },
+      { to: `/${base}/online/avance-comercial`, icon: Users, label: 'Avance Comercial' },
+    ],
+  },
+];
 
 const navModules: NavModule[] = [
   {
@@ -59,6 +113,7 @@ const navModules: NavModule[] = [
       { to: '/ventas/dashboard', icon: TrendingUp, label: 'Dashboard' },
       { to: '/ventas/presupuesto', icon: Target, label: 'Presupuesto' },
       { to: '/ventas/avance-comercial', icon: Users, label: 'Avance Comercial' },
+      { to: '/ventas/margenes-zona', icon: MapPin, label: 'Márgenes por Zona' },
     ],
   },
   {
@@ -66,11 +121,7 @@ const navModules: NavModule[] = [
     icon: LineChart,
     label: 'Venta RC',
     module: 'venta_rc',
-    children: [
-      { to: '/venta-rc/dashboard', icon: TrendingUp, label: 'Dashboard' },
-      { to: '/venta-rc/presupuesto', icon: Target, label: 'Presupuesto' },
-      { to: '/venta-rc/avance-comercial', icon: Users, label: 'Avance Comercial' },
-    ],
+    subGroups: grupoChildren('venta-rc'),
   },
   {
     id: 'credito',
@@ -89,7 +140,7 @@ const navModules: NavModule[] = [
     module: 'dashboard_ventas',
     children: [
       { to: '/logistica/comprobantes', icon: FileCheck, label: 'Comprobantes de Pago' },
-      { to: '/logistica/letras', icon: ScrollText, label: 'Letras y Letras Renovadas' },
+      { to: '/logistica/letras', icon: ScrollText, label: 'Letras' },
     ],
   },
 ];
@@ -113,11 +164,29 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
     setLogoKey((k) => k + 1);
   }, []);
 
-  // Auto-open the module that matches the current route
+  const getAllChildren = (mod: NavModule): NavChild[] => {
+    if (mod.children) return mod.children;
+    if (mod.subGroups) return mod.subGroups.flatMap((sg) => sg.children);
+    return [];
+  };
+
+  // Auto-open the module and sub-group that matches the current route
   useEffect(() => {
     for (const mod of navModules) {
-      if (mod.children.some((c) => location.pathname.startsWith(c.to))) {
-        setOpenModules((prev) => new Set([...prev, mod.id]));
+      const allChildren = getAllChildren(mod);
+      if (allChildren.some((c) => location.pathname.startsWith(c.to))) {
+        setOpenModules((prev) => {
+          const next = new Set(prev);
+          next.add(mod.id);
+          if (mod.subGroups) {
+            for (const sg of mod.subGroups) {
+              if (sg.children.some((c) => location.pathname.startsWith(c.to))) {
+                next.add(sg.id);
+              }
+            }
+          }
+          return next;
+        });
       }
     }
   }, [location.pathname]);
@@ -132,7 +201,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
   };
 
   const isModuleActive = (mod: NavModule) =>
-    mod.children.some((c) => location.pathname.startsWith(c.to));
+    getAllChildren(mod).some((c) => location.pathname.startsWith(c.to));
 
   const showExpanded = !collapsed || isMobile;
 
@@ -211,8 +280,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
                   )}
                 </button>
 
-                {/* Sub-items */}
-                {showExpanded && isOpen && (
+                {/* Sub-items (flat children) */}
+                {showExpanded && isOpen && mod.children && (
                   <div className="mt-0.5 ml-4 pl-4 border-l border-white/10 space-y-0.5">
                     {mod.children.map((child) => (
                       <NavLink
@@ -230,6 +299,51 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
                         <span>{child.label}</span>
                       </NavLink>
                     ))}
+                  </div>
+                )}
+
+                {/* Sub-groups (2-level nesting) */}
+                {showExpanded && isOpen && mod.subGroups && (
+                  <div className="mt-0.5 ml-4 pl-3 border-l border-white/10 space-y-0.5">
+                    {mod.subGroups.map((sg) => {
+                      const sgOpen = openModules.has(sg.id);
+                      const sgActive = sg.children.some((c) => location.pathname.startsWith(c.to));
+                      return (
+                        <div key={sg.id}>
+                          <button
+                            onClick={() => toggleModule(sg.id)}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200
+                              ${sgActive
+                                ? 'text-white bg-white/5'
+                                : 'text-brand-300 hover:text-white hover:bg-white/5'}`}
+                          >
+                            <sg.icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="flex-1 text-left">{sg.label}</span>
+                            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${sgOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                          {sgOpen && (
+                            <div className="mt-0.5 ml-3 pl-3 border-l border-white/5 space-y-0.5">
+                              {sg.children.map((child) => (
+                                <NavLink
+                                  key={child.to}
+                                  to={child.to}
+                                  className={({ isActive }) =>
+                                    `flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] transition-all duration-200
+                                    ${isActive
+                                      ? 'text-white bg-brand-600/30 font-medium'
+                                      : 'text-brand-300/80 hover:text-white hover:bg-white/5'}`
+                                  }
+                                  onClick={() => isMobile && onMobileClose?.()}
+                                >
+                                  <child.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                  <span>{child.label}</span>
+                                </NavLink>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

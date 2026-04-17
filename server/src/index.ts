@@ -4,6 +4,8 @@ import path from 'path';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import apiRoutes from './routes';
+import { letrasScheduler } from './services/letras-scheduler.service';
+import { letrasBot } from './services/letras-bot.service';
 
 const app = express();
 
@@ -45,6 +47,14 @@ app.listen(env.port, () => {
   ║   Env:  ${env.nodeEnv.padEnd(32)}║
   ╚══════════════════════════════════════════╝
   `);
+
+  // Start Letras background jobs (SharePoint poll + daily bot)
+  try {
+    letrasScheduler.start();
+    letrasBot.start().catch(err => console.error('[letras-bot] start error:', err));
+  } catch (err) {
+    console.error('[letras] scheduler boot error:', err);
+  }
 });
 
 export default app;

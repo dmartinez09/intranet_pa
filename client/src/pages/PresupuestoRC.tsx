@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { ventaRCApi } from '../services/api';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ComposedChart, Line, Area, Cell, PieChart, Pie, Legend,
 } from 'recharts';
-import { Target, TrendingUp, TrendingDown, DollarSign, Calendar, Loader2, AlertCircle, Store, Truck, Mountain } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, DollarSign, Calendar, Loader2, AlertCircle } from 'lucide-react';
+import { getGrupoFromSlug } from '../lib/utils';
 
 const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const COLORS = ['#00A651', '#34D67B', '#0EA5E9', '#6366F1', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
@@ -13,13 +15,6 @@ function formatUSD(n: number) {
   return '$' + n.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-const GRUPOS = [
-  { id: 'AGROINDUSTRIAS',     label: 'Agroindustrias',     icon: Store },
-  { id: 'DIST. SIERRA SELVA', label: 'Dist. Sierra Selva', icon: Mountain },
-  { id: 'DISTRIBUCION COSTA', label: 'Distribución Costa', icon: Truck },
-] as const;
-
-type GrupoId = typeof GRUPOS[number]['id'];
 
 interface BudgetEntry {
   zona: string;
@@ -30,7 +25,9 @@ interface BudgetEntry {
 }
 
 export default function PresupuestoRC() {
-  const [activeGrupo, setActiveGrupo] = useState<GrupoId>('AGROINDUSTRIAS');
+  const { grupo: grupoSlug } = useParams<{ grupo: string }>();
+  const grupoInfo = getGrupoFromSlug(grupoSlug);
+  const grupoCliente = grupoInfo.db;
   const [budget, setBudget] = useState<BudgetEntry[]>([]);
   const [ventasMensuales, setVentasMensuales] = useState<Record<number, number>>({});
   const [ventasData, setVentasData] = useState<any[]>([]);
@@ -42,8 +39,8 @@ export default function PresupuestoRC() {
   }, []);
 
   useEffect(() => {
-    loadVentas(activeGrupo);
-  }, [activeGrupo]); // eslint-disable-line react-hooks/exhaustive-deps
+    loadVentas(grupoCliente);
+  }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadBudget() {
     try {
@@ -56,7 +53,7 @@ export default function PresupuestoRC() {
     }
   }
 
-  async function loadVentas(grupo: GrupoId) {
+  async function loadVentas(grupo: string) {
     setLoading(true);
     try {
       const [diariaRes, vendedorRes] = await Promise.all([
@@ -119,7 +116,7 @@ export default function PresupuestoRC() {
   const currentMonthVenta = ventasMensuales[new Date().getMonth() + 1] || 0;
   const currentMonthLogro = currentMonthPpto > 0 ? (currentMonthVenta / currentMonthPpto) * 100 : 0;
 
-  const grupoActivo = GRUPOS.find(g => g.id === activeGrupo)!;
+  const grupoLabel = grupoInfo.label;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
@@ -150,28 +147,6 @@ export default function PresupuestoRC() {
         <p className="text-gray-500 text-sm mt-1">Avance de ventas vs presupuesto por grupo de clientes</p>
       </div>
 
-      {/* Group Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {GRUPOS.map((g) => {
-          const Icon = g.icon;
-          const isActive = activeGrupo === g.id;
-          return (
-            <button
-              key={g.id}
-              onClick={() => setActiveGrupo(g.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border
-                ${isActive
-                  ? 'bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-200'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-brand-400 hover:text-brand-600'
-                }`}
-            >
-              <Icon className="w-4 h-4" />
-              {g.label}
-            </button>
-          );
-        })}
-      </div>
-
       {budget.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
           <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -190,7 +165,7 @@ export default function PresupuestoRC() {
                 <span className="text-xs text-gray-500 uppercase tracking-wide">Ppto Anual</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">{formatUSD(totalPpto)}</p>
-              <p className="text-xs text-gray-400 mt-1">{grupoActivo.label}</p>
+              <p className="text-xs text-gray-400 mt-1">{grupoLabel}</p>
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-3 mb-3">
@@ -227,7 +202,7 @@ export default function PresupuestoRC() {
           {/* Monthly comparison chart */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-1">Venta vs Presupuesto Mensual</h3>
-            <p className="text-xs text-gray-400 mb-4">{grupoActivo.label} — comparación mensual en USD</p>
+            <p className="text-xs text-gray-400 mb-4">{grupoLabel} — comparación mensual en USD</p>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={monthlyComparison} barCategoryGap="20%">
@@ -258,7 +233,7 @@ export default function PresupuestoRC() {
           {/* RC Ranking table */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-1">Ranking RC vs Presupuesto</h3>
-            <p className="text-xs text-gray-400 mb-4">{grupoActivo.label} — avance acumulado por representante comercial</p>
+            <p className="text-xs text-gray-400 mb-4">{grupoLabel} — avance acumulado por representante comercial</p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>

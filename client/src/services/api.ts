@@ -49,8 +49,11 @@ export const ventasApi = {
   getPorIA: (params?: any) => api.get('/ventas/por-ingrediente-activo', { params }),
   getPorVendedor: (params?: any) => api.get('/ventas/por-vendedor', { params }),
   getPorFamilia: (params?: any) => api.get('/ventas/por-familia', { params }),
+  getPorSubFamilia: (params?: any) => api.get('/ventas/por-sub-familia', { params }),
   getDiarias: (params?: any) => api.get('/ventas/diarias', { params }),
   getFiltros: () => api.get('/ventas/filtros'),
+  getPorProductoZona: (params?: any) => api.get('/ventas/por-producto-zona', { params }),
+  getPorDepartamento: (params?: any) => api.get('/ventas/por-departamento', { params }),
 };
 
 // Venta RC
@@ -105,6 +108,17 @@ export const facturacionApi = {
   downloadUrl: (messageId: string, attachmentId: string) => `/api/facturacion/emails/${messageId}/attachments/${attachmentId}/download`,
   getVendedores: () => api.get('/facturacion/vendedores'),
   getStatus: () => api.get('/facturacion/status'),
+  getLetrasFiles: (params?: any) => api.get('/facturacion/letras-files', { params }),
+  getLetrasComprobantes: (facturaCode: string) => api.get('/facturacion/letras-comprobantes', { params: { facturaCode } }),
+  sendLetra: (data: { letraDriveItemId: string; facturaCode: string; to: string[]; cc?: string[]; cliente?: string }) => api.post('/facturacion/letras-send', data),
+  // Letras scheduler + bot
+  getLetrasStatus: () => api.get('/facturacion/letras-status'),
+  refreshLetras: () => api.post('/facturacion/letras-refresh'),
+  getLetrasBotConfig: () => api.get('/facturacion/letras-bot/config'),
+  updateLetrasBotConfig: (data: { enabled?: boolean; sendHour?: number; sendMinute?: number; defaultCc?: string }) =>
+    api.put('/facturacion/letras-bot/config', data),
+  getLetrasBotHistory: (limit = 50) => api.get('/facturacion/letras-bot/history', { params: { limit } }),
+  runLetrasBotNow: () => api.post('/facturacion/letras-bot/run-now'),
 };
 
 // Config

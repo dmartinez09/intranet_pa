@@ -6,6 +6,11 @@ dist/
 client/dist/
 server/dist/
 
+# TypeScript build info
+*.tsbuildinfo
+client/vite.config.d.ts
+client/vite.config.js
+
 # Environment (CREDENTIALS - never commit)
 .env
 
@@ -20,8 +25,20 @@ server/uploads/*
 # Local data (persisted on server)
 server/data/budgets.json
 
-# Claude Code local settings
-.claude/settings.local.json
+# Claude Code (local context, settings, worktrees)
+.claude/
+CLAUDE.md
+
+# Local deploy artifacts
+deploy.zip
+web.config
+
+# Server temp / data
+server/tmp/
+server/data/budgets.json
+
+# Memoria de Claude
+memory/
 
 # OS files
 .DS_Store

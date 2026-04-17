@@ -8,10 +8,14 @@
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
     "build": "cd client && npm run build && cd ../server && npm run build",
-    "start": "cd server && npm start",
-    "install:all": "npm install && cd server && npm install && cd ../client && npm install"
+    "start": "node server/dist/index.js",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "build:azure": "cd client && npm install && npm run build && cd ../server && npm install && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

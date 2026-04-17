@@ -13,6 +13,9 @@ router.get('/por-ingrediente-activo', ventasController.getPorIA);
 router.get('/por-vendedor', ventasController.getPorVendedor);
 router.get('/por-familia', ventasController.getPorFamilia);
 router.get('/diarias', ventasController.getDiarias);
+router.get('/por-sub-familia', ventasController.getPorSubFamilia);
+router.get('/por-producto-zona', ventasController.getPorProductoZona);
 router.get('/filtros', ventasController.getFiltros);
+router.get('/por-departamento', ventasController.getPorDepartamento);
 
 export default router;

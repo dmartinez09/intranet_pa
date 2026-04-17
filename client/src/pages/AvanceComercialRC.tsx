@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { ventaRCApi } from '../services/api';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from 'recharts';
-import { Users, TrendingUp, Droplets, Filter, ChevronDown, Search, Loader2, Store, Truck, Mountain } from 'lucide-react';
+import { Users, TrendingUp, Droplets, Filter, ChevronDown, Search, Loader2 } from 'lucide-react';
+import { getGrupoFromSlug } from '../lib/utils';
 
 const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const COLORS = ['#00A651', '#34D67B', '#0EA5E9', '#6366F1', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4', '#A855F7'];
@@ -17,16 +19,11 @@ const ZONE_COLORS: Record<string, string> = {
 function formatUSD(n: number) { return '$' + n.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
 function formatKG(n: number) { return n.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' KG/LT'; }
 
-const GRUPOS = [
-  { id: 'AGROINDUSTRIAS',     label: 'Agroindustrias',     icon: Store },
-  { id: 'DIST. SIERRA SELVA', label: 'Dist. Sierra Selva', icon: Mountain },
-  { id: 'DISTRIBUCION COSTA', label: 'Distribución Costa', icon: Truck },
-] as const;
-
-type GrupoId = typeof GRUPOS[number]['id'];
 
 export default function AvanceComercialRC() {
-  const [activeGrupo, setActiveGrupo] = useState<GrupoId>('AGROINDUSTRIAS');
+  const { grupo: grupoSlug } = useParams<{ grupo: string }>();
+  const grupoInfo = getGrupoFromSlug(grupoSlug);
+  const grupoCliente = grupoInfo.db;
   const [vendedores, setVendedores] = useState<any[]>([]);
   const [familias, setFamilias] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
@@ -47,10 +44,10 @@ export default function AvanceComercialRC() {
   }, []);
 
   useEffect(() => {
-    loadData(activeGrupo);
-  }, [activeGrupo]); // eslint-disable-line react-hooks/exhaustive-deps
+    loadData(grupoCliente);
+  }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function loadData(grupo: GrupoId) {
+  async function loadData(grupo: string) {
     setLoading(true);
     const params: any = { year, month_start: monthStart, month_end: monthEnd, grupo_cliente: grupo };
     if (selectedDivision) params.division = selectedDivision;
@@ -80,14 +77,7 @@ export default function AvanceComercialRC() {
     }
   }
 
-  function applyFilters() { loadData(activeGrupo); }
-
-  function handleGrupoChange(g: GrupoId) {
-    setActiveGrupo(g);
-    setSelectedDivision('');
-    setSelectedMaestroTipo('');
-    setClientSearch('');
-  }
+  function applyFilters() { loadData(grupoCliente); }
 
   // KPIs
   const totalVenta = useMemo(() => vendedores.reduce((s: number, v: any) => s + (v.total_venta_usd || 0), 0), [vendedores]);
@@ -122,7 +112,7 @@ export default function AvanceComercialRC() {
 
   const maxClienteVenta = clientes[0]?.total_venta_usd || 1;
 
-  const grupoActivo = GRUPOS.find(g => g.id === activeGrupo)!;
+  const grupoLabel = grupoInfo.label;
   const periodLabel = monthStart === monthEnd
     ? `${MONTHS_SHORT[monthStart - 1]} ${year}`
     : `${MONTHS_SHORT[monthStart - 1]} — ${MONTHS_SHORT[monthEnd - 1]} ${year}`;
@@ -132,26 +122,6 @@ export default function AvanceComercialRC() {
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Avance Comercial RC</h1>
         <p className="text-gray-500 text-sm mt-1">Seguimiento de metas por grupo de clientes — {periodLabel}</p>
-      </div>
-
-      {/* Group Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {GRUPOS.map((g) => {
-          const Icon = g.icon;
-          const isActive = activeGrupo === g.id;
-          return (
-            <button key={g.id} onClick={() => handleGrupoChange(g.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border
-                ${isActive
-                  ? 'bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-200'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-brand-400 hover:text-brand-600'
-                }`}
-            >
-              <Icon className="w-4 h-4" />
-              {g.label}
-            </button>
-          );
-        })}
       </div>
 
       {/* Filter bar */}
@@ -221,7 +191,7 @@ export default function AvanceComercialRC() {
                   </div>
                   <p className="text-2xl font-bold text-gray-900">{kpi.value}</p>
                   <p className="text-xs text-gray-500 mt-1">{kpi.label}</p>
-                  <p className="text-xs text-gray-400">{grupoActivo.label}</p>
+                  <p className="text-xs text-gray-400">{grupoLabel}</p>
                 </div>
               );
             })}
@@ -231,7 +201,7 @@ export default function AvanceComercialRC() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-bold text-gray-900 mb-1">Top 10 RC por Venta</h3>
-              <p className="text-xs text-gray-400 mb-4">{grupoActivo.label} — USD</p>
+              <p className="text-xs text-gray-400 mb-4">{grupoLabel} — USD</p>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={top10RC} layout="vertical" margin={{ left: 10, right: 30 }}>
@@ -249,7 +219,7 @@ export default function AvanceComercialRC() {
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-bold text-gray-900 mb-1">Venta por Zona</h3>
-              <p className="text-xs text-gray-400 mb-4">{grupoActivo.label} — distribución geográfica</p>
+              <p className="text-xs text-gray-400 mb-4">{grupoLabel} — distribución geográfica</p>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -277,7 +247,7 @@ export default function AvanceComercialRC() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-bold text-gray-900 mb-1">KG/LT por RC</h3>
-              <p className="text-xs text-gray-400 mb-4">{grupoActivo.label} — volumen top 10</p>
+              <p className="text-xs text-gray-400 mb-4">{grupoLabel} — volumen top 10</p>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={top10KG} layout="vertical" margin={{ left: 10, right: 20 }}>
@@ -295,7 +265,7 @@ export default function AvanceComercialRC() {
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-bold text-gray-900 mb-1">Venta por Familia</h3>
-              <p className="text-xs text-gray-400 mb-4">{grupoActivo.label} — distribución</p>
+              <p className="text-xs text-gray-400 mb-4">{grupoLabel} — distribución</p>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -321,7 +291,7 @@ export default function AvanceComercialRC() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
-                <h3 className="font-bold text-gray-900">Top 15 Clientes — {grupoActivo.label}</h3>
+                <h3 className="font-bold text-gray-900">Top 15 Clientes — {grupoLabel}</h3>
                 <p className="text-xs text-gray-400 mt-0.5">Análisis de Pareto por venta USD</p>
               </div>
               <div className="relative">

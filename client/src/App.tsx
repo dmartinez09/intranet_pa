@@ -18,6 +18,7 @@ const Letras = lazy(() => import('./pages/Letras'));
 import DashboardVentaRC from './pages/DashboardVentaRC';
 const PresupuestoRC = lazy(() => import('./pages/PresupuestoRC'));
 const AvanceComercialRC = lazy(() => import('./pages/AvanceComercialRC'));
+const VentasMargenesZona = lazy(() => import('./pages/VentasMargenesZona'));
 
 function ProtectedRoute({ children, module }: { children: React.ReactNode; module?: string }) {
   const { user, loading, hasModule } = useAuth();
@@ -65,16 +66,22 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        {/* Ventas module */}
+        {/* Ventas module — panoramic view with grupo filter */}
         <Route path="/" element={<Navigate to="/ventas/dashboard" replace />} />
         <Route path="/ventas/dashboard" element={<ProtectedRoute module="dashboard_ventas"><DashboardVentas /></ProtectedRoute>} />
         <Route path="/ventas/presupuesto" element={<ProtectedRoute module="dashboard_ventas"><Suspense fallback={LazyFallback}><Presupuesto /></Suspense></ProtectedRoute>} />
         <Route path="/ventas/avance-comercial" element={<ProtectedRoute module="dashboard_ventas"><Suspense fallback={LazyFallback}><AvanceComercial /></Suspense></ProtectedRoute>} />
+        <Route path="/ventas/margenes-zona" element={<ProtectedRoute module="dashboard_ventas"><Suspense fallback={LazyFallback}><VentasMargenesZona /></Suspense></ProtectedRoute>} />
 
-        {/* Venta RC module */}
-        <Route path="/venta-rc/dashboard" element={<ProtectedRoute module="venta_rc"><DashboardVentaRC /></ProtectedRoute>} />
-        <Route path="/venta-rc/presupuesto" element={<ProtectedRoute module="venta_rc"><Suspense fallback={LazyFallback}><PresupuestoRC /></Suspense></ProtectedRoute>} />
-        <Route path="/venta-rc/avance-comercial" element={<ProtectedRoute module="venta_rc"><Suspense fallback={LazyFallback}><AvanceComercialRC /></Suspense></ProtectedRoute>} />
+        {/* Venta RC module — parameterized by grupo */}
+        <Route path="/venta-rc/:grupo/dashboard" element={<ProtectedRoute module="venta_rc"><DashboardVentaRC /></ProtectedRoute>} />
+        <Route path="/venta-rc/:grupo/presupuesto" element={<ProtectedRoute module="venta_rc"><Suspense fallback={LazyFallback}><PresupuestoRC /></Suspense></ProtectedRoute>} />
+        <Route path="/venta-rc/:grupo/avance-comercial" element={<ProtectedRoute module="venta_rc"><Suspense fallback={LazyFallback}><AvanceComercialRC /></Suspense></ProtectedRoute>} />
+
+        {/* Legacy redirects for old flat routes */}
+        <Route path="/venta-rc/dashboard" element={<Navigate to="/venta-rc/agroindustrias/dashboard" replace />} />
+        <Route path="/venta-rc/presupuesto" element={<Navigate to="/venta-rc/agroindustrias/presupuesto" replace />} />
+        <Route path="/venta-rc/avance-comercial" element={<Navigate to="/venta-rc/agroindustrias/avance-comercial" replace />} />
 
         {/* Credito y Cobranzas module */}
         <Route path="/credito/cartera" element={<ProtectedRoute module="cartera"><Cartera /></ProtectedRoute>} />

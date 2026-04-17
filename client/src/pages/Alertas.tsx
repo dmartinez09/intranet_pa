@@ -58,7 +58,6 @@ export default function Alertas() {
   const [loadingResultado, setLoadingResultado] = useState(false);
   const [fechaAlerta, setFechaAlerta] = useState(new Date().toISOString().split('T')[0]);
   const [filtroVendedor, setFiltroVendedor] = useState('');
-  const [filtroSupervisor, setFiltroSupervisor] = useState('');
   const [searchResultado, setSearchResultado] = useState('');
 
   useEffect(() => {
@@ -92,7 +91,6 @@ export default function Alertas() {
     setSelectedAlerta(alerta);
     setLoadingResultado(true);
     setFiltroVendedor('');
-    setFiltroSupervisor('');
     setSearchResultado('');
     try {
       const res = await alertasApi.getResultado(alerta.id, fechaAlerta);
@@ -124,11 +122,9 @@ export default function Alertas() {
 
   // Filtrar resultado de alerta
   const vendedoresUnicos = [...new Set(alertaResultado.map((r) => r.vendedor).filter(Boolean))];
-  const supervisoresUnicos = [...new Set(alertaResultado.map((r) => r.supervisor).filter(Boolean))];
 
   const resultadoFiltrado = alertaResultado.filter((r) => {
     if (filtroVendedor && r.vendedor !== filtroVendedor) return false;
-    if (filtroSupervisor && r.supervisor !== filtroSupervisor) return false;
     if (searchResultado) {
       const s = searchResultado.toLowerCase();
       return r.cliente?.toLowerCase().includes(s) || r.numero_orden?.toLowerCase().includes(s) || r.descripcion?.toLowerCase().includes(s);
@@ -193,13 +189,6 @@ export default function Alertas() {
                 {vendedoresUnicos.map((v) => <option key={v} value={v}>{v}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Supervisor</label>
-              <select value={filtroSupervisor} onChange={(e) => setFiltroSupervisor(e.target.value)} className="filter-select min-w-[180px]">
-                <option value="">Todos</option>
-                {supervisoresUnicos.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
             <div className="flex-1">
               <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Buscar</label>
               <div className="relative">
@@ -233,7 +222,6 @@ export default function Alertas() {
                       <th>Descripción</th>
                       <th>Vendedor</th>
                       <th>Zona</th>
-                      <th>Supervisor</th>
                       <th className="text-right">Días Atraso</th>
                       <th className="text-right">Total USD</th>
                       <th>Comentarios</th>
@@ -249,7 +237,6 @@ export default function Alertas() {
                         <td className="text-sm max-w-[150px] truncate">{r.descripcion}</td>
                         <td className="text-sm font-medium">{r.vendedor}</td>
                         <td className="text-sm text-gray-500">{r.zona}</td>
-                        <td className="text-sm">{r.supervisor}</td>
                         <td className="text-right">
                           <span className={`badge ${r.dias_atraso > 30 ? 'badge-danger' : r.dias_atraso > 7 ? 'badge-warning' : 'bg-brand-50 text-brand-600'}`}>
                             {r.dias_atraso}d

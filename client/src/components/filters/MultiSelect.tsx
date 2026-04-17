@@ -109,9 +109,11 @@ export default function MultiSelect({ label, options, selected, onChange, placeh
           {filtered.map((option) => {
             const isSelected = selected.includes(option.value);
             return (
-              <label
+              <button
+                type="button"
                 key={option.value}
-                className="multi-select-option"
+                onClick={() => toggle(option.value)}
+                className="multi-select-option w-full"
               >
                 <div className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors
                   ${isSelected
@@ -120,10 +122,10 @@ export default function MultiSelect({ label, options, selected, onChange, placeh
                 >
                   {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                 </div>
-                <span className={`truncate ${isSelected ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
+                <span className={`truncate text-left ${isSelected ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
                   {option.label}
                 </span>
-              </label>
+              </button>
             );
           })}
 
