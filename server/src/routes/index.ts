@@ -9,6 +9,7 @@ import configRoutes from './config.routes';
 import diccionarioRoutes from './diccionario.routes';
 import facturacionRoutes from './facturacion.routes';
 import budgetRoutes from './budget.routes';
+import inteligenciaRoutes from './inteligencia.routes';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/config', configRoutes);
 router.use('/diccionario', diccionarioRoutes);
 router.use('/facturacion', facturacionRoutes);
 router.use('/budget', budgetRoutes);
+router.use('/inteligencia', inteligenciaRoutes);
 
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

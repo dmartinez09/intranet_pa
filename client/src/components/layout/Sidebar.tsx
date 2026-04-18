@@ -25,6 +25,8 @@ import {
   Store,
   Mountain,
   MapPin,
+  Sprout,
+  Map,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { configApi } from '../../services/api';
@@ -153,6 +155,20 @@ const standaloneItems = [
   { to: '/admin', icon: Shield, label: 'Administración', module: '__admin_only__' },
 ];
 
+// Módulos que se muestran DESPUÉS de los standalones (debajo de Administración)
+const afterAdminModules: NavModule[] = [
+  {
+    id: 'inteligencia',
+    icon: Sprout,
+    label: 'Inteligencia Comercial Beta',
+    module: 'inteligencia_comercial',
+    children: [
+      { to: '/inteligencia/dashboard', icon: LineChart, label: 'Inteligencia Comercial', module: 'inteligencia_comercial' },
+      { to: '/inteligencia/mapa', icon: Map, label: 'Mapa Interactivo', module: 'mapa_interactivo' },
+    ],
+  },
+];
+
 export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onMobileClose }: SidebarProps) {
   const { user, logout, hasModule, isAdmin } = useAuth();
   const canSee = (mod?: string) => {
@@ -183,7 +199,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
 
   // Auto-open the module and sub-group that matches the current route
   useEffect(() => {
-    for (const mod of navModules) {
+    for (const mod of [...navModules, ...afterAdminModules]) {
       const allChildren = getAllChildren(mod);
       if (allChildren.some((c) => location.pathname.startsWith(c.to))) {
         setOpenModules((prev) => {
@@ -385,6 +401,57 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
               {showExpanded && <span>{item.label}</span>}
             </NavLink>
           ))}
+
+        {/* Módulos después de Administración (Inteligencia Comercial Beta) */}
+        {afterAdminModules
+          .filter(moduleVisible)
+          .map((mod) => {
+            const isOpen = openModules.has(mod.id);
+            const isActive = isModuleActive(mod);
+            return (
+              <div key={mod.id} className="pt-1">
+                <button
+                  onClick={() => showExpanded ? toggleModule(mod.id) : undefined}
+                  title={!showExpanded ? mod.label : undefined}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    ${isActive
+                      ? 'text-white bg-white/10'
+                      : 'text-brand-200 hover:text-white hover:bg-white/5'}
+                    ${!showExpanded ? 'justify-center px-0' : ''}`}
+                >
+                  <mod.icon className="w-5 h-5 flex-shrink-0" />
+                  {showExpanded && (
+                    <>
+                      <span className="flex-1 text-left">{mod.label}</span>
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      />
+                    </>
+                  )}
+                </button>
+                {showExpanded && isOpen && mod.children && (
+                  <div className="mt-0.5 ml-4 pl-4 border-l border-white/10 space-y-0.5">
+                    {mod.children.filter(c => canSee(c.module || mod.module)).map((child) => (
+                      <NavLink
+                        key={child.to}
+                        to={child.to}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all duration-200
+                          ${isActive
+                            ? 'text-white bg-brand-600/30 font-medium'
+                            : 'text-brand-300 hover:text-white hover:bg-white/5'}`
+                        }
+                        onClick={() => isMobile && onMobileClose?.()}
+                      >
+                        <child.icon className="w-4 h-4 flex-shrink-0" />
+                        <span>{child.label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
       </nav>
 
       {/* User & Logout */}

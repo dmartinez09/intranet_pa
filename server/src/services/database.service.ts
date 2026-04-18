@@ -124,6 +124,7 @@ export const ALL_MODULES = [
   'cartera', 'estado_cuenta',
   'facturacion', 'letras',
   'alertas', 'diccionario',
+  'inteligencia_comercial', 'mapa_interactivo',
 ] as const;
 export type AppModuleCode = typeof ALL_MODULES[number];
 

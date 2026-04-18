@@ -129,9 +129,21 @@ export const facturacionApi = {
   runLetrasBotNow: () => api.post('/facturacion/letras-bot/run-now'),
 };
 
-// Inteligencia Comercial (Beta — stub hasta que el backend esté listo)
+// Inteligencia Comercial Beta
 export const inteligenciaApi = {
-  getMeta: () => Promise.resolve({ data: { data: { sources: 0, crops: 0, regions: 0, categories: 0, last_run: null } } }),
+  getMeta: () => api.get('/inteligencia/meta'),
+  getSources: () => api.get('/inteligencia/sources'),
+  getCrops: () => api.get('/inteligencia/crops'),
+  getRegions: () => api.get('/inteligencia/regions'),
+  getCategories: () => api.get('/inteligencia/categories'),
+  getSnapshots: (params?: {
+    crop_id?: number; region_id?: number; category_id?: number;
+    source_id?: number; from_date?: string; to_date?: string; limit?: number;
+  }) => api.get('/inteligencia/snapshots', { params }),
+  getGeoSummary: (params?: { crop_id?: number; category_id?: number }) =>
+    api.get('/inteligencia/geo-summary', { params }),
+  getTopCrops: (limit = 10) => api.get('/inteligencia/top-crops', { params: { limit } }),
+  getEtlRuns: (limit = 30) => api.get('/inteligencia/etl-runs', { params: { limit } }),
 };
 
 // Config

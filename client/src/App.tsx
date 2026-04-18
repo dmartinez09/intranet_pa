@@ -19,6 +19,9 @@ import DashboardVentaRC from './pages/DashboardVentaRC';
 const PresupuestoRC = lazy(() => import('./pages/PresupuestoRC'));
 const AvanceComercialRC = lazy(() => import('./pages/AvanceComercialRC'));
 const VentasMargenesZona = lazy(() => import('./pages/VentasMargenesZona'));
+// Inteligencia Comercial Beta
+const InteligenciaComercial = lazy(() => import('./pages/InteligenciaComercial'));
+const MapaInteractivo = lazy(() => import('./pages/MapaInteractivo'));
 
 function ProtectedRoute({ children, module }: { children: React.ReactNode; module?: string }) {
   const { user, loading, hasModule } = useAuth();
@@ -95,6 +98,10 @@ export default function App() {
         <Route path="/alertas" element={<ProtectedRoute module="alertas"><Alertas /></ProtectedRoute>} />
         <Route path="/diccionario" element={<ProtectedRoute module="dashboard_ventas"><Diccionario /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute module="admin"><Admin /></ProtectedRoute>} />
+
+        {/* Inteligencia Comercial Beta */}
+        <Route path="/inteligencia/dashboard" element={<ProtectedRoute module="inteligencia_comercial"><Suspense fallback={LazyFallback}><InteligenciaComercial /></Suspense></ProtectedRoute>} />
+        <Route path="/inteligencia/mapa" element={<ProtectedRoute module="mapa_interactivo"><Suspense fallback={LazyFallback}><MapaInteractivo /></Suspense></ProtectedRoute>} />
 
         {/* Legacy redirects */}
         <Route path="/cartera" element={<Navigate to="/credito/cartera" replace />} />
