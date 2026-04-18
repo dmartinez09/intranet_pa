@@ -115,10 +115,17 @@ async function buildAndSendForLetra(
       return { status: 'skipped', error: 'Sin facturaCode' };
     }
 
-    const result = await graphService.getFacturacionEmails({ top: 100 });
-    const matching = result.emails.filter((e: any) =>
-      e.numeroDocumento && codes.some(c => e.numeroDocumento.includes(c))
-    );
+    const result = await graphService.getFacturacionEmails({ top: 500 });
+    const tails = codes.map(c => (c.match(/\d+/g) || []).join('').replace(/^0+/, '')).filter(Boolean);
+    const matching = result.emails.filter((e: any) => {
+      const num = (e.numeroDocumento || '').toUpperCase();
+      const subj = (e.subject || '').toUpperCase();
+      const preview = (e.preview || '').toUpperCase();
+      const haystack = `${num} ${subj} ${preview}`;
+      if (codes.some(c => haystack.includes(c.toUpperCase()))) return true;
+      const allDigits = (haystack.match(/\d{4,}/g) || []).map((d: string) => d.replace(/^0+/, ''));
+      return tails.some(t => allDigits.includes(t));
+    });
 
     // 2. Collect recipients from the comprobantes
     const toSet = new Set<string>();
@@ -145,9 +152,12 @@ async function buildAndSendForLetra(
     }];
 
     for (const email of matching.filter((e: any) => e.hasAttachments)) {
+      const isFac = (email.tipoDocumento || '').toUpperCase() === 'FAC';
       const atts = await graphService.getFacturacionAttachments(email.id);
       for (const att of (atts || [])) {
         if ((att as any).isInline) continue;
+        const isXml = /\.xml$/i.test(att.name) || /xml/i.test(att.contentType || '');
+        if (!isFac && !isXml) continue;
         const dl = await graphService.downloadFacturacionAttachment(email.id, att.id);
         if (dl) attachments.push({ name: dl.name, contentType: dl.contentType, contentBytes: dl.contentBytes });
       }
@@ -196,13 +206,13 @@ async function buildAndSendForLetra(
   }
 }
 
-async function alreadySentToday(letraId: string): Promise<boolean> {
+async function alreadySent(letraId: string): Promise<boolean> {
   try {
     const pool = await getDbPool();
     const r = await pool.request()
       .input('lid', letraId)
       .query(`SELECT TOP 1 1 AS x FROM dbo.intranet_letras_bot_history
-              WHERE letra_id=@lid AND status='sent' AND run_date=CAST(GETDATE() AS DATE)`);
+              WHERE letra_id=@lid AND status='sent'`);
     return r.recordset.length > 0;
   } catch { return false; }
 }
@@ -222,7 +232,7 @@ async function runDailyJob(triggerType: 'auto' | 'manual' = 'auto') {
 
   let sent = 0, skipped = 0, failed = 0;
   for (const letra of todayFiles) {
-    if (await alreadySentToday(letra.id)) { skipped++; continue; }
+    if (await alreadySent(letra.id)) { skipped++; continue; }
     const r = await buildAndSendForLetra(letra, cfg.defaultCc, triggerType);
     if (r.status === 'sent') sent++;
     else if (r.status === 'skipped') skipped++;

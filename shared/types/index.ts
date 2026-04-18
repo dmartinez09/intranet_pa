@@ -5,32 +5,46 @@
 
 // ---- AUTH & RBAC ----
 
-export interface User {
+export type AppModule =
+  | 'dashboard_ventas'
+  | 'presupuesto'
+  | 'avance_comercial'
+  | 'cartera'
+  | 'estado_cuenta'
+  | 'facturacion'
+  | 'letras'
+  | 'alertas'
+  | 'diccionario';
+
+export const MODULE_LABELS: Record<AppModule, string> = {
+  dashboard_ventas: 'Ventas — Dashboard',
+  presupuesto: 'Ventas — Presupuesto',
+  avance_comercial: 'Ventas — Avance Comercial',
+  cartera: 'Crédito — Cartera',
+  estado_cuenta: 'Crédito — Estado de Cuenta',
+  facturacion: 'Logística — Facturas Electrónicas',
+  letras: 'Logística — Letras',
+  alertas: 'Alertas',
+  diccionario: 'Diccionario',
+};
+
+export const MODULE_GROUPS: { group: string; modules: AppModule[] }[] = [
+  { group: 'Ventas', modules: ['dashboard_ventas', 'presupuesto', 'avance_comercial'] },
+  { group: 'Crédito', modules: ['cartera', 'estado_cuenta'] },
+  { group: 'Logística', modules: ['facturacion', 'letras'] },
+  { group: 'General', modules: ['alertas', 'diccionario'] },
+];
+
+export interface AuthUser {
   id: number;
-  username: string; // formato: inicial + apellido (ej: dmartinez)
+  username: string;
   full_name: string;
-  email: string;
-  role_id: number;
-  active: boolean;
-  created_at: string;
-  updated_at: string;
+  email: string | null;
+  modules: AppModule[];
+  is_admin: boolean;
+  is_active: boolean;
+  last_login?: string | null;
 }
-
-export interface Role {
-  id: number;
-  name: string; // Admin, Jefe de Venta, Vendedor, Finanzas, Viewer
-  description: string;
-}
-
-export interface Permission {
-  id: number;
-  role_id: number;
-  module: AppModule;
-  can_read: boolean;
-  can_write: boolean;
-}
-
-export type AppModule = 'dashboard_ventas' | 'cartera' | 'alertas' | 'admin';
 
 export interface LoginRequest {
   username: string;
@@ -39,15 +53,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string;
-  user: Omit<User, 'created_at' | 'updated_at'> & {
-    role: Role;
-    permissions: Permission[];
-  };
-}
-
-export interface AuthUser extends Omit<User, 'created_at' | 'updated_at'> {
-  role: Role;
-  permissions: Permission[];
+  user: AuthUser;
 }
 
 // ---- VENTAS (Vista principal - 43 columnas) ----

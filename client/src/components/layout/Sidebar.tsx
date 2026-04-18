@@ -42,6 +42,7 @@ interface NavChild {
   to: string;
   icon: any;
   label: string;
+  module?: string;
 }
 
 interface SubGroup {
@@ -110,17 +111,17 @@ const navModules: NavModule[] = [
     label: 'Venta Gerencia',
     module: 'dashboard_ventas',
     children: [
-      { to: '/ventas/dashboard', icon: TrendingUp, label: 'Dashboard' },
-      { to: '/ventas/presupuesto', icon: Target, label: 'Presupuesto' },
-      { to: '/ventas/avance-comercial', icon: Users, label: 'Avance Comercial' },
-      { to: '/ventas/margenes-zona', icon: MapPin, label: 'Márgenes por Zona' },
+      { to: '/ventas/dashboard', icon: TrendingUp, label: 'Dashboard', module: 'dashboard_ventas' },
+      { to: '/ventas/presupuesto', icon: Target, label: 'Presupuesto', module: 'presupuesto' },
+      { to: '/ventas/avance-comercial', icon: Users, label: 'Avance Comercial', module: 'avance_comercial' },
+      { to: '/ventas/margenes-zona', icon: MapPin, label: 'Márgenes por Zona', module: 'dashboard_ventas' },
     ],
   },
   {
     id: 'venta_rc',
     icon: LineChart,
     label: 'Venta RC',
-    module: 'venta_rc',
+    module: '__admin_only__',
     subGroups: grupoChildren('venta-rc'),
   },
   {
@@ -129,18 +130,18 @@ const navModules: NavModule[] = [
     label: 'Crédito y Cobranzas',
     module: 'cartera',
     children: [
-      { to: '/credito/cartera', icon: Wallet, label: 'Cartera y Recaudo' },
-      { to: '/credito/estado-cuenta', icon: ClipboardList, label: 'Estado de Cuenta F. Corte' },
+      { to: '/credito/cartera', icon: Wallet, label: 'Cartera y Recaudo', module: 'cartera' },
+      { to: '/credito/estado-cuenta', icon: ClipboardList, label: 'Estado de Cuenta F. Corte', module: 'estado_cuenta' },
     ],
   },
   {
     id: 'logistica',
     icon: Truck,
     label: 'Logística',
-    module: 'dashboard_ventas',
+    module: 'facturacion',
     children: [
-      { to: '/logistica/comprobantes', icon: FileCheck, label: 'Comprobantes de Pago' },
-      { to: '/logistica/letras', icon: ScrollText, label: 'Letras' },
+      { to: '/logistica/comprobantes', icon: FileCheck, label: 'Facturas Electrónicas', module: 'facturacion' },
+      { to: '/logistica/letras', icon: ScrollText, label: 'Letras', module: 'letras' },
     ],
   },
 ];
@@ -148,12 +149,22 @@ const navModules: NavModule[] = [
 // Standalone items (no children)
 const standaloneItems = [
   { to: '/alertas', icon: Bell, label: 'Alertas Operativas', module: 'alertas' },
-  { to: '/diccionario', icon: BookOpen, label: 'Diccionario', module: 'dashboard_ventas' },
-  { to: '/admin', icon: Shield, label: 'Administración', module: 'admin' },
+  { to: '/diccionario', icon: BookOpen, label: 'Diccionario', module: 'diccionario' },
+  { to: '/admin', icon: Shield, label: 'Administración', module: '__admin_only__' },
 ];
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onMobileClose }: SidebarProps) {
-  const { user, logout, hasModule } = useAuth();
+  const { user, logout, hasModule, isAdmin } = useAuth();
+  const canSee = (mod?: string) => {
+    if (!mod) return true;
+    if (mod === '__admin_only__') return isAdmin;
+    return hasModule(mod);
+  };
+  const moduleVisible = (m: NavModule) => {
+    if (isAdmin) return true;
+    if (m.children) return m.children.some(c => canSee(c.module || m.module));
+    return canSee(m.module);
+  };
   const location = useLocation();
   const [logoError, setLogoError] = useState(false);
   const [logoKey, setLogoKey] = useState(0);
@@ -252,7 +263,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
         {/* Module groups */}
         {navModules
-          .filter((mod) => hasModule(mod.module))
+          .filter(moduleVisible)
           .map((mod) => {
             const isOpen = openModules.has(mod.id);
             const isActive = isModuleActive(mod);
@@ -283,7 +294,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
                 {/* Sub-items (flat children) */}
                 {showExpanded && isOpen && mod.children && (
                   <div className="mt-0.5 ml-4 pl-4 border-l border-white/10 space-y-0.5">
-                    {mod.children.map((child) => (
+                    {mod.children.filter(c => canSee(c.module || mod.module)).map((child) => (
                       <NavLink
                         key={child.to}
                         to={child.to}
@@ -355,7 +366,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
 
         {/* Standalone items */}
         {standaloneItems
-          .filter((item) => hasModule(item.module))
+          .filter((item) => canSee(item.module))
           .map((item) => (
             <NavLink
               key={item.to}
@@ -381,7 +392,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
         {showExpanded && user && (
           <div className="px-4 py-2 mb-2">
             <p className="text-white text-sm font-medium truncate">{user.full_name}</p>
-            <p className="text-brand-400 text-xs truncate">{user.role?.name}</p>
+            <p className="text-brand-400 text-xs truncate">{user.is_admin ? 'Administrador' : 'Usuario'}</p>
           </div>
         )}
         <button

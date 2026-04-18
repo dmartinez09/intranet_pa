@@ -12,6 +12,9 @@ import {
   Search,
   ChevronDown,
   ArrowUpDown,
+  RefreshCw,
+  FileWarning,
+  CreditCard,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -20,31 +23,52 @@ import {
 
 const AGING_COLORS = ['#00A651', '#34D67B', '#FBBF24', '#F59E0B', '#EF4444'];
 
+type CarteraTab = 'resumen' | 'vendedores' | 'transacciones' | 'letras_no_aceptadas' | 'linea_creditos';
+
+function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('es-PE', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
 export default function Cartera() {
   const [kpis, setKpis] = useState<any>(null);
   const [carteraEdad, setCarteraEdad] = useState<any[]>([]);
   const [carteraVendedor, setCarteraVendedor] = useState<any[]>([]);
   const [transacciones, setTransacciones] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'resumen' | 'vendedores' | 'transacciones'>('resumen');
+  const [letrasNoAcept, setLetrasNoAcept] = useState<any[]>([]);
+  const [lineaCreditos, setLineaCreditos] = useState<any[]>([]);
+  const [meta, setMeta] = useState<{ al004: string | null; al006: string | null; al007: string | null }>({ al004: null, al006: null, al007: null });
+  const [activeTab, setActiveTab] = useState<CarteraTab>('resumen');
   const [searchTx, setSearchTx] = useState('');
+  const [searchLNA, setSearchLNA] = useState('');
+  const [searchLC, setSearchLC] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
   }, []);
 
+  const [lnaLoaded, setLnaLoaded] = useState(false);
+  const [lcLoaded, setLcLoaded] = useState(false);
+
   async function loadData() {
     try {
-      const [kpiRes, edadRes, vendRes, txRes] = await Promise.all([
+      const [kpiRes, edadRes, vendRes, txRes, metaRes] = await Promise.all([
         carteraApi.getKPIs(),
         carteraApi.getPorEdad(),
         carteraApi.getPorVendedor(),
         carteraApi.getTransacciones(),
+        carteraApi.getMeta(),
       ]);
       setKpis(kpiRes.data.data);
       setCarteraEdad(edadRes.data.data);
       setCarteraVendedor(vendRes.data.data);
       setTransacciones(txRes.data.data);
+      setMeta(metaRes.data.data);
     } catch (err) {
       console.error('Error loading cartera:', err);
     } finally {
@@ -52,11 +76,59 @@ export default function Cartera() {
     }
   }
 
+  useEffect(() => {
+    if (activeTab === 'letras_no_aceptadas' && !lnaLoaded) {
+      carteraApi.getLetrasNoAceptadas()
+        .then(r => setLetrasNoAcept(r.data.data))
+        .catch(e => console.error('LNA load error:', e))
+        .finally(() => setLnaLoaded(true));
+    }
+    if (activeTab === 'linea_creditos' && !lcLoaded) {
+      carteraApi.getLineaCreditos()
+        .then(r => setLineaCreditos(r.data.data))
+        .catch(e => console.error('LC load error:', e))
+        .finally(() => setLcLoaded(true));
+    }
+  }, [activeTab, lnaLoaded, lcLoaded]);
+
+  const currentUpdate = activeTab === 'letras_no_aceptadas' ? meta.al006
+    : activeTab === 'linea_creditos' ? meta.al007
+    : meta.al004;
+
   const filteredTx = transacciones.filter((t) =>
     !searchTx || t.cliente.toLowerCase().includes(searchTx.toLowerCase()) ||
     t.vendedor.toLowerCase().includes(searchTx.toLowerCase()) ||
     t.numero_doc.toLowerCase().includes(searchTx.toLowerCase())
   );
+
+  const filteredLNA = letrasNoAcept.filter((l) => {
+    if (!searchLNA) return true;
+    const q = searchLNA.toLowerCase();
+    return (l.cliente || '').toLowerCase().includes(q)
+      || (l.vendedor || '').toLowerCase().includes(q)
+      || (l.numero_documento || '').toLowerCase().includes(q)
+      || (l.numero_letra || '').toLowerCase().includes(q);
+  });
+
+  const filteredLC = lineaCreditos.filter((l) => {
+    if (!searchLC) return true;
+    const q = searchLC.toLowerCase();
+    return (l.cliente || '').toLowerCase().includes(q)
+      || (l.vendedor || '').toLowerCase().includes(q)
+      || (l.codigo_cliente || '').toLowerCase().includes(q);
+  });
+
+  const lnaKpis = {
+    total: filteredLNA.reduce((s, l) => s + (l.importe_pendiente || 0), 0),
+    cantidad: filteredLNA.length,
+    clientes: new Set(filteredLNA.map(l => l.ruc)).size,
+  };
+  const lcKpis = {
+    totalLinea: filteredLC.reduce((s, l) => s + (l.linea_credito || 0), 0),
+    totalUsada: filteredLC.reduce((s, l) => s + (l.linea_usada || 0), 0),
+    totalDisp: filteredLC.reduce((s, l) => s + (l.linea_disponible || 0), 0),
+    clientes: filteredLC.length,
+  };
 
   if (loading) {
     return (
@@ -73,9 +145,16 @@ export default function Cartera() {
 
   return (
     <div className="min-h-screen">
-      <Header title="Cartera y Recaudo" subtitle="Estado de cuentas por cobrar - Marzo 2026" />
+      <Header title="Cartera y Recaudo" subtitle="Estado de cuentas por cobrar" />
 
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Leyenda de última actualización */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-brand-50 border border-brand-100 rounded-lg text-xs text-brand-700 w-fit">
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span className="font-medium">Última actualización:</span>
+          <span className="font-semibold">{formatDateTime(currentUpdate)}</span>
+        </div>
+
         {/* KPI Cards */}
         {kpis && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
@@ -126,14 +205,20 @@ export default function Cartera() {
 
         {/* Tabs */}
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-fit overflow-x-auto">
-          {(['resumen', 'vendedores', 'transacciones'] as const).map((tab) => (
+          {([
+            { key: 'resumen', label: 'Resumen' },
+            { key: 'vendedores', label: 'Recaudo por Vendedor' },
+            { key: 'transacciones', label: 'Detalle Transacciones' },
+            { key: 'letras_no_aceptadas', label: 'Letras No Aceptadas' },
+            { key: 'linea_creditos', label: 'Línea de Créditos' },
+          ] as { key: CarteraTab; label: string }[]).map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
               className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap
-                ${activeTab === tab ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                ${activeTab === tab.key ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              {tab === 'resumen' ? 'Resumen' : tab === 'vendedores' ? 'Recaudo por Vendedor' : 'Detalle Transacciones'}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -325,6 +410,200 @@ export default function Cartera() {
                           }`}>
                             {t.estado}
                           </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Letras Emitidas No Aceptadas (AL006) */}
+        {activeTab === 'letras_no_aceptadas' && (
+          <div className="animate-fade-in space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+              <div className="kpi-card">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center mb-3">
+                  <FileWarning className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-lg sm:text-2xl font-extrabold text-gray-900 truncate">{formatUSD(lnaKpis.total)}</p>
+                <p className="text-xs text-gray-500">Importe Pendiente Total</p>
+              </div>
+              <div className="kpi-card">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center mb-3">
+                  <AlertTriangle className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-lg sm:text-2xl font-extrabold text-gray-900">{formatNumber(lnaKpis.cantidad)}</p>
+                <p className="text-xs text-gray-500">Letras No Aceptadas</p>
+              </div>
+              <div className="kpi-card">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mb-3">
+                  <Users className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-lg sm:text-2xl font-extrabold text-gray-900">{formatNumber(lnaKpis.clientes)}</p>
+                <p className="text-xs text-gray-500">Clientes Afectados</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchLNA}
+                  onChange={(e) => setSearchLNA(e.target.value)}
+                  placeholder="Buscar por cliente, vendedor, documento o letra..."
+                  className="input-field pl-10"
+                />
+              </div>
+              <p className="text-sm text-gray-400">
+                {filteredLNA.length > 200 ? `Mostrando 200 de ${filteredLNA.length}` : `${filteredLNA.length} letras`}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="table-modern">
+                  <thead>
+                    <tr>
+                      <th>N° Letra</th>
+                      <th>Doc. Origen</th>
+                      <th>Cliente</th>
+                      <th>RUC</th>
+                      <th>Vendedor</th>
+                      <th>F. Creación</th>
+                      <th>F. Emisión</th>
+                      <th>F. Vencimiento</th>
+                      <th>Moneda</th>
+                      <th className="text-right">Importe Pend.</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredLNA.slice(0, 200).map((l, i) => (
+                      <tr key={`${l.numero_letra}-${i}`}>
+                        <td className="font-mono text-xs font-bold text-brand-700">{l.numero_letra || '—'}</td>
+                        <td className="font-mono text-xs text-gray-600">{l.documento_origen || l.numero_documento || '—'}</td>
+                        <td className="font-medium max-w-[220px] truncate" title={l.cliente}>{l.cliente}</td>
+                        <td className="font-mono text-xs text-gray-500">{l.ruc}</td>
+                        <td className="text-sm">{l.vendedor || '—'}</td>
+                        <td className="text-xs text-gray-600">{l.fecha_creacion || '—'}</td>
+                        <td className="text-xs text-gray-600">{l.fecha_emision || '—'}</td>
+                        <td className="text-xs text-gray-600">{l.fecha_vencimiento || '—'}</td>
+                        <td><span className="badge-info text-[10px]">{l.moneda}</span></td>
+                        <td className="text-right font-bold">{formatUSD(l.importe_pendiente)}</td>
+                        <td>
+                          <span className="badge bg-amber-50 text-amber-700 text-[10px]">
+                            {l.estado_letra || '—'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Línea de Créditos (AL007) */}
+        {activeTab === 'linea_creditos' && (
+          <div className="animate-fade-in space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+              <div className="kpi-card">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center mb-3">
+                  <CreditCard className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-lg sm:text-2xl font-extrabold text-gray-900 truncate">{formatUSD(lcKpis.totalLinea)}</p>
+                <p className="text-xs text-gray-500">Línea Total Asignada</p>
+              </div>
+              <div className="kpi-card">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center mb-3">
+                  <TrendingDown className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-lg sm:text-2xl font-extrabold text-accent-700 truncate">{formatUSD(lcKpis.totalUsada)}</p>
+                <p className="text-xs text-gray-500">Línea Usada</p>
+              </div>
+              <div className="kpi-card">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center mb-3">
+                  <CheckCircle2 className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-lg sm:text-2xl font-extrabold text-brand-600 truncate">{formatUSD(lcKpis.totalDisp)}</p>
+                <p className="text-xs text-gray-500">Línea Disponible</p>
+              </div>
+              <div className="kpi-card">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mb-3">
+                  <Users className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-lg sm:text-2xl font-extrabold text-gray-900">{formatNumber(lcKpis.clientes)}</p>
+                <p className="text-xs text-gray-500">Clientes con Línea</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchLC}
+                  onChange={(e) => setSearchLC(e.target.value)}
+                  placeholder="Buscar por cliente, código o vendedor..."
+                  className="input-field pl-10"
+                />
+              </div>
+              <p className="text-sm text-gray-400">
+                {filteredLC.length > 200 ? `Mostrando 200 de ${filteredLC.length}` : `${filteredLC.length} clientes`}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="table-modern">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Cliente</th>
+                      <th>Vendedor</th>
+                      <th>Zona</th>
+                      <th>Equipo</th>
+                      <th>Moneda</th>
+                      <th className="text-right">Línea Crédito</th>
+                      <th className="text-right">Línea Usada</th>
+                      <th className="text-right">Línea Disponible</th>
+                      <th className="text-right">% Uso</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredLC.slice(0, 200).map((l, i) => (
+                      <tr key={`${l.codigo_cliente}-${i}`}>
+                        <td className="font-mono text-xs font-bold text-brand-700">{l.codigo_cliente}</td>
+                        <td className="font-medium max-w-[240px] truncate" title={l.cliente}>{l.cliente}</td>
+                        <td className="text-sm">{l.vendedor || '—'}</td>
+                        <td className="text-sm text-gray-500">{l.zona || '—'}</td>
+                        <td>{l.grupo_cliente ? <span className="badge-info text-[10px]">{l.grupo_cliente}</span> : '—'}</td>
+                        <td><span className="text-xs text-gray-500">{l.moneda}</span></td>
+                        <td className="text-right font-bold">{formatUSD(l.linea_credito)}</td>
+                        <td className="text-right text-accent-600 font-medium">{formatUSD(l.linea_usada)}</td>
+                        <td className="text-right text-brand-600 font-medium">{formatUSD(l.linea_disponible)}</td>
+                        <td className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${Math.min(l.porcentaje_uso, 100)}%`,
+                                  backgroundColor: l.porcentaje_uso >= 90 ? '#EF4444' : l.porcentaje_uso >= 70 ? '#F59E0B' : '#00A651',
+                                }}
+                              />
+                            </div>
+                            <span className={`text-xs font-bold ${
+                              l.porcentaje_uso >= 90 ? 'text-danger-500' : l.porcentaje_uso >= 70 ? 'text-accent-600' : 'text-brand-600'
+                            }`}>
+                              {formatPercent(l.porcentaje_uso)}
+                            </span>
+                          </div>
                         </td>
                       </tr>
                     ))}

@@ -393,6 +393,17 @@ export const graphService = {
   },
 
   // ---- LETRAS (SharePoint) ----
+  async getLetraDownloadUrl(itemId: string): Promise<string | null> {
+    const DRIVE_ID = 'b!aDBAYXgyCUifG71OViKVOiShCsAuAlVOqAljzYTa1vGXuJpv-DDtTZw_GIbFTKRX';
+    try {
+      const data = await graphRequest(`/drives/${DRIVE_ID}/items/${itemId}`);
+      return data['@microsoft.graph.downloadUrl'] || null;
+    } catch (e) {
+      console.error('[graph] getLetraDownloadUrl failed:', (e as Error).message);
+      return null;
+    }
+  },
+
   async getLetrasFiles(params?: { search?: string }) {
     const DRIVE_ID = 'b!aDBAYXgyCUifG71OViKVOiShCsAuAlVOqAljzYTa1vGXuJpv-DDtTZw_GIbFTKRX';
     const FOLDER_ID = '01KKJOPMODLHUOCZVMZ5AKFBNXAYTMIBX4';
@@ -438,12 +449,10 @@ export const graphService = {
     // "LT 691 - F001-00039681.pdf"
     const clean = name.replace(/\.pdf$/i, '').trim();
 
-    // Extract letra numbers: everything between "LT " and the first "F0" or " - F"
-    const letraMatch = clean.match(/^LT\s+([\d\s\-]+?)[\s\-]*(?:F\d|$)/i);
-    let letras: string[] = [];
-    if (letraMatch) {
-      letras = letraMatch[1].trim().split(/\s*-\s*/).filter(Boolean);
-    }
+    // Extract letra numbers — handles "LT 705-706", "LT 705 - LT 706", "LT705-706", mixed.
+    // Strip everything from the first factura code (F001-...) onward, then pull all 2-4 digit groups.
+    const beforeFactura = clean.split(/F\d{3}-\d{4,}/)[0];
+    const letras = Array.from(new Set((beforeFactura.match(/\d{2,4}/g) || []))).filter(Boolean);
 
     // Extract factura code(s): F001-XXXXXXXX pattern(s)
     const facturaMatches = clean.match(/F\d{3}-\d{5,}/g) || [];

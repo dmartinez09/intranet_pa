@@ -4,9 +4,8 @@ import { getDbPool, sql } from '../config/database';
 // DATABASE SERVICE - Queries contra SQL Server / Mock fallback
 // ============================================================
 
-// Auth/Users/Roles always use mock (no users table in DWH)
+// Users stored in dbo.intranet_users (real SQL)
 // Ventas use real data from stg_rpt_ventas_detallado
-const USE_MOCK_AUTH = true;
 const USE_MOCK_VENTAS = false;
 
 // ---- Mock Data (Marzo 2026 - basado en Excel Avance de ventas) ----
@@ -119,126 +118,127 @@ function generateMockVentas(count: number) {
 
 const MOCK_VENTAS = generateMockVentas(500);
 
-// ---- USERS Mock ----
-const MOCK_USERS = [
-  { id: 1, username: 'admin', password_hash: '$2a$10$9cKoZsj8b6PfkAeLoUgwUOmHIQDzEeQ1vHd4vwJ4N70DlJsXTpuMm', full_name: 'Administrador', email: 'admin@pointandina.com', role_id: 1, active: true, created_at: '2026-01-01', updated_at: '2026-01-01' },
-  { id: 2, username: 'zmosquera', password_hash: '$2a$10$9cKoZsj8b6PfkAeLoUgwUOmHIQDzEeQ1vHd4vwJ4N70DlJsXTpuMm', full_name: 'Zaida Mosquera García', email: 'zmosquera@pointandina.com', role_id: 2, active: true, created_at: '2026-01-01', updated_at: '2026-01-01' },
-  { id: 3, username: 'klopez', password_hash: '$2a$10$9cKoZsj8b6PfkAeLoUgwUOmHIQDzEeQ1vHd4vwJ4N70DlJsXTpuMm', full_name: 'Katye Lopez Montufar', email: 'klopez@pointandina.com', role_id: 3, active: true, created_at: '2026-01-01', updated_at: '2026-01-01' },
-  { id: 4, username: 'lquispe', password_hash: '$2a$10$9cKoZsj8b6PfkAeLoUgwUOmHIQDzEeQ1vHd4vwJ4N70DlJsXTpuMm', full_name: 'Liliana Quispe', email: 'lquispe@pointandina.com', role_id: 4, active: true, created_at: '2026-01-01', updated_at: '2026-01-01' },
-];
+// ---- Módulos disponibles (catálogo compartido) ----
+export const ALL_MODULES = [
+  'dashboard_ventas', 'presupuesto', 'avance_comercial',
+  'cartera', 'estado_cuenta',
+  'facturacion', 'letras',
+  'alertas', 'diccionario',
+] as const;
+export type AppModuleCode = typeof ALL_MODULES[number];
 
-const MOCK_ROLES = [
-  { id: 1, name: 'Admin', description: 'Acceso total al sistema' },
-  { id: 2, name: 'Jefe de Venta', description: 'Acceso a ventas, cartera y alertas' },
-  { id: 3, name: 'Vendedor', description: 'Acceso a ventas y alertas' },
-  { id: 4, name: 'Finanzas', description: 'Acceso a ventas y cartera' },
-  { id: 5, name: 'Viewer', description: 'Solo lectura en dashboard de ventas' },
-];
+// Usuario tal como viene de la tabla (con modules ya parseado a array)
+export interface IntranetUser {
+  id: number;
+  username: string;
+  password_hash: string;
+  full_name: string;
+  email: string | null;
+  modules: string[];
+  is_admin: boolean;
+  is_active: boolean;
+  last_login: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+function parseModules(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw as string[];
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; }
+}
+
+function hydrate(row: any): IntranetUser {
+  return {
+    id: row.id,
+    username: row.username,
+    password_hash: row.password_hash,
+    full_name: row.full_name,
+    email: row.email,
+    modules: parseModules(row.modules),
+    is_admin: !!row.is_admin,
+    is_active: !!row.is_active,
+    last_login: row.last_login,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
 
 // ============================================================
 // SERVICE METHODS
 // ============================================================
 
 export const dbService = {
-  // ---- AUTH ----
-  async findUserByUsername(username: string) {
-    if (USE_MOCK_AUTH) {
-      return MOCK_USERS.find(u => u.username === username) || null;
-    }
+  // ---- AUTH / USERS ----
+  async findUserByUsername(username: string): Promise<IntranetUser | null> {
     const pool = await getDbPool();
     const result = await pool.request()
-      .input('username', sql.VarChar, username)
-      .query('SELECT * FROM users WHERE username = @username AND active = 1');
-    return result.recordset[0] || null;
+      .input('username', sql.NVarChar, username)
+      .query('SELECT * FROM dbo.intranet_users WHERE username = @username');
+    return result.recordset[0] ? hydrate(result.recordset[0]) : null;
   },
 
-  async findUserById(id: number) {
-    if (USE_MOCK_AUTH) {
-      return MOCK_USERS.find(u => u.id === id) || null;
-    }
+  async findUserById(id: number): Promise<IntranetUser | null> {
     const pool = await getDbPool();
     const result = await pool.request()
       .input('id', sql.Int, id)
-      .query('SELECT * FROM users WHERE id = @id');
-    return result.recordset[0] || null;
+      .query('SELECT * FROM dbo.intranet_users WHERE id = @id');
+    return result.recordset[0] ? hydrate(result.recordset[0]) : null;
   },
 
-  async getAllUsers() {
-    if (USE_MOCK_AUTH) {
-      return MOCK_USERS.map(({ password_hash, ...u }) => u);
-    }
+  async getAllUsers(): Promise<Omit<IntranetUser, 'password_hash'>[]> {
     const pool = await getDbPool();
     const result = await pool.request()
-      .query('SELECT id, username, full_name, email, role_id, active, created_at, updated_at FROM users ORDER BY id');
-    return result.recordset;
-  },
-
-  async createUser(user: { username: string; password_hash: string; full_name: string; email: string; role_id: number }) {
-    if (USE_MOCK_AUTH) {
-      const newUser = { id: MOCK_USERS.length + 1, ...user, active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-      MOCK_USERS.push(newUser);
-      const { password_hash, ...safe } = newUser;
+      .query('SELECT id, username, full_name, email, modules, is_admin, is_active, last_login, created_at, updated_at FROM dbo.intranet_users ORDER BY id');
+    return result.recordset.map((row: any) => {
+      const { password_hash, ...safe } = hydrate({ ...row, password_hash: '' });
       return safe;
-    }
+    });
+  },
+
+  async createUser(user: { username: string; password_hash: string; full_name: string; email?: string | null; modules?: string[]; is_admin?: boolean }) {
     const pool = await getDbPool();
     const result = await pool.request()
-      .input('username', sql.VarChar, user.username)
-      .input('password_hash', sql.VarChar, user.password_hash)
+      .input('username', sql.NVarChar, user.username)
+      .input('password_hash', sql.NVarChar, user.password_hash)
       .input('full_name', sql.NVarChar, user.full_name)
-      .input('email', sql.VarChar, user.email)
-      .input('role_id', sql.Int, user.role_id)
-      .query(`INSERT INTO users (username, password_hash, full_name, email, role_id, active)
-              OUTPUT INSERTED.id, INSERTED.username, INSERTED.full_name, INSERTED.email, INSERTED.role_id, INSERTED.active
-              VALUES (@username, @password_hash, @full_name, @email, @role_id, 1)`);
-    return result.recordset[0];
+      .input('email', sql.NVarChar, user.email ?? null)
+      .input('modules', sql.NVarChar, JSON.stringify(user.modules || []))
+      .input('is_admin', sql.Bit, user.is_admin ? 1 : 0)
+      .query(`INSERT INTO dbo.intranet_users (username, password_hash, full_name, email, modules, is_admin, is_active)
+              OUTPUT INSERTED.*
+              VALUES (@username, @password_hash, @full_name, @email, @modules, @is_admin, 1)`);
+    const { password_hash, ...safe } = hydrate(result.recordset[0]);
+    return safe;
   },
 
-  async updateUser(id: number, updates: Partial<{ full_name: string; email: string; role_id: number; active: boolean; password_hash: string }>) {
-    if (USE_MOCK_AUTH) {
-      const idx = MOCK_USERS.findIndex(u => u.id === id);
-      if (idx === -1) return null;
-      Object.assign(MOCK_USERS[idx], updates, { updated_at: new Date().toISOString() });
-      const { password_hash, ...safe } = MOCK_USERS[idx];
-      return safe;
-    }
+  async updateUser(id: number, updates: Partial<{ full_name: string; email: string | null; modules: string[]; is_active: boolean; password_hash: string }>) {
     const pool = await getDbPool();
     const sets: string[] = [];
     const request = pool.request().input('id', sql.Int, id);
-    if (updates.full_name) { sets.push('full_name = @full_name'); request.input('full_name', sql.NVarChar, updates.full_name); }
-    if (updates.email) { sets.push('email = @email'); request.input('email', sql.VarChar, updates.email); }
-    if (updates.role_id) { sets.push('role_id = @role_id'); request.input('role_id', sql.Int, updates.role_id); }
-    if (updates.active !== undefined) { sets.push('active = @active'); request.input('active', sql.Bit, updates.active); }
-    if (updates.password_hash) { sets.push('password_hash = @password_hash'); request.input('password_hash', sql.VarChar, updates.password_hash); }
-    sets.push('updated_at = GETDATE()');
-    const result = await request.query(`UPDATE users SET ${sets.join(', ')} OUTPUT INSERTED.* WHERE id = @id`);
-    return result.recordset[0] || null;
+    if (updates.full_name !== undefined) { sets.push('full_name = @full_name'); request.input('full_name', sql.NVarChar, updates.full_name); }
+    if (updates.email !== undefined) { sets.push('email = @email'); request.input('email', sql.NVarChar, updates.email); }
+    if (updates.modules !== undefined) { sets.push('modules = @modules'); request.input('modules', sql.NVarChar, JSON.stringify(updates.modules)); }
+    if (updates.is_active !== undefined) { sets.push('is_active = @is_active'); request.input('is_active', sql.Bit, updates.is_active ? 1 : 0); }
+    if (updates.password_hash) { sets.push('password_hash = @password_hash'); request.input('password_hash', sql.NVarChar, updates.password_hash); }
+    if (!sets.length) return await this.findUserById(id);
+    sets.push('updated_at = SYSDATETIME()');
+    const result = await request.query(`UPDATE dbo.intranet_users SET ${sets.join(', ')} OUTPUT INSERTED.* WHERE id = @id`);
+    if (!result.recordset[0]) return null;
+    const { password_hash, ...safe } = hydrate(result.recordset[0]);
+    return safe;
   },
 
   async deleteUser(id: number) {
-    if (USE_MOCK_AUTH) {
-      const idx = MOCK_USERS.findIndex(u => u.id === id);
-      if (idx === -1) return false;
-      MOCK_USERS.splice(idx, 1);
-      return true;
-    }
     const pool = await getDbPool();
-    const result = await pool.request().input('id', sql.Int, id).query('DELETE FROM users WHERE id = @id');
+    const result = await pool.request().input('id', sql.Int, id).query('DELETE FROM dbo.intranet_users WHERE id = @id');
     return (result.rowsAffected[0] || 0) > 0;
   },
 
-  // ---- ROLES ----
-  async getAllRoles() {
-    if (USE_MOCK_AUTH) return MOCK_ROLES;
+  async touchLastLogin(id: number) {
     const pool = await getDbPool();
-    const result = await pool.request().query('SELECT * FROM roles ORDER BY id');
-    return result.recordset;
-  },
-
-  async getRoleById(id: number) {
-    if (USE_MOCK_AUTH) return MOCK_ROLES.find(r => r.id === id) || null;
-    const pool = await getDbPool();
-    const result = await pool.request().input('id', sql.Int, id).query('SELECT * FROM roles WHERE id = @id');
-    return result.recordset[0] || null;
+    await pool.request().input('id', sql.Int, id)
+      .query('UPDATE dbo.intranet_users SET last_login = SYSDATETIME() WHERE id = @id');
   },
 
   // ---- VENTAS ----
@@ -827,6 +827,107 @@ export const dbService = {
     }
   },
 
+  // ---- META: fecha de actualización de las tablas de cartera ----
+  async getCarteraMeta() {
+    try {
+      const pool = await getDbPool();
+      const result = await pool.request().query(`
+        SELECT
+          OBJECT_NAME(object_id) AS tabla,
+          MAX(last_user_update) AS ultima_actualizacion
+        FROM sys.dm_db_index_usage_stats
+        WHERE database_id = DB_ID()
+          AND OBJECT_NAME(object_id) IN (
+            'stg_al004_letras_facturas',
+            'stg_al006_letras_emitidas_no_aceptadas',
+            'stg_al007_linea_creditos'
+          )
+        GROUP BY object_id
+      `);
+      const out: Record<string, string | null> = { al004: null, al006: null, al007: null };
+      for (const r of result.recordset) {
+        if (r.tabla === 'stg_al004_letras_facturas') out.al004 = r.ultima_actualizacion;
+        if (r.tabla === 'stg_al006_letras_emitidas_no_aceptadas') out.al006 = r.ultima_actualizacion;
+        if (r.tabla === 'stg_al007_linea_creditos') out.al007 = r.ultima_actualizacion;
+      }
+      return out;
+    } catch (error) {
+      console.error('Error in getCarteraMeta:', error);
+      return { al004: null, al006: null, al007: null };
+    }
+  },
+
+  // ---- AL006: Letras emitidas no aceptadas ----
+  async getLetrasNoAceptadas() {
+    try {
+      const pool = await getDbPool();
+      const result = await pool.request().query(`
+        SELECT TOP 500
+          Ruc                      AS ruc,
+          Cliente                  AS cliente,
+          [Tipo Documento]         AS tipo_documento,
+          [Número Documento]       AS numero_documento,
+          [N° de la letra]         AS numero_letra,
+          [Fecha Creación]         AS fecha_creacion,
+          [Fecha Emisión]          AS fecha_emision,
+          [Fecha Vencimiento]      AS fecha_vencimiento,
+          Moneda                   AS moneda,
+          [Estado de la letra]     AS estado_letra,
+          [Documento de origen]    AS documento_origen,
+          [Importe Pendiente]      AS importe_pendiente,
+          Vendedor                 AS vendedor,
+          [Grupo Cliente]          AS grupo_cliente
+        FROM dbo.stg_al006_letras_emitidas_no_aceptadas
+        WHERE [Importe Pendiente] > 0
+        ORDER BY [Fecha Creación] DESC
+      `);
+      return result.recordset.map((r: any) => ({
+        ...r,
+        importe_pendiente: Math.round((Number(r.importe_pendiente) || 0) * 100) / 100,
+        fecha_creacion: r.fecha_creacion ? new Date(r.fecha_creacion).toISOString().split('T')[0] : '',
+        fecha_emision: r.fecha_emision ? new Date(r.fecha_emision).toISOString().split('T')[0] : '',
+        fecha_vencimiento: r.fecha_vencimiento ? new Date(r.fecha_vencimiento).toISOString().split('T')[0] : '',
+      }));
+    } catch (error) {
+      console.error('Error in getLetrasNoAceptadas:', error);
+      return [];
+    }
+  },
+
+  // ---- AL007: Línea de créditos ----
+  async getLineaCreditos() {
+    try {
+      const pool = await getDbPool();
+      const result = await pool.request().query(`
+        SELECT TOP 500
+          [Código Cliente]    AS codigo_cliente,
+          Cliente             AS cliente,
+          [Moneda SN]         AS moneda,
+          [Línea de crédito]  AS linea_credito,
+          [Línea usada]       AS linea_usada,
+          [Línea disponible]  AS linea_disponible,
+          Vendedor            AS vendedor,
+          Zona                AS zona,
+          [Grupo Cliente]     AS grupo_cliente
+        FROM dbo.stg_al007_linea_creditos
+        WHERE [Línea de crédito] IS NOT NULL AND [Línea de crédito] > 0
+        ORDER BY [Línea usada] DESC
+      `);
+      return result.recordset.map((r: any) => ({
+        ...r,
+        linea_credito: Math.round((Number(r.linea_credito) || 0) * 100) / 100,
+        linea_usada: Math.round((Number(r.linea_usada) || 0) * 100) / 100,
+        linea_disponible: Math.round((Number(r.linea_disponible) || 0) * 100) / 100,
+        porcentaje_uso: r.linea_credito > 0
+          ? Math.round((Number(r.linea_usada) / Number(r.linea_credito)) * 10000) / 100
+          : 0,
+      }));
+    } catch (error) {
+      console.error('Error in getLineaCreditos:', error);
+      return [];
+    }
+  },
+
   // ---- ALERTAS (Mock completo basado en las 55 alertas SAP) ----
   async getAlertasSAP() {
     return [
@@ -1076,9 +1177,16 @@ export const dbService = {
       SELECT
         COUNT(*) AS total_registros,
         COUNT(DISTINCT CardCode) AS total_clientes,
-        SUM(CAST(Saldo AS FLOAT)) AS saldo_total,
-        SUM(CASE WHEN Dias < 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_vencido,
-        SUM(CASE WHEN Dias >= 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_vigente,
+        -- Cartera real: solo saldos positivos (deuda del cliente)
+        SUM(CASE WHEN CAST(Saldo AS FLOAT) > 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_total,
+        -- Vencido: saldo positivo y Dias < 0 (fecha vcto pasada)
+        SUM(CASE WHEN CAST(Saldo AS FLOAT) > 0 AND Dias < 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_vencido,
+        -- Vigente: saldo positivo y Dias >= 0
+        SUM(CASE WHEN CAST(Saldo AS FLOAT) > 0 AND Dias >= 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_vigente,
+        -- Saldo neto (considerando NCs y anticipos)
+        SUM(CAST(Saldo AS FLOAT)) AS saldo_neto,
+        -- NCs y anticipos (saldos negativos, expresados como monto absoluto)
+        ABS(SUM(CASE WHEN CAST(Saldo AS FLOAT) < 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END)) AS notas_anticipos,
         MAX(Fecha_Corte) AS fecha_corte
       FROM dbo.stg_estado_cuenta_jdt
     `);

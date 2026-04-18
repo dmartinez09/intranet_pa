@@ -8,7 +8,7 @@ import { letrasBot } from '../services/letras-bot.service';
 
 const router = Router();
 
-router.use(authenticateToken, requireModule('dashboard_ventas'));
+router.use(authenticateToken, requireModule('facturacion', 'letras'));
 
 // Cached vendedor map (refreshes every 10 min)
 let vendedorMapCache: Record<string, { vendedor: string; zona: string }> = {};
@@ -50,8 +50,8 @@ router.get('/emails', async (req, res) => {
       };
     });
 
-    // Server-side filtering
-    let filtered = enriched;
+    // Module "Facturas Electrónicas" — restrict to FAC only
+    let filtered = enriched.filter(e => e.tipoDocumento === 'FAC');
     const tipoDoc = req.query.tipoDocumento as string | undefined;
     const cliente = req.query.cliente as string | undefined;
     const numero = req.query.numero as string | undefined;
@@ -172,6 +172,18 @@ router.get('/letras-status', async (_req, res) => {
   return res.json({ success: true, data: letrasScheduler.getStatus() });
 });
 
+// Fresh download URL per file — bypasses stale cached pre-signed URLs that expire ~1h
+router.get('/letras-download/:itemId', async (req, res) => {
+  try {
+    const url = await graphService.getLetraDownloadUrl(req.params.itemId);
+    if (!url) return res.status(404).json({ success: false, message: 'Archivo no encontrado' });
+    return res.json({ success: true, data: { url } });
+  } catch (error) {
+    console.error('Error obtaining download url:', error);
+    return res.status(500).json({ success: false, message: 'Error al generar URL de descarga' });
+  }
+});
+
 // Force manual sync with SharePoint
 router.post('/letras-refresh', async (_req, res) => {
   try {
@@ -241,7 +253,7 @@ router.get('/letras-comprobantes', async (req, res) => {
       return digits.replace(/^0+/, '');
     }).filter(Boolean);
 
-    const result = await graphService.getFacturacionEmails({ top: 200 });
+    const result = await graphService.getFacturacionEmails({ top: 500 });
     const allEmails = result.emails.filter((e: any) => {
       const num = (e.numeroDocumento || '').toUpperCase();
       const subj = (e.subject || '').toUpperCase();
@@ -297,11 +309,29 @@ router.get('/letras-comprobantes', async (req, res) => {
 // Send letra + comprobantes email to client
 router.post('/letras-send', async (req, res) => {
   try {
-    const { letraDriveItemId, facturaCode, to, cc, cliente } = req.body;
+    const { letraDriveItemId, facturaCode, to, cc, cliente, force } = req.body;
+    console.log('[letras-send] request:', { letraDriveItemId, facturaCode, to, cc, cliente, force });
     if (!to || !to.length) return res.status(400).json({ success: false, message: 'Destinatarios requeridos' });
     if (!letraDriveItemId) return res.status(400).json({ success: false, message: 'ID de letra requerido' });
 
     const DRIVE_ID = 'b!aDBAYXgyCUifG71OViKVOiShCsAuAlVOqAljzYTa1vGXuJpv-DDtTZw_GIbFTKRX';
+
+    // Idempotency: check if this letra was already sent previously (bot history)
+    if (!force) {
+      try {
+        const pool = await (await import('../config/database')).getDbPool();
+        const prev = await pool.request().input('lid', letraDriveItemId)
+          .query(`SELECT TOP 1 run_at, recipients_to FROM dbo.intranet_letras_bot_history
+                  WHERE letra_id=@lid AND status='sent' ORDER BY run_at DESC`);
+        if (prev.recordset.length) {
+          return res.status(409).json({
+            success: false, alreadySent: true,
+            message: `Esta letra ya fue enviada previamente (${new Date(prev.recordset[0].run_at).toLocaleString('es-PE')}). Use force:true para reenviar.`,
+            previousRecipients: prev.recordset[0].recipients_to,
+          });
+        }
+      } catch (e) { console.error('[letras-send] idempotency check failed:', (e as Error).message); }
+    }
 
     // 1. Download letra PDF from SharePoint
     const letraFile = await graphService.downloadDriveItem(DRIVE_ID, letraDriveItemId);
@@ -320,14 +350,26 @@ router.post('/letras-send', async (req, res) => {
     if (facturaCode) {
       const codes = facturaCode.split(' / ').map((c: string) => c.trim()).filter(Boolean);
       try {
-        const result = await graphService.getFacturacionEmails({ top: 100 });
-        const matching = result.emails.filter((e: any) =>
-          e.numeroDocumento && e.hasAttachments && codes.some((c: string) => e.numeroDocumento.includes(c))
-        );
+        const result = await graphService.getFacturacionEmails({ top: 500 });
+        const matching = result.emails.filter((e: any) => {
+          if (!e.hasAttachments) return false;
+          const num = (e.numeroDocumento || '').toUpperCase();
+          const subj = (e.subject || '').toUpperCase();
+          const preview = (e.preview || '').toUpperCase();
+          const haystack = `${num} ${subj} ${preview}`;
+          if (codes.some((c: string) => haystack.includes(c.toUpperCase()))) return true;
+          const tails = codes.map((c: string) => (c.match(/\d+/g) || []).join('').replace(/^0+/, '')).filter(Boolean);
+          const allDigits = (haystack.match(/\d{4,}/g) || []).map((d: string) => d.replace(/^0+/, ''));
+          return tails.some((t: string) => allDigits.includes(t));
+        });
         for (const email of matching) {
+          const isFac = (email.tipoDocumento || '').toUpperCase() === 'FAC';
           const emailAttachments = await graphService.getFacturacionAttachments(email.id);
           for (const att of (emailAttachments || [])) {
             if (att.isInline) continue;
+            const isXml = /\.xml$/i.test(att.name) || /xml/i.test(att.contentType || '');
+            // Attach all FAC email contents (PDF+XML); from non-FAC emails, attach XML only
+            if (!isFac && !isXml) continue;
             const downloaded = await graphService.downloadFacturacionAttachment(email.id, att.id);
             if (downloaded) {
               attachments.push({
@@ -378,6 +420,27 @@ router.post('/letras-send', async (req, res) => {
       bodyHtml,
       attachments: uniqueAttachments,
     });
+
+    // Log to bot history so the scheduler won't resend it
+    try {
+      const pool = await (await import('../config/database')).getDbPool();
+      await pool.request()
+        .input('rd', new Date().toISOString().slice(0, 10))
+        .input('tt', 'manual')
+        .input('lid', letraDriveItemId)
+        .input('ln', letraFile.name)
+        .input('fc', facturaCode || null)
+        .input('cl', cliente || null)
+        .input('rt', (to || []).join('; '))
+        .input('rc', (cc || []).join('; '))
+        .input('aq', uniqueAttachments.length)
+        .input('st', 'sent')
+        .input('em', null)
+        .query(`INSERT INTO dbo.intranet_letras_bot_history
+                  (run_date, trigger_type, letra_id, letra_name, factura_code, cliente,
+                   recipients_to, recipients_cc, attachments_qty, status, error_message)
+                VALUES (@rd, @tt, @lid, @ln, @fc, @cl, @rt, @rc, @aq, @st, @em)`);
+    } catch (e) { console.error('[letras-send] history log failed:', (e as Error).message); }
 
     return res.json({
       success: true,

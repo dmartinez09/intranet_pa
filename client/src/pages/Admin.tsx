@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Header from '../components/layout/Header';
 import { usersApi, configApi } from '../services/api';
 import {
@@ -29,16 +30,33 @@ interface UserRow {
   id: number;
   username: string;
   full_name: string;
-  email: string;
-  role_id: number;
-  active: boolean;
+  email: string | null;
+  modules: string[];
+  is_admin: boolean;
+  is_active: boolean;
+  last_login?: string | null;
 }
 
-interface Role {
-  id: number;
-  name: string;
-  description: string;
-}
+const MODULE_GROUPS: { group: string; icon: any; modules: { code: string; label: string }[] }[] = [
+  { group: 'Ventas', icon: Target, modules: [
+    { code: 'dashboard_ventas', label: 'Dashboard' },
+    { code: 'presupuesto', label: 'Presupuesto' },
+    { code: 'avance_comercial', label: 'Avance Comercial' },
+  ]},
+  { group: 'Crédito', icon: DollarSign, modules: [
+    { code: 'cartera', label: 'Cartera y Recaudo' },
+    { code: 'estado_cuenta', label: 'Estado de Cuenta' },
+  ]},
+  { group: 'Logística', icon: Building2, modules: [
+    { code: 'facturacion', label: 'Facturas Electrónicas' },
+    { code: 'letras', label: 'Letras' },
+  ]},
+  { group: 'General', icon: UserCheck, modules: [
+    { code: 'alertas', label: 'Alertas Operativas' },
+    { code: 'diccionario', label: 'Diccionario' },
+  ]},
+];
+const ALL_MODULE_CODES = MODULE_GROUPS.flatMap(g => g.modules.map(m => m.code));
 
 interface BudgetYear {
   year: number;
@@ -51,12 +69,14 @@ interface BudgetYear {
 
 export default function Admin() {
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
   const [activeTab, setActiveTab] = useState<'users' | 'logo' | 'presupuestos'>('users');
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
-  const [form, setForm] = useState({ username: '', password: '', full_name: '', email: '', role_id: 1 });
+  const [form, setForm] = useState({ username: '', password: '', full_name: '', email: '', modules: [] as string[] });
   const [showPassword, setShowPassword] = useState(false);
+  const [pwdModal, setPwdModal] = useState<UserRow | null>(null);
+  const [pwdValue, setPwdValue] = useState('');
+  const [pwdMsg, setPwdMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -81,7 +101,6 @@ export default function Admin() {
     try {
       const res = await usersApi.getAll();
       setUsers(res.data.data.users);
-      setRoles(res.data.data.roles);
     } catch (err) {
       console.error('Error loading users:', err);
     }
@@ -89,25 +108,50 @@ export default function Admin() {
 
   function openCreate() {
     setEditingUser(null);
-    setForm({ username: '', password: '', full_name: '', email: '', role_id: 1 });
+    setForm({ username: '', password: '', full_name: '', email: '', modules: [] });
     setShowForm(true);
   }
 
   function openEdit(user: UserRow) {
     setEditingUser(user);
-    setForm({ username: user.username, password: '', full_name: user.full_name, email: user.email, role_id: user.role_id });
+    setForm({ username: user.username, password: '', full_name: user.full_name, email: user.email || '', modules: [...(user.modules || [])] });
     setShowForm(true);
+  }
+
+  function toggleModule(code: string) {
+    setForm(f => ({
+      ...f,
+      modules: f.modules.includes(code) ? f.modules.filter(m => m !== code) : [...f.modules, code],
+    }));
+  }
+
+  function toggleGroup(groupCodes: string[]) {
+    const allSelected = groupCodes.every(c => form.modules.includes(c));
+    setForm(f => ({
+      ...f,
+      modules: allSelected
+        ? f.modules.filter(m => !groupCodes.includes(m))
+        : Array.from(new Set([...f.modules, ...groupCodes])),
+    }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
       if (editingUser) {
-        const data: any = { full_name: form.full_name, email: form.email, role_id: form.role_id };
-        if (form.password) data.password = form.password;
-        await usersApi.update(editingUser.id, data);
+        await usersApi.update(editingUser.id, {
+          full_name: form.full_name,
+          email: form.email,
+          modules: form.modules,
+        });
       } else {
-        await usersApi.create(form);
+        await usersApi.create({
+          username: form.username.trim(),
+          password: form.password,
+          full_name: form.full_name,
+          email: form.email || undefined,
+          modules: form.modules,
+        });
       }
       setShowForm(false);
       loadData();
@@ -116,10 +160,11 @@ export default function Admin() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm('¿Está seguro de eliminar este usuario?')) return;
+  async function handleDelete(user: UserRow) {
+    if (user.is_admin) return;
+    if (!confirm(`¿Eliminar al usuario ${user.username}?`)) return;
     try {
-      await usersApi.remove(id);
+      await usersApi.remove(user.id);
       loadData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Error al eliminar');
@@ -127,11 +172,34 @@ export default function Admin() {
   }
 
   async function handleToggleActive(user: UserRow) {
+    if (user.is_admin) return;
     try {
-      await usersApi.update(user.id, { active: !user.active });
+      await usersApi.setActive(user.id, !user.is_active);
       loadData();
-    } catch (err) {
-      console.error('Error toggling user:', err);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Error al cambiar estado');
+    }
+  }
+
+  function openPwd(user: UserRow) {
+    setPwdModal(user);
+    setPwdValue('');
+    setPwdMsg(null);
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!pwdModal) return;
+    if (pwdValue.length < 4) {
+      setPwdMsg({ type: 'error', text: 'Mínimo 4 caracteres' });
+      return;
+    }
+    try {
+      await usersApi.changePassword(pwdModal.id, pwdValue);
+      setPwdMsg({ type: 'success', text: 'Contraseña actualizada' });
+      setTimeout(() => { setPwdModal(null); }, 1000);
+    } catch (err: any) {
+      setPwdMsg({ type: 'error', text: err.response?.data?.message || 'Error al actualizar' });
     }
   }
 
@@ -249,7 +317,13 @@ export default function Admin() {
     return new Date(d).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
-  const getRoleName = (roleId: number) => roles.find((r) => r.id === roleId)?.name || 'N/A';
+  const moduleLabel = (code: string) => {
+    for (const g of MODULE_GROUPS) {
+      const m = g.modules.find(x => x.code === code);
+      if (m) return `${g.group} › ${m.label}`;
+    }
+    return code;
+  };
 
   return (
     <div className="min-h-screen">
@@ -263,7 +337,7 @@ export default function Admin() {
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all
               ${activeTab === 'users' ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            <Users className="w-4 h-4" /> Usuarios y Roles
+            <Users className="w-4 h-4" /> Usuarios y Accesos
           </button>
           <button
             onClick={() => setActiveTab('presupuestos')}
@@ -302,7 +376,7 @@ export default function Admin() {
                     <th>Usuario</th>
                     <th>Nombre Completo</th>
                     <th>Email</th>
-                    <th>Rol</th>
+                    <th>Accesos</th>
                     <th>Estado</th>
                     <th className="text-right">Acciones</th>
                   </tr>
@@ -312,39 +386,57 @@ export default function Admin() {
                     <tr key={user.id}>
                       <td>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${user.is_admin ? 'bg-gradient-to-br from-purple-400 to-purple-600' : 'bg-gradient-to-br from-brand-400 to-brand-600'}`}>
                             <span className="text-white text-xs font-bold">{user.full_name.charAt(0)}</span>
                           </div>
                           <span className="font-mono text-sm font-medium">{user.username}</span>
                         </div>
                       </td>
                       <td className="font-medium">{user.full_name}</td>
-                      <td className="text-gray-500">{user.email}</td>
+                      <td className="text-gray-500">{user.email || '—'}</td>
                       <td>
-                        <span className={`badge ${
-                          getRoleName(user.role_id) === 'Admin' ? 'bg-purple-50 text-purple-700' :
-                          getRoleName(user.role_id) === 'Jefe de Venta' ? 'bg-brand-50 text-brand-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          <Shield className="w-3 h-3 mr-1" />
-                          {getRoleName(user.role_id)}
-                        </span>
+                        {user.is_admin ? (
+                          <span className="badge bg-purple-50 text-purple-700"><Shield className="w-3 h-3 mr-1" />Acceso total</span>
+                        ) : user.modules?.length ? (
+                          <div className="flex flex-wrap gap-1 max-w-md">
+                            {user.modules.map(m => (
+                              <span key={m} className="badge bg-brand-50 text-brand-700 text-[11px]" title={moduleLabel(m)}>
+                                {moduleLabel(m).split(' › ')[1] || m}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Sin módulos</span>
+                        )}
                       </td>
                       <td>
-                        <button onClick={() => handleToggleActive(user)} className="cursor-pointer">
-                          {user.active ? (
-                            <span className="badge-success">Activo</span>
-                          ) : (
-                            <span className="badge-danger">Inactivo</span>
-                          )}
+                        <button onClick={() => handleToggleActive(user)} disabled={user.is_admin} className={user.is_admin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}>
+                          {user.is_active ? <span className="badge-success">Activo</span> : <span className="badge-danger">Inactivo</span>}
                         </button>
                       </td>
                       <td>
-                        <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => openEdit(user)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Editar">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEdit(user)}
+                            disabled={user.is_admin}
+                            className={`p-2 rounded-lg transition-colors ${user.is_admin ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+                            title={user.is_admin ? 'Admin no editable' : 'Editar accesos'}
+                          >
                             <Pencil className="w-4 h-4 text-gray-500" />
                           </button>
-                          <button onClick={() => handleDelete(user.id)} className="p-2 rounded-lg hover:bg-danger-50 transition-colors" title="Eliminar">
+                          <button
+                            onClick={() => openPwd(user)}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            title="Cambiar contraseña"
+                          >
+                            <Shield className="w-4 h-4 text-brand-500" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user)}
+                            disabled={user.is_admin}
+                            className={`p-2 rounded-lg transition-colors ${user.is_admin ? 'opacity-30 cursor-not-allowed' : 'hover:bg-danger-50'}`}
+                            title={user.is_admin ? 'Admin no eliminable' : 'Eliminar'}
+                          >
                             <Trash2 className="w-4 h-4 text-danger-400" />
                           </button>
                         </div>
@@ -355,84 +447,108 @@ export default function Admin() {
               </table>
             </div>
 
-            {/* Roles Info */}
-            <div className="mt-8">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Roles del Sistema</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {roles.map((role) => (
-                  <div key={role.id} className="kpi-card">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Shield className="w-5 h-5 text-brand-500" />
-                      <h4 className="font-bold text-gray-900">{role.name}</h4>
-                    </div>
-                    <p className="text-sm text-gray-500">{role.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Modal Form */}
-            {showForm && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 animate-fade-in">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h3 className="text-lg font-bold">{editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
+            {/* Modal Create/Edit */}
+            {showForm && createPortal(
+              <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm overflow-y-auto p-4 sm:p-8">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto animate-fade-in max-h-[calc(100vh-4rem)] flex flex-col">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl">
+                    <h3 className="text-lg font-bold">{editingUser ? `Editar ${editingUser.username}` : 'Nuevo Usuario'}</h3>
                     <button onClick={() => setShowForm(false)} className="p-2 hover:bg-gray-100 rounded-lg">
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                  <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
                     {!editingUser && (
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Usuario</label>
-                        <input
-                          value={form.username}
-                          onChange={(e) => setForm({ ...form, username: e.target.value })}
-                          placeholder="ej: dmartinez"
-                          className="input-field"
-                          required
-                        />
-                        <p className="text-xs text-gray-400 mt-1">Formato: inicial del nombre + apellido</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Usuario</label>
+                          <input
+                            value={form.username}
+                            onChange={(e) => setForm({ ...form, username: e.target.value })}
+                            placeholder="ej: dmartinez"
+                            className="input-field"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Contraseña</label>
+                          <div className="relative">
+                            <input
+                              type={showPassword ? 'text' : 'password'}
+                              value={form.password}
+                              onChange={(e) => setForm({ ...form, password: e.target.value })}
+                              className="input-field pr-12"
+                              required
+                              minLength={4}
+                            />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nombre Completo</label>
-                      <input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className="input-field" required />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
-                      <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input-field" required />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Contraseña {editingUser && <span className="text-gray-400 font-normal">(dejar vacío para no cambiar)</span>}
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          value={form.password}
-                          onChange={(e) => setForm({ ...form, password: e.target.value })}
-                          className="input-field pr-12"
-                          required={!editingUser}
-                        />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nombre Completo</label>
+                        <input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className="input-field" required />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+                        <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input-field" />
                       </div>
                     </div>
+
+                    {/* Módulos */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Rol</label>
-                      <select
-                        value={form.role_id}
-                        onChange={(e) => setForm({ ...form, role_id: parseInt(e.target.value) })}
-                        className="input-field"
-                      >
-                        {roles.map((r) => (
-                          <option key={r.id} value={r.id}>{r.name} — {r.description}</option>
-                        ))}
-                      </select>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-semibold text-gray-700">Accesos al sistema</label>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => setForm(f => ({ ...f, modules: [...ALL_MODULE_CODES] }))} className="text-xs text-brand-600 hover:underline">Seleccionar todo</button>
+                          <span className="text-gray-300">|</span>
+                          <button type="button" onClick={() => setForm(f => ({ ...f, modules: [] }))} className="text-xs text-gray-500 hover:underline">Ninguno</button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {MODULE_GROUPS.map(g => {
+                          const groupCodes = g.modules.map(m => m.code);
+                          const selected = groupCodes.filter(c => form.modules.includes(c)).length;
+                          const all = selected === groupCodes.length;
+                          const some = selected > 0 && !all;
+                          return (
+                            <div key={g.group} className="border border-gray-200 rounded-xl p-3">
+                              <label className="flex items-center gap-2 mb-2 font-semibold text-sm text-gray-800 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={all}
+                                  ref={el => { if (el) el.indeterminate = some; }}
+                                  onChange={() => toggleGroup(groupCodes)}
+                                  className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                />
+                                <g.icon className="w-4 h-4 text-brand-500" />
+                                {g.group}
+                                <span className="text-xs text-gray-400 ml-auto">{selected}/{groupCodes.length}</span>
+                              </label>
+                              <div className="pl-6 space-y-1.5">
+                                {g.modules.map(m => (
+                                  <label key={m.code} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-900">
+                                    <input
+                                      type="checkbox"
+                                      checked={form.modules.includes(m.code)}
+                                      onChange={() => toggleModule(m.code)}
+                                      className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                    />
+                                    {m.label}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="flex gap-3 pt-4">
+
+                    <div className="flex gap-3 pt-2">
                       <button type="button" onClick={() => setShowForm(false)} className="btn-secondary flex-1">Cancelar</button>
                       <button type="submit" className="btn-primary flex-1">
                         <Check className="w-4 h-4" /> {editingUser ? 'Guardar Cambios' : 'Crear Usuario'}
@@ -441,7 +557,51 @@ export default function Admin() {
                   </form>
                 </div>
               </div>
-            )}
+            , document.body)}
+
+            {/* Modal Cambiar Contraseña */}
+            {pwdModal && createPortal(
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-fade-in">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                    <h3 className="text-lg font-bold">Cambiar Contraseña</h3>
+                    <button onClick={() => setPwdModal(null)} className="p-2 hover:bg-gray-100 rounded-lg">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <form onSubmit={handleChangePassword} className="p-6 space-y-4">
+                    <p className="text-sm text-gray-600">Usuario: <span className="font-mono font-semibold">{pwdModal.username}</span></p>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nueva contraseña</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={pwdValue}
+                          onChange={(e) => setPwdValue(e.target.value)}
+                          className="input-field pr-12"
+                          required
+                          minLength={4}
+                          autoFocus
+                        />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    {pwdMsg && (
+                      <div className={`px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${pwdMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                        {pwdMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                        {pwdMsg.text}
+                      </div>
+                    )}
+                    <div className="flex gap-3 pt-2">
+                      <button type="button" onClick={() => setPwdModal(null)} className="btn-secondary flex-1">Cancelar</button>
+                      <button type="submit" className="btn-primary flex-1"><Check className="w-4 h-4" /> Actualizar</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            , document.body)}
           </div>
         )}
 

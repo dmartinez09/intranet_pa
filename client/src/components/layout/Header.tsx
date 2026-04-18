@@ -33,7 +33,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
             </div>
             <div className="hidden lg:block">
               <p className="text-sm font-semibold text-gray-800">{user?.full_name}</p>
-              <p className="text-xs text-gray-500">{user?.role?.name}</p>
+              <p className="text-xs text-gray-500">{user?.is_admin ? 'Administrador' : 'Usuario'}</p>
             </div>
           </div>
         </div>

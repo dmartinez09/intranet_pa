@@ -44,6 +44,33 @@ router.get('/transacciones', async (_req, res) => {
   }
 });
 
+router.get('/meta', async (_req, res) => {
+  try {
+    const data = await dbService.getCarteraMeta();
+    return res.json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error al obtener meta de cartera' });
+  }
+});
+
+router.get('/letras-no-aceptadas', async (_req, res) => {
+  try {
+    const data = await dbService.getLetrasNoAceptadas();
+    return res.json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error al obtener letras no aceptadas' });
+  }
+});
+
+router.get('/linea-creditos', async (_req, res) => {
+  try {
+    const data = await dbService.getLineaCreditos();
+    return res.json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error al obtener líneas de crédito' });
+  }
+});
+
 // ============================================================
 // ESTADO DE CUENTA F. CORTE
 // ============================================================

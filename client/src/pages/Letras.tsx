@@ -252,7 +252,7 @@ export default function Letras() {
     setSendResult(null);
   }
 
-  async function handleSend() {
+  async function handleSend(force = false) {
     if (!sendModal) return;
     const toList = sendTo.split(/[;,]/).map(e => e.trim()).filter(Boolean);
     const ccList = sendCc ? sendCc.split(/[;,]/).map(e => e.trim()).filter(Boolean) : [];
@@ -267,10 +267,20 @@ export default function Letras() {
         to: toList,
         cc: ccList,
         cliente: sendModal.letra.cliente,
+        force,
       });
       setSendResult({ success: true, message: res.data.message || 'Email enviado exitosamente' });
     } catch (err: any) {
-      setSendResult({ success: false, message: err.response?.data?.message || 'Error al enviar' });
+      const data = err.response?.data;
+      if (data?.alreadySent && !force) {
+        if (confirm(`${data.message}\n\n¿Reenviar de todas formas?`)) {
+          return handleSend(true);
+        }
+        setSendResult({ success: false, message: data.message });
+      } else {
+        setSendResult({ success: false, message: data?.message || err?.message || 'Error al enviar' });
+        console.error('[letras-send] error:', err?.response?.status, data, err);
+      }
     } finally {
       setSending(false);
     }
@@ -588,7 +598,7 @@ export default function Letras() {
               <div className="flex justify-end gap-3 pt-2">
                 <button onClick={() => setSendModal(null)} disabled={sending}
                   className="btn-secondary">Cancelar</button>
-                <button onClick={handleSend} disabled={sending || !!sendResult?.success}
+                <button onClick={() => handleSend()} disabled={sending || !!sendResult?.success}
                   className="btn-primary flex items-center gap-2">
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   {sending ? 'Enviando...' : 'Enviar Email'}
@@ -657,10 +667,18 @@ function ExpandableRow({ file, isExpanded, onToggle, loadingComprobantes, compro
         <td className="text-sm text-gray-500">{formatDate(file.lastModified)}</td>
         <td className="text-sm text-gray-400 text-right">{formatFileSize(file.size)}</td>
         <td className="text-center" onClick={e => e.stopPropagation()}>
-          <a href={file.downloadUrl} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-brand-50 text-brand-700 hover:bg-brand-100">
+          <button type="button" onClick={async () => {
+            try {
+              const res = await facturacionApi.getLetraDownloadUrl(file.id);
+              const url = res.data.data?.url;
+              if (url) window.open(url, '_blank', 'noopener,noreferrer');
+              else if (file.webUrl) window.open(file.webUrl, '_blank', 'noopener,noreferrer');
+            } catch {
+              if (file.webUrl) window.open(file.webUrl, '_blank', 'noopener,noreferrer');
+            }
+          }} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-brand-50 text-brand-700 hover:bg-brand-100">
             <Download className="w-3.5 h-3.5" /> PDF
-          </a>
+          </button>
         </td>
       </tr>
 

@@ -36,10 +36,13 @@ export const authApi = {
 // Users
 export const usersApi = {
   getAll: () => api.get('/users'),
-  create: (data: any) => api.post('/users', data),
-  update: (id: number, data: any) => api.put(`/users/${id}`, data),
+  create: (data: { username: string; password: string; full_name: string; email?: string; modules: string[] }) =>
+    api.post('/users', data),
+  update: (id: number, data: { full_name?: string; email?: string; modules?: string[]; is_active?: boolean }) =>
+    api.put(`/users/${id}`, data),
+  changePassword: (id: number, password: string) => api.put(`/users/${id}/password`, { password }),
+  setActive: (id: number, is_active: boolean) => api.patch(`/users/${id}/active`, { is_active }),
   remove: (id: number) => api.delete(`/users/${id}`),
-  getRoles: () => api.get('/users/roles'),
 };
 
 // Ventas
@@ -75,6 +78,9 @@ export const carteraApi = {
   getPorEdad: () => api.get('/cartera/por-edad'),
   getPorVendedor: () => api.get('/cartera/por-vendedor'),
   getTransacciones: () => api.get('/cartera/transacciones'),
+  getMeta: () => api.get('/cartera/meta'),
+  getLetrasNoAceptadas: () => api.get('/cartera/letras-no-aceptadas'),
+  getLineaCreditos: () => api.get('/cartera/linea-creditos'),
   // Estado de Cuenta
   getEstadoCuenta: (params?: any) => api.get('/cartera/estado-cuenta', { params }),
   getEstadoCuentaFiltros: () => api.get('/cartera/estado-cuenta/filtros'),
@@ -110,6 +116,7 @@ export const facturacionApi = {
   getStatus: () => api.get('/facturacion/status'),
   getLetrasFiles: (params?: any) => api.get('/facturacion/letras-files', { params }),
   getLetrasComprobantes: (facturaCode: string) => api.get('/facturacion/letras-comprobantes', { params: { facturaCode } }),
+  getLetraDownloadUrl: (itemId: string) => api.get(`/facturacion/letras-download/${itemId}`),
   sendLetra: (data: { letraDriveItemId: string; facturaCode: string; to: string[]; cc?: string[]; cliente?: string }) => api.post('/facturacion/letras-send', data),
   // Letras scheduler + bot
   getLetrasStatus: () => api.get('/facturacion/letras-status'),

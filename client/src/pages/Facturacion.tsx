@@ -201,7 +201,7 @@ export default function Facturacion() {
 
   return (
     <div className="min-h-screen">
-      <Header title="Facturación Electrónica" subtitle="Comprobantes de Pago Electrónicos" />
+      <Header title="Facturas Electrónicas" subtitle="Facturas electrónicas emitidas a clientes" />
 
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4">
         {/* Filter Bar */}
@@ -226,7 +226,7 @@ export default function Facturacion() {
             </button>
           </div>
           <p className="text-xs sm:text-sm text-gray-400">
-            <span className="font-medium text-gray-600">{filteredCount}</span> comprobantes encontrados{activeFilterCount > 0 && totalCount > 0 ? ` (de ${totalCount} en buzón)` : ''}
+            <span className="font-medium text-gray-600">{filteredCount}</span> facturas encontradas{activeFilterCount > 0 && totalCount > 0 ? ` (de ${totalCount} en buzón)` : ''}
           </p>
         </div>
 

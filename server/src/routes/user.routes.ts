@@ -5,12 +5,13 @@ import { requireAdmin } from '../middleware/rbac';
 
 const router = Router();
 
-router.use(authenticateToken);
+router.use(authenticateToken, requireAdmin);
 
-router.get('/', requireAdmin, userController.getAll);
-router.post('/', requireAdmin, userController.create);
-router.put('/:id', requireAdmin, userController.update);
-router.delete('/:id', requireAdmin, userController.remove);
-router.get('/roles', requireAdmin, userController.getRoles);
+router.get('/', userController.getAll);
+router.post('/', userController.create);
+router.put('/:id', userController.update);
+router.put('/:id/password', userController.changePassword);
+router.patch('/:id/active', userController.setActive);
+router.delete('/:id', userController.remove);
 
 export default router;

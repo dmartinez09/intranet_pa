@@ -5,59 +5,49 @@ import { env } from '../config/env';
 import { dbService } from '../services/database.service';
 import type { JwtPayload } from '../middleware/auth';
 
+function toSafeUser(u: any) {
+  return {
+    id: u.id,
+    username: u.username,
+    full_name: u.full_name,
+    email: u.email,
+    modules: u.modules,
+    is_admin: u.is_admin,
+    is_active: u.is_active,
+    last_login: u.last_login,
+  };
+}
+
 export const authController = {
   async login(req: Request, res: Response) {
     try {
       const { username, password } = req.body;
-
       if (!username || !password) {
         return res.status(400).json({ success: false, message: 'Usuario y contraseña son requeridos' });
       }
-
       const user = await dbService.findUserByUsername(username);
       if (!user) {
         return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
       }
-
-      if (!user.active) {
+      if (!user.is_active) {
         return res.status(401).json({ success: false, message: 'Usuario desactivado' });
       }
-
       const validPassword = await bcrypt.compare(password, user.password_hash);
       if (!validPassword) {
         return res.status(401).json({ success: false, message: 'Credenciales inválidas' });
       }
 
-      const role = await dbService.getRoleById(user.role_id);
-      if (!role) {
-        return res.status(500).json({ success: false, message: 'Error de configuración de rol' });
-      }
-
       const payload: JwtPayload = {
         userId: user.id,
         username: user.username,
-        roleId: user.role_id,
-        roleName: role.name,
+        modules: user.modules,
+        isAdmin: user.is_admin,
       };
-
       const token = jwt.sign(payload, env.jwt.secret, { expiresIn: '8h' });
 
-      return res.json({
-        success: true,
-        data: {
-          token,
-          user: {
-            id: user.id,
-            username: user.username,
-            full_name: user.full_name,
-            email: user.email,
-            role_id: user.role_id,
-            active: user.active,
-            role,
-            permissions: [],
-          },
-        },
-      });
+      await dbService.touchLastLogin(user.id).catch(() => {});
+
+      return res.json({ success: true, data: { token, user: toSafeUser(user) } });
     } catch (error) {
       console.error('[Auth] Login error:', error);
       return res.status(500).json({ success: false, message: 'Error interno del servidor' });
@@ -66,27 +56,10 @@ export const authController = {
 
   async me(req: Request, res: Response) {
     try {
-      if (!req.user) {
-        return res.status(401).json({ success: false, message: 'No autenticado' });
-      }
+      if (!req.user) return res.status(401).json({ success: false, message: 'No autenticado' });
       const user = await dbService.findUserById(req.user.userId);
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
-      }
-      const role = await dbService.getRoleById(user.role_id);
-      return res.json({
-        success: true,
-        data: {
-          id: user.id,
-          username: user.username,
-          full_name: user.full_name,
-          email: user.email,
-          role_id: user.role_id,
-          active: user.active,
-          role,
-          permissions: [],
-        },
-      });
+      if (!user) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+      return res.json({ success: true, data: toSafeUser(user) });
     } catch (error) {
       console.error('[Auth] Me error:', error);
       return res.status(500).json({ success: false, message: 'Error interno del servidor' });
