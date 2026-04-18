@@ -118,7 +118,7 @@ export const facturacionApi = {
   getLetrasFiles: (params?: any) => api.get('/facturacion/letras-files', { params }),
   getLetrasComprobantes: (facturaCode: string) => api.get('/facturacion/letras-comprobantes', { params: { facturaCode } }),
   getLetraDownloadUrl: (itemId: string) => api.get(`/facturacion/letras-download/${itemId}`),
-  sendLetra: (data: { letraDriveItemId: string; facturaCode: string; to: string[]; cc?: string[]; cliente?: string }) => api.post('/facturacion/letras-send', data),
+  sendLetra: (data: { letraDriveItemId: string; facturaCode: string; to: string[]; cc?: string[]; cliente?: string; force?: boolean }) => api.post('/facturacion/letras-send', data),
   // Letras scheduler + bot
   getLetrasStatus: () => api.get('/facturacion/letras-status'),
   refreshLetras: () => api.post('/facturacion/letras-refresh'),
@@ -127,6 +127,11 @@ export const facturacionApi = {
     api.put('/facturacion/letras-bot/config', data),
   getLetrasBotHistory: (limit = 50) => api.get('/facturacion/letras-bot/history', { params: { limit } }),
   runLetrasBotNow: () => api.post('/facturacion/letras-bot/run-now'),
+};
+
+// Inteligencia Comercial (Beta — stub hasta que el backend esté listo)
+export const inteligenciaApi = {
+  getMeta: () => Promise.resolve({ data: { data: { sources: 0, crops: 0, regions: 0, categories: 0, last_run: null } } }),
 };
 
 // Config

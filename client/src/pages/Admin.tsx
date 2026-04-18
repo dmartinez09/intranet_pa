@@ -24,6 +24,7 @@ import {
   DollarSign,
   MapPin,
   UserCheck,
+  Sprout,
 } from 'lucide-react';
 
 interface UserRow {
@@ -50,6 +51,10 @@ const MODULE_GROUPS: { group: string; icon: any; modules: { code: string; label:
   { group: 'Logística', icon: Building2, modules: [
     { code: 'facturacion', label: 'Facturas Electrónicas' },
     { code: 'letras', label: 'Letras' },
+  ]},
+  { group: 'Inteligencia Comercial Beta', icon: Sprout, modules: [
+    { code: 'inteligencia_comercial', label: 'Inteligencia Comercial' },
+    { code: 'mapa_interactivo', label: 'Mapa Interactivo' },
   ]},
   { group: 'General', icon: UserCheck, modules: [
     { code: 'alertas', label: 'Alertas Operativas' },

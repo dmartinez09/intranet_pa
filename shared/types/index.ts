@@ -14,7 +14,9 @@ export type AppModule =
   | 'facturacion'
   | 'letras'
   | 'alertas'
-  | 'diccionario';
+  | 'diccionario'
+  | 'inteligencia_comercial'
+  | 'mapa_interactivo';
 
 export const MODULE_LABELS: Record<AppModule, string> = {
   dashboard_ventas: 'Ventas — Dashboard',
@@ -26,12 +28,15 @@ export const MODULE_LABELS: Record<AppModule, string> = {
   letras: 'Logística — Letras',
   alertas: 'Alertas',
   diccionario: 'Diccionario',
+  inteligencia_comercial: 'Inteligencia Comercial Beta — Datos',
+  mapa_interactivo: 'Inteligencia Comercial Beta — Mapa',
 };
 
 export const MODULE_GROUPS: { group: string; modules: AppModule[] }[] = [
   { group: 'Ventas', modules: ['dashboard_ventas', 'presupuesto', 'avance_comercial'] },
   { group: 'Crédito', modules: ['cartera', 'estado_cuenta'] },
   { group: 'Logística', modules: ['facturacion', 'letras'] },
+  { group: 'Inteligencia Comercial Beta', modules: ['inteligencia_comercial', 'mapa_interactivo'] },
   { group: 'General', modules: ['alertas', 'diccionario'] },
 ];
 
