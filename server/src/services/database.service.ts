@@ -649,10 +649,29 @@ export const dbService = {
   },
 
   // ---- CARTERA (SQL Real — AL004, AL006, AL007) ----
-  async getCarteraKPIs() {
+  async getCarteraGrupos(): Promise<string[]> {
     try {
       const pool = await getDbPool();
       const result = await pool.request().query(`
+        SELECT DISTINCT [Grupo Cliente] AS grupo
+        FROM dbo.stg_al004_letras_facturas
+        WHERE [Grupo Cliente] IS NOT NULL AND [Grupo Cliente] != ''
+        ORDER BY [Grupo Cliente]
+      `);
+      return result.recordset.map((r: any) => r.grupo);
+    } catch (error) {
+      console.error('Error in getCarteraGrupos:', error);
+      return [];
+    }
+  },
+
+  async getCarteraKPIs(grupo?: string) {
+    try {
+      const pool = await getDbPool();
+      const grupoFilter = grupo ? ' AND [Grupo Cliente] = @grupo' : '';
+      const req1 = pool.request();
+      if (grupo) req1.input('grupo', sql.NVarChar, grupo);
+      const result = await req1.query(`
         SELECT
           SUM(CASE WHEN [Importe Pendiente] > 0 THEN [Importe Pendiente] ELSE 0 END) AS total_cartera_positiva,
           SUM(CASE WHEN [Importe Pendiente] < 0 THEN [Importe Pendiente] ELSE 0 END) AS total_notas_credito,
@@ -663,7 +682,7 @@ export const dbService = {
           COUNT(DISTINCT CASE WHEN [Importe Pendiente] > 0 AND [Fecha Vencimiento] < GETDATE() THEN Ruc END) AS clientes_morosos,
           COUNT(DISTINCT CASE WHEN [Importe Pendiente] > 0 THEN Ruc END) AS total_clientes_con_deuda
         FROM dbo.stg_al004_letras_facturas
-        WHERE [Importe Pendiente] != 0
+        WHERE [Importe Pendiente] != 0${grupoFilter}
       `);
       const r = result.recordset[0];
       const totalCartera = Math.round((r.total_cartera_positiva || 0) * 100) / 100;
@@ -674,10 +693,12 @@ export const dbService = {
       const porcentajeRecaudo = totalFacturado > 0 ? Math.round((totalRecaudado / totalFacturado) * 10000) / 100 : 0;
 
       // Días promedio de cobro
-      const diasRes = await pool.request().query(`
+      const req2 = pool.request();
+      if (grupo) req2.input('grupo', sql.NVarChar, grupo);
+      const diasRes = await req2.query(`
         SELECT AVG(CAST(DATEDIFF(day, [Fecha Emisión], GETDATE()) AS FLOAT)) AS dias_promedio
         FROM dbo.stg_al004_letras_facturas
-        WHERE [Importe Pendiente] > 0 AND [Fecha Emisión] IS NOT NULL
+        WHERE [Importe Pendiente] > 0 AND [Fecha Emisión] IS NOT NULL${grupoFilter}
       `);
       const diasPromedio = Math.round(diasRes.recordset[0].dias_promedio || 0);
 
@@ -695,10 +716,13 @@ export const dbService = {
     }
   },
 
-  async getCarteraPorEdad() {
+  async getCarteraPorEdad(grupo?: string) {
     try {
       const pool = await getDbPool();
-      const result = await pool.request().query(`
+      const grupoFilter = grupo ? ' AND [Grupo Cliente] = @grupo' : '';
+      const req = pool.request();
+      if (grupo) req.input('grupo', sql.NVarChar, grupo);
+      const result = await req.query(`
         SELECT rango, orden, SUM(monto) AS monto, SUM(docs) AS cantidad_documentos
         FROM (
           SELECT
@@ -721,7 +745,7 @@ export const dbService = {
             [Importe Pendiente] AS monto,
             1 AS docs
           FROM dbo.stg_al004_letras_facturas
-          WHERE [Importe Pendiente] > 0
+          WHERE [Importe Pendiente] > 0${grupoFilter}
         ) sub
         GROUP BY rango, orden
         ORDER BY orden
@@ -739,10 +763,13 @@ export const dbService = {
     }
   },
 
-  async getCarteraPorVendedor() {
+  async getCarteraPorVendedor(grupo?: string) {
     try {
       const pool = await getDbPool();
-      const result = await pool.request().query(`
+      const grupoFilter = grupo ? ' AND [Grupo Cliente] = @grupo' : '';
+      const req = pool.request();
+      if (grupo) req.input('grupo', sql.NVarChar, grupo);
+      const result = await req.query(`
         SELECT
           Vendedor AS vendedor,
           MAX(Zona) AS zona,
@@ -755,7 +782,7 @@ export const dbService = {
           AVG(CASE WHEN [Importe Pendiente] > 0 AND [Fecha Emisión] IS NOT NULL
               THEN CAST(DATEDIFF(day, [Fecha Emisión], GETDATE()) AS FLOAT) END) AS dias_promedio_cobro
         FROM dbo.stg_al004_letras_facturas
-        WHERE Vendedor IS NOT NULL AND Vendedor != ''
+        WHERE Vendedor IS NOT NULL AND Vendedor != ''${grupoFilter}
         GROUP BY Vendedor
         HAVING SUM(CASE WHEN [Importe Pendiente] > 0 THEN [Importe Pendiente] ELSE 0 END) > 0
         ORDER BY cartera_total DESC
@@ -782,10 +809,13 @@ export const dbService = {
     }
   },
 
-  async getCarteraTransacciones() {
+  async getCarteraTransacciones(grupo?: string) {
     try {
       const pool = await getDbPool();
-      const result = await pool.request().query(`
+      const grupoFilter = grupo ? ' AND [Grupo Cliente] = @grupo' : '';
+      const req = pool.request();
+      if (grupo) req.input('grupo', sql.NVarChar, grupo);
+      const result = await req.query(`
         SELECT TOP 500
           [Número Documento]                        AS numero_doc,
           Cliente                                    AS cliente,
@@ -810,7 +840,7 @@ export const dbService = {
             ELSE 'Vigente'
           END AS estado
         FROM dbo.stg_al004_letras_facturas
-        WHERE [Importe Pendiente] != 0
+        WHERE [Importe Pendiente] != 0${grupoFilter}
         ORDER BY ABS([Importe Pendiente]) DESC
       `);
       return result.recordset.map((r: any) => ({
@@ -858,10 +888,13 @@ export const dbService = {
   },
 
   // ---- AL006: Letras emitidas no aceptadas ----
-  async getLetrasNoAceptadas() {
+  async getLetrasNoAceptadas(grupo?: string) {
     try {
       const pool = await getDbPool();
-      const result = await pool.request().query(`
+      const grupoFilter = grupo ? ' AND [Grupo Cliente] = @grupo' : '';
+      const req = pool.request();
+      if (grupo) req.input('grupo', sql.NVarChar, grupo);
+      const result = await req.query(`
         SELECT TOP 500
           Ruc                      AS ruc,
           Cliente                  AS cliente,
@@ -878,7 +911,7 @@ export const dbService = {
           Vendedor                 AS vendedor,
           [Grupo Cliente]          AS grupo_cliente
         FROM dbo.stg_al006_letras_emitidas_no_aceptadas
-        WHERE [Importe Pendiente] > 0
+        WHERE [Importe Pendiente] > 0${grupoFilter}
         ORDER BY [Fecha Creación] DESC
       `);
       return result.recordset.map((r: any) => ({
@@ -895,10 +928,13 @@ export const dbService = {
   },
 
   // ---- AL007: Línea de créditos ----
-  async getLineaCreditos() {
+  async getLineaCreditos(grupo?: string) {
     try {
       const pool = await getDbPool();
-      const result = await pool.request().query(`
+      const grupoFilter = grupo ? ' AND [Grupo Cliente] = @grupo' : '';
+      const req = pool.request();
+      if (grupo) req.input('grupo', sql.NVarChar, grupo);
+      const result = await req.query(`
         SELECT TOP 500
           [Código Cliente]    AS codigo_cliente,
           Cliente             AS cliente,
@@ -910,7 +946,7 @@ export const dbService = {
           Zona                AS zona,
           [Grupo Cliente]     AS grupo_cliente
         FROM dbo.stg_al007_linea_creditos
-        WHERE [Línea de crédito] IS NOT NULL AND [Línea de crédito] > 0
+        WHERE [Línea de crédito] IS NOT NULL AND [Línea de crédito] > 0${grupoFilter}
         ORDER BY [Línea usada] DESC
       `);
       return result.recordset.map((r: any) => ({

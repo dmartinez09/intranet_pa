@@ -74,13 +74,14 @@ export const ventaRCApi = {
 
 // Cartera
 export const carteraApi = {
-  getKPIs: () => api.get('/cartera/kpis'),
-  getPorEdad: () => api.get('/cartera/por-edad'),
-  getPorVendedor: () => api.get('/cartera/por-vendedor'),
-  getTransacciones: () => api.get('/cartera/transacciones'),
+  getGrupos: () => api.get('/cartera/grupos'),
+  getKPIs: (params?: { grupo?: string }) => api.get('/cartera/kpis', { params }),
+  getPorEdad: (params?: { grupo?: string }) => api.get('/cartera/por-edad', { params }),
+  getPorVendedor: (params?: { grupo?: string }) => api.get('/cartera/por-vendedor', { params }),
+  getTransacciones: (params?: { grupo?: string }) => api.get('/cartera/transacciones', { params }),
   getMeta: () => api.get('/cartera/meta'),
-  getLetrasNoAceptadas: () => api.get('/cartera/letras-no-aceptadas'),
-  getLineaCreditos: () => api.get('/cartera/linea-creditos'),
+  getLetrasNoAceptadas: (params?: { grupo?: string }) => api.get('/cartera/letras-no-aceptadas', { params }),
+  getLineaCreditos: (params?: { grupo?: string }) => api.get('/cartera/linea-creditos', { params }),
   // Estado de Cuenta
   getEstadoCuenta: (params?: any) => api.get('/cartera/estado-cuenta', { params }),
   getEstadoCuentaFiltros: () => api.get('/cartera/estado-cuenta/filtros'),

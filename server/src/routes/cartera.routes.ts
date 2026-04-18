@@ -8,36 +8,49 @@ const router = Router();
 
 router.use(authenticateToken, requireModule('cartera'));
 
-router.get('/kpis', async (_req, res) => {
+router.get('/grupos', async (_req, res) => {
   try {
-    const data = await dbService.getCarteraKPIs();
+    const data = await dbService.getCarteraGrupos();
+    return res.json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error al obtener grupos' });
+  }
+});
+
+router.get('/kpis', async (req, res) => {
+  try {
+    const grupo = req.query.grupo as string | undefined;
+    const data = await dbService.getCarteraKPIs(grupo);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error al obtener KPIs de cartera' });
   }
 });
 
-router.get('/por-edad', async (_req, res) => {
+router.get('/por-edad', async (req, res) => {
   try {
-    const data = await dbService.getCarteraPorEdad();
+    const grupo = req.query.grupo as string | undefined;
+    const data = await dbService.getCarteraPorEdad(grupo);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error al obtener cartera por edad' });
   }
 });
 
-router.get('/por-vendedor', async (_req, res) => {
+router.get('/por-vendedor', async (req, res) => {
   try {
-    const data = await dbService.getCarteraPorVendedor();
+    const grupo = req.query.grupo as string | undefined;
+    const data = await dbService.getCarteraPorVendedor(grupo);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error al obtener cartera por vendedor' });
   }
 });
 
-router.get('/transacciones', async (_req, res) => {
+router.get('/transacciones', async (req, res) => {
   try {
-    const data = await dbService.getCarteraTransacciones();
+    const grupo = req.query.grupo as string | undefined;
+    const data = await dbService.getCarteraTransacciones(grupo);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error al obtener transacciones' });
@@ -53,18 +66,20 @@ router.get('/meta', async (_req, res) => {
   }
 });
 
-router.get('/letras-no-aceptadas', async (_req, res) => {
+router.get('/letras-no-aceptadas', async (req, res) => {
   try {
-    const data = await dbService.getLetrasNoAceptadas();
+    const grupo = req.query.grupo as string | undefined;
+    const data = await dbService.getLetrasNoAceptadas(grupo);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error al obtener letras no aceptadas' });
   }
 });
 
-router.get('/linea-creditos', async (_req, res) => {
+router.get('/linea-creditos', async (req, res) => {
   try {
-    const data = await dbService.getLineaCreditos();
+    const grupo = req.query.grupo as string | undefined;
+    const data = await dbService.getLineaCreditos(grupo);
     return res.json({ success: true, data });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Error al obtener líneas de crédito' });

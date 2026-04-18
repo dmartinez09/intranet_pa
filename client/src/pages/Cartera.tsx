@@ -42,6 +42,8 @@ export default function Cartera() {
   const [letrasNoAcept, setLetrasNoAcept] = useState<any[]>([]);
   const [lineaCreditos, setLineaCreditos] = useState<any[]>([]);
   const [meta, setMeta] = useState<{ al004: string | null; al006: string | null; al007: string | null }>({ al004: null, al006: null, al007: null });
+  const [grupos, setGrupos] = useState<string[]>([]);
+  const [grupo, setGrupo] = useState<string>('');
   const [activeTab, setActiveTab] = useState<CarteraTab>('resumen');
   const [searchTx, setSearchTx] = useState('');
   const [searchLNA, setSearchLNA] = useState('');
@@ -49,19 +51,31 @@ export default function Cartera() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    carteraApi.getGrupos().then(r => setGrupos(r.data.data)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    loadData();
+    // reset lazy loaded tabs when grupo changes
+    setLnaLoaded(false);
+    setLcLoaded(false);
+    setLetrasNoAcept([]);
+    setLineaCreditos([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grupo]);
 
   const [lnaLoaded, setLnaLoaded] = useState(false);
   const [lcLoaded, setLcLoaded] = useState(false);
 
   async function loadData() {
+    setLoading(true);
     try {
+      const params = grupo ? { grupo } : undefined;
       const [kpiRes, edadRes, vendRes, txRes, metaRes] = await Promise.all([
-        carteraApi.getKPIs(),
-        carteraApi.getPorEdad(),
-        carteraApi.getPorVendedor(),
-        carteraApi.getTransacciones(),
+        carteraApi.getKPIs(params),
+        carteraApi.getPorEdad(params),
+        carteraApi.getPorVendedor(params),
+        carteraApi.getTransacciones(params),
         carteraApi.getMeta(),
       ]);
       setKpis(kpiRes.data.data);
@@ -77,19 +91,20 @@ export default function Cartera() {
   }
 
   useEffect(() => {
+    const params = grupo ? { grupo } : undefined;
     if (activeTab === 'letras_no_aceptadas' && !lnaLoaded) {
-      carteraApi.getLetrasNoAceptadas()
+      carteraApi.getLetrasNoAceptadas(params)
         .then(r => setLetrasNoAcept(r.data.data))
         .catch(e => console.error('LNA load error:', e))
         .finally(() => setLnaLoaded(true));
     }
     if (activeTab === 'linea_creditos' && !lcLoaded) {
-      carteraApi.getLineaCreditos()
+      carteraApi.getLineaCreditos(params)
         .then(r => setLineaCreditos(r.data.data))
         .catch(e => console.error('LC load error:', e))
         .finally(() => setLcLoaded(true));
     }
-  }, [activeTab, lnaLoaded, lcLoaded]);
+  }, [activeTab, lnaLoaded, lcLoaded, grupo]);
 
   const currentUpdate = activeTab === 'letras_no_aceptadas' ? meta.al006
     : activeTab === 'linea_creditos' ? meta.al007
@@ -148,11 +163,21 @@ export default function Cartera() {
       <Header title="Cartera y Recaudo" subtitle="Estado de cuentas por cobrar" />
 
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        {/* Leyenda de última actualización */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-brand-50 border border-brand-100 rounded-lg text-xs text-brand-700 w-fit">
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span className="font-medium">Última actualización:</span>
-          <span className="font-semibold">{formatDateTime(currentUpdate)}</span>
+        {/* Filtro de Grupo + Leyenda de última actualización */}
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={grupo}
+            onChange={(e) => setGrupo(e.target.value)}
+            className="input-field text-sm py-1.5 px-3 pr-8 min-w-[200px]"
+          >
+            <option value="">Todos los Grupos</option>
+            {grupos.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
+          <div className="flex items-center gap-2 px-3 py-2 bg-brand-50 border border-brand-100 rounded-lg text-xs text-brand-700">
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="font-medium">Última actualización:</span>
+            <span className="font-semibold">{formatDateTime(currentUpdate)}</span>
+          </div>
         </div>
 
         {/* KPI Cards */}
