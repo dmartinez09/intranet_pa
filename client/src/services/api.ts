@@ -168,6 +168,7 @@ export const inteligenciaApi = {
 // COMEX y Competidores
 export const comexApi = {
   getMeta: () => api.get('/inteligencia/comex/meta'),
+  getSources: () => api.get('/inteligencia/comex/sources'),
   getPartidas: () => api.get('/inteligencia/comex/partidas'),
   getEmpresas: () => api.get('/inteligencia/comex/empresas'),
   getPaises: () => api.get('/inteligencia/comex/paises'),

@@ -351,6 +351,16 @@ router.get('/comex/meta', canReadComex, async (_req: Request, res: Response) => 
   }
 });
 
+router.get('/comex/sources', canReadComex, async (_req: Request, res: Response) => {
+  try {
+    const data = await comexService.getSources();
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[COMEX] getSources error:', err);
+    res.status(500).json({ success: false, message: 'Error al obtener fuentes COMEX' });
+  }
+});
+
 router.get('/comex/partidas', canReadComex, async (_req: Request, res: Response) => {
   try {
     const data = await comexService.getPartidas();

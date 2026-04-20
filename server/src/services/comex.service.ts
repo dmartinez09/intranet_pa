@@ -95,6 +95,20 @@ export interface FlowRow {
   share_pct: number;
 }
 
+export interface CxSource {
+  source_id: number;
+  source_code: string;
+  source_name: string;
+  source_url: string;
+  source_owner: string | null;
+  source_type: string;
+  extraction_method: string;
+  active_flag: boolean;
+  last_run_at: string | null;
+  last_run_status: string | null;
+  last_run_records: number | null;
+}
+
 export interface PartidaResumen {
   partida_id: number;
   hs_code: string;
@@ -176,6 +190,33 @@ class ComexService {
       last_run_status: lastRow?.status || null,
       tables_exist: true,
     };
+  }
+
+  // Fuentes externas del dominio COMEX (SUNAT, BCR, MINCETUR, etc.)
+  async getSources(): Promise<CxSource[]> {
+    if (!(await tablesExist())) return [];
+    const pool = await getDbPool();
+    const res = await pool.request().query(`
+      SELECT
+        s.source_id, s.source_code, s.source_name, s.source_url,
+        s.source_owner, s.source_type, s.extraction_method, s.active_flag,
+        r.finished_at AS last_run_at, r.status AS last_run_status, r.records_inserted AS last_run_records
+      FROM dbo.icb_dim_source s
+      OUTER APPLY (
+        SELECT TOP 1 finished_at, status, records_inserted
+        FROM dbo.icb_etl_run_log
+        WHERE source_id = s.source_id AND finished_at IS NOT NULL
+        ORDER BY finished_at DESC
+      ) r
+      WHERE s.active_flag = 1
+        AND s.source_code IN (
+          'SUNAT_TRANSPARENCIA','SUNAT_ADUANET','BCR_COMEX',
+          'MINCETUR_ESTADISTICAS','INEI_COMEX','DATOS_ABIERTOS_COMEX',
+          'ADEX_ESTADISTICAS','CCL_COMEX','SENASA_PLAGUICIDAS','BASELINE_PE_COMEX'
+        )
+      ORDER BY s.source_owner, s.source_name
+    `);
+    return res.recordset;
   }
 
   async getPartidas(): Promise<Partida[]> {

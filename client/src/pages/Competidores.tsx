@@ -3,6 +3,7 @@ import Header from '../components/layout/Header';
 import { comexApi } from '../services/api';
 import {
   Trophy, RefreshCw, Search, Briefcase, DollarSign, Package, Award,
+  Globe, ExternalLink,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -21,10 +22,24 @@ interface RankingRow {
   share_pct: number;
 }
 
+interface SourceRow {
+  source_id: number;
+  source_code: string;
+  source_name: string;
+  source_url: string;
+  source_owner: string | null;
+  source_type: string;
+  extraction_method: string;
+  last_run_at: string | null;
+  last_run_status: string | null;
+  last_run_records: number | null;
+}
+
 const BAR_COLORS = ['#00A651', '#008C44', '#007038', '#34D67B', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899', '#10B981'];
 
 export default function Competidores() {
   const [data, setData] = useState<RankingRow[]>([]);
+  const [sources, setSources] = useState<SourceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [search, setSearch] = useState('');
@@ -35,8 +50,12 @@ export default function Competidores() {
   async function load() {
     setLoading(true);
     try {
-      const res = await comexApi.getRanking(year, 50);
-      setData(res.data.data || []);
+      const [rRes, sRes] = await Promise.all([
+        comexApi.getRanking(year, 50),
+        comexApi.getSources(),
+      ]);
+      setData(rRes.data.data || []);
+      setSources(sRes.data.data || []);
     } catch (err) {
       console.error('[Competidores] error:', err);
     } finally {
@@ -222,6 +241,94 @@ export default function Competidores() {
               </table>
             </div>
           )}
+        </div>
+
+        {/* Fuentes externas COMEX */}
+        <div className="chart-container">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center">
+                <Globe className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Fuentes Externas — COMEX / Competidores</h3>
+                <p className="text-xs text-gray-400">
+                  Trazabilidad de origen: instituciones peruanas públicas consultadas · {sources.length} fuentes activas
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {sources.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">Cargando fuentes...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="table-modern">
+                <thead>
+                  <tr>
+                    <th>Fuente</th>
+                    <th>Institución</th>
+                    <th>Tipo</th>
+                    <th>Método</th>
+                    <th>Última Ejecución</th>
+                    <th>Estado</th>
+                    <th className="text-right">Registros</th>
+                    <th>URL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sources.map(s => (
+                    <tr key={s.source_id}>
+                      <td className="font-semibold text-sm">{s.source_name}</td>
+                      <td className="text-gray-500 text-xs">{s.source_owner || '—'}</td>
+                      <td>
+                        <span className="badge bg-gray-100 text-gray-700 text-[10px]">{s.source_type}</span>
+                      </td>
+                      <td className="text-xs text-gray-500">{s.extraction_method}</td>
+                      <td className="text-xs">
+                        {s.last_run_at
+                          ? new Date(s.last_run_at).toLocaleString('es-PE')
+                          : <span className="text-gray-400">Sin ejecuciones</span>}
+                      </td>
+                      <td>
+                        {s.last_run_status ? (
+                          <span className={`badge text-[10px] ${
+                            s.last_run_status === 'SUCCESS' ? 'badge-success' :
+                            s.last_run_status === 'FAILED' ? 'badge-danger' :
+                            'badge-warning'
+                          }`}>{s.last_run_status}</span>
+                        ) : <span className="text-gray-400 text-xs">—</span>}
+                      </td>
+                      <td className="text-right font-mono text-sm">
+                        {s.last_run_records != null ? s.last_run_records.toLocaleString('es-PE') : '—'}
+                      </td>
+                      <td>
+                        <a
+                          href={s.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:text-brand-800 inline-flex items-center gap-1 text-xs"
+                          title={s.source_url}
+                        >
+                          Abrir <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500 leading-relaxed">
+            <p className="font-semibold text-gray-600 mb-1">Notas de trazabilidad:</p>
+            <ul className="list-disc ml-5 space-y-0.5">
+              <li>Los datos de importaciones provienen exclusivamente de fuentes peruanas públicas.</li>
+              <li>No se cruza información con SAP ni otros módulos internos.</li>
+              <li>El baseline representativo (BASELINE_PE_COMEX) se nutre de órdenes de magnitud públicos conocidos (SUNAT/ADEX) hasta que los collectors reales maduren.</li>
+              <li>Todas las consultas quedan auditadas en <span className="font-mono">icb_etl_run_log</span>.</li>
+            </ul>
+          </div>
         </div>
 
       </div>
