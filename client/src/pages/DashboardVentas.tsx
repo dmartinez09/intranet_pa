@@ -66,6 +66,12 @@ export default function DashboardVentas() {
   const [ventasFamilia, setVentasFamilia] = useState<any[]>([]);
   const [ventasDiarias, setVentasDiarias] = useState<any[]>([]);
   const [ventasVendedor, setVentasVendedor] = useState<any[]>([]);
+  const [detalleData, setDetalleData] = useState<{ rows: any[]; total_rows: number; returned: number } | null>(null);
+  const [detalleLoading, setDetalleLoading] = useState(false);
+  const [detalleSearch, setDetalleSearch] = useState('');
+  const [onlyAnomalias, setOnlyAnomalias] = useState(false);
+  const [detallePage, setDetallePage] = useState(1);
+  const [lastParams, setLastParams] = useState<any>(null);
   const [opcionesFiltro, setOpcionesFiltro] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -124,11 +130,74 @@ export default function DashboardVentas() {
       setVentasFamilia(familiaRes.data.data);
       setVentasDiarias(diariaRes.data.data);
       setVentasVendedor(vendedorRes.data.data);
+      setLastParams(p);
+      // Lanza detalle en paralelo (no bloquea el render del dashboard)
+      loadDetalle(p);
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadDetalle(p: any) {
+    setDetalleLoading(true);
+    try {
+      const res = await ventasApi.getDetalle({ ...p, limit: 5000 });
+      setDetalleData(res.data.data);
+      setDetallePage(1);
+    } catch (err) {
+      console.error('Error loading detalle:', err);
+    } finally {
+      setDetalleLoading(false);
+    }
+  }
+
+  function exportDetalleExcel() {
+    if (!detalleData?.rows?.length) return;
+    const rows = filteredDetalle();
+    const headers = [
+      'Fecha','N SAP','Tipo Doc','División','Maestro','RUC','Cliente','Grupo',
+      'Vendedor','Cód Vend','Zona','Dpto Despacho','Familia','SubFamilia','Ingr. Activo',
+      'Cantidad','Venta USD','Costo','Ganancia','Gan %','Margen Unit','% Gan Unit','Alerta',
+    ];
+    const csv = [headers.join(';')]
+      .concat(rows.map(r => [
+        r.fecha_emision, r.numero_sap, r.tipo_documento, r.division, r.maestro_tipo,
+        r.ruc_cliente, `"${(r.cliente||'').replace(/"/g,'""')}"`, r.grupo_cliente,
+        `"${(r.vendedor||'').replace(/"/g,'""')}"`, r.codigo_vendedor, r.zona, r.departamento_despacho,
+        r.familia, r.sub_familia, r.ingrediente_activo,
+        r.cantidad, r.valor_venta_dolares, r.costo_total, r.ganancia,
+        r.ganancia_pct, r.margen_unitario, r.porcentaje_ganancia_unitario,
+        r.alerta_signo ? 'SIGNO_COSTO_INCONSISTENTE' : '',
+      ].join(';'))).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ventas_detalle_${new Date().toISOString().substring(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function filteredDetalle(): any[] {
+    if (!detalleData?.rows) return [];
+    let rows = detalleData.rows;
+    if (onlyAnomalias) rows = rows.filter(r => r.alerta_signo);
+    if (detalleSearch.trim()) {
+      const q = detalleSearch.toLowerCase();
+      rows = rows.filter(r =>
+        (r.numero_sap || '').toLowerCase().includes(q) ||
+        (r.cliente || '').toLowerCase().includes(q) ||
+        (r.ruc_cliente || '').toLowerCase().includes(q) ||
+        (r.vendedor || '').toLowerCase().includes(q) ||
+        (r.familia || '').toLowerCase().includes(q) ||
+        (r.ingrediente_activo || '').toLowerCase().includes(q)
+      );
+    }
+    return rows;
   }
 
   async function loadFiltros() {
@@ -471,6 +540,178 @@ export default function DashboardVentas() {
             </table>
           </div>
         </div>
+
+        {/* Detalle de transacciones para auditoría / revisión de errores de origen */}
+        <div className="chart-container">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-base font-bold text-gray-900 mb-1">Detalle de Transacciones — Auditoría</h3>
+              <p className="text-xs text-gray-400">
+                {detalleData
+                  ? `Mostrando ${filteredDetalle().length} de ${detalleData.total_rows.toLocaleString('es-PE')} registros (límite ${detalleData.returned.toLocaleString('es-PE')}) — incluye costo, ganancia y alertas de signo`
+                  : 'Aplique filtros arriba para cargar el detalle por transacción'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={detalleSearch}
+                  onChange={e => { setDetalleSearch(e.target.value); setDetallePage(1); }}
+                  placeholder="Buscar N SAP, cliente, vendedor..."
+                  className="input-field text-sm pl-3 w-64"
+                />
+              </div>
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none bg-amber-50 text-amber-700 px-2.5 py-1.5 rounded-lg border border-amber-200">
+                <input
+                  type="checkbox"
+                  checked={onlyAnomalias}
+                  onChange={e => { setOnlyAnomalias(e.target.checked); setDetallePage(1); }}
+                  className="rounded text-amber-600"
+                />
+                <span className="font-semibold">Solo alertas de signo</span>
+              </label>
+              <button onClick={exportDetalleExcel}
+                disabled={!detalleData?.rows?.length}
+                className="btn-secondary text-xs">
+                📥 Export CSV
+              </button>
+              <button onClick={() => lastParams && loadDetalle(lastParams)}
+                disabled={detalleLoading}
+                className="btn-secondary text-xs">
+                🔄 Recargar
+              </button>
+            </div>
+          </div>
+
+          {detalleLoading && !detalleData && (
+            <div className="flex justify-center py-8">
+              <div className="w-8 h-8 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+            </div>
+          )}
+
+          {detalleData && (() => {
+            const all = filteredDetalle();
+            const PAGE_SIZE = 100;
+            const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+            const pageRows = all.slice((detallePage - 1) * PAGE_SIZE, detallePage * PAGE_SIZE);
+            const totVenta = all.reduce((s, r) => s + (r.valor_venta_dolares || 0), 0);
+            const totCosto = all.reduce((s, r) => s + (r.costo_total || 0), 0);
+            const totGan = all.reduce((s, r) => s + (r.ganancia || 0), 0);
+            const anomalias = all.filter(r => r.alerta_signo).length;
+
+            return (
+              <>
+                {anomalias > 0 && !onlyAnomalias && (
+                  <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                    ⚠️ <strong>{anomalias}</strong> transacciones con signo de costo inconsistente vs. venta (probables errores de origen SAP).
+                    Activa el checkbox <strong>"Solo alertas de signo"</strong> para aislarlas.
+                  </div>
+                )}
+
+                <div className="overflow-x-auto border border-gray-100 rounded-lg">
+                  <table className="table-modern text-xs">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>N SAP</th>
+                        <th>Tipo Doc</th>
+                        <th>División</th>
+                        <th>Maestro</th>
+                        <th>RUC</th>
+                        <th>Cliente</th>
+                        <th>Grupo</th>
+                        <th>Vendedor</th>
+                        <th>Zona</th>
+                        <th>Dpto Despacho</th>
+                        <th>Familia</th>
+                        <th>Sub Familia</th>
+                        <th>Ingr. Activo</th>
+                        <th className="text-right">Cantidad</th>
+                        <th className="text-right">Venta USD</th>
+                        <th className="text-right">Costo</th>
+                        <th className="text-right">Ganancia</th>
+                        <th className="text-right">Gan %</th>
+                        <th>Alerta</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageRows.map((r, i) => (
+                        <tr key={`${r.numero_sap}-${i}`}
+                          className={r.alerta_signo ? 'bg-amber-50' : ''}>
+                          <td className="whitespace-nowrap">
+                            {r.fecha_emision ? new Date(r.fecha_emision).toLocaleDateString('es-PE') : '—'}
+                          </td>
+                          <td className="font-mono text-[11px]">{r.numero_sap || '—'}</td>
+                          <td className="whitespace-nowrap">{r.tipo_documento || '—'}</td>
+                          <td>{r.division || '—'}</td>
+                          <td>{r.maestro_tipo || '—'}</td>
+                          <td className="font-mono text-[11px]">{r.ruc_cliente || '—'}</td>
+                          <td className="max-w-[180px] truncate" title={r.cliente || ''}>{r.cliente || '—'}</td>
+                          <td>{r.grupo_cliente || '—'}</td>
+                          <td className="max-w-[140px] truncate" title={r.vendedor || ''}>{r.vendedor || '—'}</td>
+                          <td>{r.zona || '—'}</td>
+                          <td>{r.departamento_despacho || '—'}</td>
+                          <td className="max-w-[120px] truncate" title={r.familia || ''}>{r.familia || '—'}</td>
+                          <td className="max-w-[120px] truncate" title={r.sub_familia || ''}>{r.sub_familia || '—'}</td>
+                          <td className="max-w-[120px] truncate" title={r.ingrediente_activo || ''}>{r.ingrediente_activo || '—'}</td>
+                          <td className="text-right font-mono">{Number(r.cantidad || 0).toLocaleString('es-PE')}</td>
+                          <td className={`text-right font-mono ${r.valor_venta_dolares < 0 ? 'text-red-600' : ''}`}>
+                            {formatUSD(r.valor_venta_dolares)}
+                          </td>
+                          <td className={`text-right font-mono ${r.alerta_signo ? 'text-amber-700 font-bold' : ''}`}>
+                            {formatUSD(r.costo_total)}
+                          </td>
+                          <td className={`text-right font-mono ${r.ganancia < 0 ? 'text-red-600' : 'text-brand-700'}`}>
+                            {formatUSD(r.ganancia)}
+                          </td>
+                          <td className="text-right font-mono">{Number(r.ganancia_pct || 0).toFixed(2)}%</td>
+                          <td>
+                            {r.alerta_signo && (
+                              <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                                ⚠ signo
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-gray-50 font-semibold">
+                      <tr>
+                        <td colSpan={14}>Totales ({all.length} registros filtrados)</td>
+                        <td></td>
+                        <td className="text-right font-mono">{formatUSD(totVenta)}</td>
+                        <td className="text-right font-mono">{formatUSD(totCosto)}</td>
+                        <td className={`text-right font-mono ${totGan < 0 ? 'text-red-600' : 'text-brand-700'}`}>
+                          {formatUSD(totGan)}
+                        </td>
+                        <td className="text-right font-mono">
+                          {totVenta !== 0 ? ((totGan / totVenta) * 100).toFixed(2) : '0.00'}%
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-3 text-xs text-gray-600">
+                    <span>Página {detallePage} de {totalPages} · {PAGE_SIZE} por página</span>
+                    <div className="flex gap-1">
+                      <button onClick={() => setDetallePage(Math.max(1, detallePage - 1))}
+                        disabled={detallePage === 1}
+                        className="btn-secondary text-xs disabled:opacity-50">Anterior</button>
+                      <button onClick={() => setDetallePage(Math.min(totalPages, detallePage + 1))}
+                        disabled={detallePage === totalPages}
+                        className="btn-secondary text-xs disabled:opacity-50">Siguiente</button>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+
       </div>
     </div>
   );

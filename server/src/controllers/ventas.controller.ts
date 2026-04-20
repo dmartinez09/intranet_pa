@@ -72,6 +72,16 @@ export const ventasController = {
     }
   },
 
+  async getDetalle(req: Request, res: Response) {
+    try {
+      const data = await dbService.getVentasDetalle(req.query);
+      res.json({ success: true, data });
+    } catch (err: any) {
+      console.error('[ventas] getDetalle error:', err);
+      res.status(500).json({ success: false, message: 'Error al obtener detalle de ventas' });
+    }
+  },
+
   async getFiltros(_req: Request, res: Response) {
     try {
       const data = await dbService.getFiltrosOpciones();

@@ -564,6 +564,48 @@ export const dbService = {
     }).sort((a, b) => b.total_venta_usd - a.total_venta_usd);
   },
 
+  // Detalle de transacciones para auditoría / revisión de errores de origen
+  // Expone todas las columnas clave (incluye costo, ganancia, signos, tipo doc)
+  async getVentasDetalle(filtros: any) {
+    const ventas = await this.getVentas(filtros);
+    // Limita a 5000 filas para evitar payload enorme
+    const LIMIT = Math.min(Math.max(Number(filtros?.limit) || 2000, 1), 5000);
+    const limited = ventas.slice(0, LIMIT);
+
+    return {
+      total_rows: ventas.length,
+      returned: limited.length,
+      limit: LIMIT,
+      rows: limited.map((v: any) => ({
+        fecha_emision: v.fecha_emision,
+        numero_sap: v.numero_sap,
+        tipo_documento: v.tipo_documento,
+        division: v.division,
+        maestro_tipo: v.maestro_tipo,
+        ruc_cliente: v.ruc_cliente,
+        cliente: v.cliente,
+        grupo_cliente: v.grupo_cliente,
+        vendedor: v.vendedor,
+        codigo_vendedor: v.codigo_vendedor,
+        zona: v.zona,
+        departamento_despacho: v.departamento_despacho,
+        familia: v.familia,
+        sub_familia: v.sub_familia,
+        ingrediente_activo: v.ingrediente_activo,
+        cantidad: v.cantidad,
+        valor_venta_dolares: Number(v.valor_venta_dolares) || 0,
+        costo_total: Number(v.costo_total) || 0,
+        ganancia: Number(v.ganancia) || 0,
+        ganancia_pct: Number(v.ganancia_pct) || 0,
+        margen_unitario: Number(v.margen_unitario) || 0,
+        porcentaje_ganancia_unitario: Number(v.porcentaje_ganancia_unitario) || 0,
+        // Bandera de alerta: costo con signo contrario al de venta (típico en NC mal cargadas)
+        alerta_signo: (Number(v.valor_venta_dolares) < 0 && Number(v.costo_total) > 0) ||
+                      (Number(v.valor_venta_dolares) > 0 && Number(v.costo_total) < 0),
+      })),
+    };
+  },
+
   async getFiltrosOpciones() {
     if (USE_MOCK_VENTAS) {
       return {

@@ -57,6 +57,7 @@ export const ventasApi = {
   getFiltros: () => api.get('/ventas/filtros'),
   getPorProductoZona: (params?: any) => api.get('/ventas/por-producto-zona', { params }),
   getPorDepartamento: (params?: any) => api.get('/ventas/por-departamento', { params }),
+  getDetalle: (params?: any) => api.get('/ventas/detalle', { params }),
 };
 
 // Venta RC
