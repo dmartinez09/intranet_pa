@@ -4,6 +4,7 @@ import { comexApi } from '../services/api';
 import {
   Share2, RefreshCw, Globe, Filter,
 } from 'lucide-react';
+import ComexSourcesPanel from '../components/ComexSourcesPanel';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
@@ -183,6 +184,8 @@ export default function MapaFlujosCOMEX() {
             </p>
           </div>
         </div>
+
+        <ComexSourcesPanel />
 
       </div>
     </div>

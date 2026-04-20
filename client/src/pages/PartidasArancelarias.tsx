@@ -2,8 +2,9 @@ import { useEffect, useState, useMemo } from 'react';
 import Header from '../components/layout/Header';
 import { comexApi } from '../services/api';
 import {
-  Landmark, RefreshCw, Search, Filter, X, DollarSign, Package, Briefcase, Globe,
+  Landmark, RefreshCw, Search, Filter, X, DollarSign, Package, Briefcase,
 } from 'lucide-react';
+import ComexSourcesPanel from '../components/ComexSourcesPanel';
 
 interface PartidaResumen {
   partida_id: number;
@@ -189,6 +190,8 @@ export default function PartidasArancelarias() {
             </div>
           )}
         </div>
+
+        <ComexSourcesPanel />
 
       </div>
     </div>

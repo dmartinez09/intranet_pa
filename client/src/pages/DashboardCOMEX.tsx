@@ -5,6 +5,7 @@ import {
   Globe, Briefcase, Landmark, DollarSign, TrendingUp,
   AlertCircle, CheckCircle2, Clock, RefreshCw, Package, Target,
 } from 'lucide-react';
+import ComexSourcesPanel from '../components/ComexSourcesPanel';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line, Area,
@@ -255,6 +256,8 @@ export default function DashboardCOMEX() {
             </div>
           </>
         )}
+
+        <ComexSourcesPanel />
 
       </div>
     </div>
