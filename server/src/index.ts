@@ -6,6 +6,7 @@ import { env } from './config/env';
 import apiRoutes from './routes';
 import { letrasScheduler } from './services/letras-scheduler.service';
 import { letrasBot } from './services/letras-bot.service';
+import { etlScheduler } from './services/etl/scheduler';
 
 const app = express();
 
@@ -54,6 +55,16 @@ app.listen(env.port, () => {
     letrasBot.start().catch(err => console.error('[letras-bot] start error:', err));
   } catch (err) {
     console.error('[letras] scheduler boot error:', err);
+  }
+
+  // Start ETL scheduler (Inteligencia Comercial) - daily + weekly
+  // Sólo en production o con ETL_AUTO_START=1 para evitar ruido en dev
+  if (env.nodeEnv === 'production' || process.env.ETL_AUTO_START === '1') {
+    try {
+      etlScheduler.start();
+    } catch (err) {
+      console.error('[etl-scheduler] boot error:', err);
+    }
   }
 });
 

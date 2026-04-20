@@ -55,6 +55,7 @@ const MODULE_GROUPS: { group: string; icon: any; modules: { code: string; label:
   { group: 'Inteligencia Comercial Beta', icon: Sprout, modules: [
     { code: 'inteligencia_comercial', label: 'Inteligencia Comercial' },
     { code: 'mapa_interactivo', label: 'Mapa Interactivo' },
+    { code: 'comex', label: 'Competidores / COMEX' },
   ]},
   { group: 'General', icon: UserCheck, modules: [
     { code: 'alertas', label: 'Alertas Operativas' },

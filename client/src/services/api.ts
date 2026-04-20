@@ -144,6 +144,42 @@ export const inteligenciaApi = {
     api.get('/inteligencia/geo-summary', { params }),
   getTopCrops: (limit = 10) => api.get('/inteligencia/top-crops', { params: { limit } }),
   getEtlRuns: (limit = 30) => api.get('/inteligencia/etl-runs', { params: { limit } }),
+  getTopOpportunities: (limit = 10, minScore = 70) => api.get('/inteligencia/top-opportunities', { params: { limit, min_score: minScore } }),
+  getSnapshotDetail: (id: number) => api.get(`/inteligencia/snapshots/${id}`),
+  exportSnapshotsUrl: (params?: { crop_id?: number; region_id?: number; category_id?: number; source_id?: number }) => {
+    const qs = new URLSearchParams();
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v) qs.set(k, String(v)); });
+    return `/api/inteligencia/export/snapshots?${qs.toString()}`;
+  },
+  // Fase 4 - Gap analysis
+  getMarketGap: () => api.get('/inteligencia/market-gap'),
+  getOpportunityByCrop: (limit = 50) => api.get('/inteligencia/opportunity-by-crop', { params: { limit } }),
+  getExecutiveSummary: () => api.get('/inteligencia/executive-summary'),
+  getRecommendations: (limit = 10) => api.get('/inteligencia/recommendations', { params: { limit } }),
+  // ETL (admin)
+  listCollectors: () => api.get('/inteligencia/etl/collectors'),
+  runCollector: (sourceCode: string) => api.post(`/inteligencia/etl/run/${sourceCode}`),
+  runAllCollectors: () => api.post('/inteligencia/etl/run-all'),
+  runCollectorsByFrequency: (freq: 'daily' | 'weekly' | 'on_demand') =>
+    api.post(`/inteligencia/etl/run-by-frequency/${freq}`),
+  getSchedulerStatus: () => api.get('/inteligencia/etl/scheduler'),
+};
+
+// COMEX y Competidores
+export const comexApi = {
+  getMeta: () => api.get('/inteligencia/comex/meta'),
+  getPartidas: () => api.get('/inteligencia/comex/partidas'),
+  getEmpresas: () => api.get('/inteligencia/comex/empresas'),
+  getPaises: () => api.get('/inteligencia/comex/paises'),
+  getImportaciones: (params?: {
+    empresa_id?: number; partida_id?: number; pais_id?: number;
+    year?: number; month?: number; familia_pa?: string; limit?: number;
+  }) => api.get('/inteligencia/comex/importaciones', { params }),
+  getRanking: (year?: number, limit = 20) => api.get('/inteligencia/comex/ranking', { params: { year, limit } }),
+  getFlows: (year?: number, familia_pa?: string) => api.get('/inteligencia/comex/flows', { params: { year, familia_pa } }),
+  getPartidaResumen: (year?: number) => api.get('/inteligencia/comex/partida-resumen', { params: { year } }),
+  getMonthlyTrend: (year?: number) => api.get('/inteligencia/comex/monthly-trend', { params: { year } }),
+  getByFamilia: (year?: number) => api.get('/inteligencia/comex/by-familia', { params: { year } }),
 };
 
 // Config

@@ -5,6 +5,7 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simp
 import {
   Map as MapIcon, AlertCircle, CheckCircle2, RefreshCw, Clock,
   Filter, ChevronDown, X, Sprout, Tag, TrendingUp, MapPin,
+  DollarSign, Target,
 } from 'lucide-react';
 import peruGeo from '../data/peru-departments.json';
 
@@ -22,6 +23,18 @@ interface GeoSummary {
   crops: string[];
 }
 
+interface MarketGapRow {
+  departamento: string;
+  region_code: string | null;
+  hectareas_potenciales: number;
+  snapshots_count: number;
+  ventas_usd: number;
+  transacciones: number;
+  ventas_por_hectarea: number;
+  penetration_level: 'Alta' | 'Media' | 'Baja';
+  opportunity_gap_usd: number;
+}
+
 interface Crop { crop_id: number; crop_name_standard: string; }
 interface Category { category_id: number; category_name: string; category_group: string | null; }
 
@@ -32,7 +45,7 @@ interface Meta {
 }
 
 // Paleta de colores para escala coroplética (hectáreas)
-const COLOR_SCALE = [
+const COLOR_SCALE_HA = [
   { min: 0,      max: 1,       color: '#f1f5f9' }, // Sin dato
   { min: 1,      max: 1000,    color: '#dcfce7' },
   { min: 1000,   max: 5000,    color: '#bbf7d0' },
@@ -43,11 +56,26 @@ const COLOR_SCALE = [
   { min: 300000, max: Infinity, color: '#15803d' },
 ];
 
-function getColor(value: number): string {
+// Paleta para escala de penetración (USD/ha) - rojo = baja penetración = alta oportunidad
+const COLOR_SCALE_GAP = [
+  { min: 0,       max: 1,       color: '#f1f5f9' }, // Sin data
+  { min: 1,       max: 10,      color: '#fecaca' }, // muy baja penetracion
+  { min: 10,      max: 25,      color: '#fca5a5' },
+  { min: 25,      max: 50,      color: '#fdba74' },
+  { min: 50,      max: 80,      color: '#fde68a' },
+  { min: 80,      max: 120,     color: '#bef264' },
+  { min: 120,     max: 200,     color: '#86efac' },
+  { min: 200,     max: Infinity, color: '#22c55e' },
+];
+
+function getColor(value: number, mode: MapMode): string {
+  const scale = mode === 'gap' ? COLOR_SCALE_GAP : COLOR_SCALE_HA;
   if (value <= 0) return '#f1f5f9';
-  for (const s of COLOR_SCALE) if (value >= s.min && value < s.max) return s.color;
-  return '#15803d';
+  for (const s of scale) if (value >= s.min && value < s.max) return s.color;
+  return scale[scale.length - 1].color;
 }
+
+type MapMode = 'hectares' | 'gap';
 
 // Normaliza nombres para matcheo con GeoJSON
 function normalizeDeptName(name: string): string {
@@ -63,32 +91,36 @@ function normalizeDeptName(name: string): string {
 export default function MapaInteractivo() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [data, setData] = useState<GeoSummary[]>([]);
+  const [marketGap, setMarketGap] = useState<MarketGapRow[]>([]);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(true);
-  const [hoveredDept, setHoveredDept] = useState<GeoSummary | null>(null);
+  const [hoveredDept, setHoveredDept] = useState<(GeoSummary & { gap?: MarketGapRow | null }) | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   // Filtros
   const [cropId, setCropId] = useState<number | ''>('');
   const [categoryId, setCategoryId] = useState<number | ''>('');
+  const [mapMode, setMapMode] = useState<MapMode>('hectares');
 
   useEffect(() => { void loadAll(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadAll() {
     setLoading(true);
     try {
-      const [m, c, cat, g] = await Promise.all([
+      const [m, c, cat, g, mg] = await Promise.all([
         inteligenciaApi.getMeta(),
         inteligenciaApi.getCrops(),
         inteligenciaApi.getCategories(),
         inteligenciaApi.getGeoSummary({}),
+        inteligenciaApi.getMarketGap().catch(() => ({ data: { data: [] } })),
       ]);
       setMeta(m.data.data);
       setCrops(c.data.data || []);
       setCategories(cat.data.data || []);
       setData(g.data.data || []);
+      setMarketGap(mg.data.data || []);
     } catch (err) {
       console.error('[MapaInteractivo] error:', err);
     } finally {
@@ -126,6 +158,13 @@ export default function MapaInteractivo() {
     data.forEach(d => m.set(normalizeDeptName(d.department), d));
     return m;
   }, [data]);
+
+  // Mapa de gaps por departamento (Fase 4)
+  const gapMap = useMemo(() => {
+    const m = new Map<string, MarketGapRow>();
+    marketGap.forEach(g => m.set(normalizeDeptName(g.departamento), g));
+    return m;
+  }, [marketGap]);
 
   const totalHectares = useMemo(() =>
     data.reduce((sum, d) => sum + (d.total_hectares || 0), 0), [data]);
@@ -281,8 +320,35 @@ export default function MapaInteractivo() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Mapa */}
           <div className="lg:col-span-2 chart-container relative">
-            <h3 className="text-base font-bold text-gray-900 mb-1">Superficie Agrícola por Departamento</h3>
-            <p className="text-xs text-gray-400 mb-4">Escala coroplética por hectáreas | Pasa el cursor sobre un departamento</p>
+            <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+              <h3 className="text-base font-bold text-gray-900">
+                {mapMode === 'hectares' ? 'Superficie Agrícola por Departamento' : 'Penetración Comercial por Departamento'}
+              </h3>
+              <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setMapMode('hectares')}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                    mapMode === 'hectares' ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <Sprout className="w-3.5 h-3.5" /> Hectáreas
+                </button>
+                <button
+                  onClick={() => setMapMode('gap')}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                    mapMode === 'gap' ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  title="Ver penetración USD/ha (rojo = baja = alta oportunidad)"
+                >
+                  <Target className="w-3.5 h-3.5" /> Brecha (USD/ha)
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              {mapMode === 'hectares'
+                ? 'Escala coroplética por hectáreas agrícolas | Pasa el cursor sobre un departamento'
+                : 'Escala roja = baja penetración (alta oportunidad comercial) | Verde = alta penetración'}
+            </p>
 
             <div className="relative" style={{ minHeight: 500 }}>
               <ComposableMap
@@ -297,8 +363,11 @@ export default function MapaInteractivo() {
                         const deptName: string = geo.properties.NOMBDEP || geo.properties.name || '';
                         const key = normalizeDeptName(deptName);
                         const match = deptMap.get(key);
-                        const value = match?.total_hectares || 0;
-                        const color = getColor(value);
+                        const gap = gapMap.get(key) || null;
+                        const value = mapMode === 'hectares'
+                          ? (match?.total_hectares || 0)
+                          : (gap?.ventas_por_hectarea || 0);
+                        const color = getColor(value, mapMode);
                         return (
                           <Geography
                             key={geo.rsmKey}
@@ -307,13 +376,16 @@ export default function MapaInteractivo() {
                             stroke="#ffffff"
                             strokeWidth={0.6}
                             onMouseEnter={(evt) => {
-                              setHoveredDept(match || {
-                                region_code: '',
-                                department: deptName,
-                                latitude: null, longitude: null,
-                                total_hectares: 0, total_snapshots: 0,
-                                opportunity_avg: null, opportunity_level: null,
-                                crops: [],
+                              setHoveredDept({
+                                ...(match || {
+                                  region_code: '',
+                                  department: deptName,
+                                  latitude: null, longitude: null,
+                                  total_hectares: 0, total_snapshots: 0,
+                                  opportunity_avg: null, opportunity_level: null,
+                                  crops: [],
+                                }),
+                                gap,
                               });
                               setTooltipPos({ x: evt.clientX, y: evt.clientY });
                             }}
@@ -354,14 +426,34 @@ export default function MapaInteractivo() {
                       <span>Snapshots:</span>
                       <span className="font-semibold">{hoveredDept.total_snapshots}</span>
                     </div>
-                    {hoveredDept.opportunity_level && (
-                      <div className="flex justify-between gap-3">
-                        <span>Oportunidad:</span>
-                        <span className={`font-bold ${
-                          hoveredDept.opportunity_level === 'Alta' ? 'text-green-600' :
-                          hoveredDept.opportunity_level === 'Media' ? 'text-amber-600' : 'text-blue-600'
-                        }`}>{hoveredDept.opportunity_level}</span>
-                      </div>
+                    {hoveredDept.gap && (
+                      <>
+                        <div className="pt-1 mt-1 border-t border-gray-100">
+                          <div className="flex justify-between gap-3">
+                            <span>Ventas 12m:</span>
+                            <span className="font-semibold text-green-700">
+                              ${hoveredDept.gap.ventas_usd.toLocaleString('es-PE', { maximumFractionDigits: 0 })}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <span>USD/ha:</span>
+                            <span className="font-semibold">${hoveredDept.gap.ventas_por_hectarea.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <span>Penetración:</span>
+                            <span className={`font-bold ${
+                              hoveredDept.gap.penetration_level === 'Alta' ? 'text-green-600' :
+                              hoveredDept.gap.penetration_level === 'Media' ? 'text-amber-600' : 'text-red-600'
+                            }`}>{hoveredDept.gap.penetration_level}</span>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <span>Gap USD:</span>
+                            <span className="font-bold text-amber-700">
+                              ${hoveredDept.gap.opportunity_gap_usd.toLocaleString('es-PE', { maximumFractionDigits: 0 })}
+                            </span>
+                          </div>
+                        </div>
+                      </>
                     )}
                     {hoveredDept.crops.length > 0 && (
                       <div className="pt-1 border-t border-gray-100 mt-1">
@@ -376,9 +468,11 @@ export default function MapaInteractivo() {
 
             {/* Leyenda */}
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-400 mb-2">Escala por hectáreas</p>
+              <p className="text-xs text-gray-400 mb-2">
+                {mapMode === 'hectares' ? 'Escala por hectáreas' : 'Escala por USD/ha (rojo = baja penetración, verde = alta)'}
+              </p>
               <div className="flex items-center gap-1 flex-wrap">
-                {COLOR_SCALE.map((s, i) => (
+                {(mapMode === 'hectares' ? COLOR_SCALE_HA : COLOR_SCALE_GAP).map((s, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-[10px] text-gray-600">
                     <div className="w-5 h-3 rounded" style={{ backgroundColor: s.color }} />
                     <span>

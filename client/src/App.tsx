@@ -22,6 +22,11 @@ const VentasMargenesZona = lazy(() => import('./pages/VentasMargenesZona'));
 // Inteligencia Comercial Beta
 const InteligenciaComercial = lazy(() => import('./pages/InteligenciaComercial'));
 const MapaInteractivo = lazy(() => import('./pages/MapaInteractivo'));
+// COMEX y Competidores
+const DashboardCOMEX = lazy(() => import('./pages/DashboardCOMEX'));
+const PartidasArancelarias = lazy(() => import('./pages/PartidasArancelarias'));
+const Competidores = lazy(() => import('./pages/Competidores'));
+const MapaFlujosCOMEX = lazy(() => import('./pages/MapaFlujosCOMEX'));
 
 function ProtectedRoute({ children, module }: { children: React.ReactNode; module?: string }) {
   const { user, loading, hasModule } = useAuth();
@@ -102,6 +107,12 @@ export default function App() {
         {/* Inteligencia Comercial Beta */}
         <Route path="/inteligencia/dashboard" element={<ProtectedRoute module="inteligencia_comercial"><Suspense fallback={LazyFallback}><InteligenciaComercial /></Suspense></ProtectedRoute>} />
         <Route path="/inteligencia/mapa" element={<ProtectedRoute module="mapa_interactivo"><Suspense fallback={LazyFallback}><MapaInteractivo /></Suspense></ProtectedRoute>} />
+
+        {/* COMEX y Competidores */}
+        <Route path="/inteligencia/comex/dashboard" element={<ProtectedRoute module="comex"><Suspense fallback={LazyFallback}><DashboardCOMEX /></Suspense></ProtectedRoute>} />
+        <Route path="/inteligencia/comex/partidas" element={<ProtectedRoute module="comex"><Suspense fallback={LazyFallback}><PartidasArancelarias /></Suspense></ProtectedRoute>} />
+        <Route path="/inteligencia/comex/competidores" element={<ProtectedRoute module="comex"><Suspense fallback={LazyFallback}><Competidores /></Suspense></ProtectedRoute>} />
+        <Route path="/inteligencia/comex/mapa-flujos" element={<ProtectedRoute module="comex"><Suspense fallback={LazyFallback}><MapaFlujosCOMEX /></Suspense></ProtectedRoute>} />
 
         {/* Legacy redirects */}
         <Route path="/cartera" element={<Navigate to="/credito/cartera" replace />} />

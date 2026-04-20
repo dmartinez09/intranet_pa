@@ -327,6 +327,79 @@ class InteligenciaService {
     return res.recordset;
   }
 
+  // Detalle de snapshot - incluye rawPayload del staging si existe
+  async getSnapshotDetail(snapshotId: number): Promise<(IcbSnapshot & { raw_payload?: string | null }) | null> {
+    const exists = await tablesExist();
+    if (!exists) return null;
+
+    const pool = await getDbPool();
+    const res = await pool.request()
+      .input('id', sql.BigInt, snapshotId)
+      .query(`
+        SELECT TOP 1
+          s.snapshot_id,
+          src.source_name, src.source_owner,
+          c.crop_name_standard AS crop_name, c.crop_group,
+          r.department,
+          cat.category_name,
+          s.document_title, s.document_url, s.document_type,
+          s.period_label, s.publication_date, s.capture_date,
+          s.hectares, s.production_value,
+          s.opportunity_score, s.opportunity_level, s.business_note,
+          s.record_hash
+        FROM dbo.icb_fact_agri_market_snapshot s
+        LEFT JOIN dbo.icb_dim_source src ON s.source_id = src.source_id
+        LEFT JOIN dbo.icb_dim_crop c ON s.crop_id = c.crop_id
+        LEFT JOIN dbo.icb_dim_region r ON s.region_id = r.region_id
+        LEFT JOIN dbo.icb_dim_point_category cat ON s.category_id = cat.category_id
+        WHERE s.snapshot_id = @id
+      `);
+    if (res.recordset.length === 0) return null;
+
+    const snap = res.recordset[0] as any;
+
+    // Intenta recuperar raw_payload más reciente con mismo hash
+    if (snap.record_hash) {
+      const raw = await pool.request()
+        .input('cs', sql.NVarChar(64), snap.record_hash)
+        .query(`SELECT TOP 1 raw_payload FROM dbo.icb_stg_raw_document WHERE checksum = @cs ORDER BY captured_at DESC`);
+      snap.raw_payload = raw.recordset[0]?.raw_payload || null;
+    }
+
+    return snap as IcbSnapshot & { raw_payload?: string | null };
+  }
+
+  // Top oportunidades destacadas (score >= threshold)
+  async getTopOpportunities(limit = 10, minScore = 70): Promise<IcbSnapshot[]> {
+    const exists = await tablesExist();
+    if (!exists) return [];
+
+    const pool = await getDbPool();
+    const capLimit = Math.min(Math.max(limit, 1), 50);
+    const res = await pool.request()
+      .input('min_score', sql.Decimal(6, 2), minScore)
+      .query(`
+        SELECT TOP ${capLimit}
+          s.snapshot_id,
+          src.source_name, src.source_owner,
+          c.crop_name_standard AS crop_name, c.crop_group,
+          r.department,
+          cat.category_name,
+          s.document_title, s.document_url, s.document_type,
+          s.period_label, s.publication_date, s.capture_date,
+          s.hectares, s.production_value,
+          s.opportunity_score, s.opportunity_level, s.business_note
+        FROM dbo.icb_fact_agri_market_snapshot s
+        LEFT JOIN dbo.icb_dim_source src ON s.source_id = src.source_id
+        LEFT JOIN dbo.icb_dim_crop c ON s.crop_id = c.crop_id
+        LEFT JOIN dbo.icb_dim_region r ON s.region_id = r.region_id
+        LEFT JOIN dbo.icb_dim_point_category cat ON s.category_id = cat.category_id
+        WHERE s.opportunity_score >= @min_score
+        ORDER BY s.opportunity_score DESC, s.hectares DESC, s.capture_date DESC
+      `);
+    return res.recordset;
+  }
+
   // Ranking por cultivo con agregación de hectáreas
   async getTopCrops(limit = 10): Promise<Array<{
     crop_name: string; crop_group: string | null; total_hectares: number;

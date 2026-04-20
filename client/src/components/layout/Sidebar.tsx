@@ -27,6 +27,11 @@ import {
   MapPin,
   Sprout,
   Map,
+  Briefcase,
+  Globe,
+  Trophy,
+  Landmark,
+  Share2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { configApi } from '../../services/api';
@@ -165,6 +170,19 @@ const afterAdminModules: NavModule[] = [
     children: [
       { to: '/inteligencia/dashboard', icon: LineChart, label: 'Inteligencia Comercial', module: 'inteligencia_comercial' },
       { to: '/inteligencia/mapa', icon: Map, label: 'Mapa Interactivo', module: 'mapa_interactivo' },
+    ],
+    subGroups: [
+      {
+        id: 'competidores',
+        label: 'Competidores',
+        icon: Briefcase,
+        children: [
+          { to: '/inteligencia/comex/dashboard', icon: Globe, label: 'Dashboard Competidores', module: 'comex' },
+          { to: '/inteligencia/comex/partidas', icon: Landmark, label: 'Partidas Arancelarias', module: 'comex' },
+          { to: '/inteligencia/comex/competidores', icon: Trophy, label: 'Competidores', module: 'comex' },
+          { to: '/inteligencia/comex/mapa-flujos', icon: Share2, label: 'Mapa de Flujos', module: 'comex' },
+        ],
+      },
     ],
   },
 ];
@@ -447,6 +465,53 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
                         <span>{child.label}</span>
                       </NavLink>
                     ))}
+                  </div>
+                )}
+
+                {/* Sub-groups (Competidores, etc.) */}
+                {showExpanded && isOpen && mod.subGroups && (
+                  <div className="mt-0.5 ml-4 pl-3 border-l border-white/10 space-y-0.5">
+                    {mod.subGroups.map((sg) => {
+                      const sgOpen = openModules.has(sg.id);
+                      const sgActive = sg.children.some((c) => location.pathname.startsWith(c.to));
+                      const visibleChildren = sg.children.filter(c => canSee(c.module));
+                      if (visibleChildren.length === 0) return null;
+                      return (
+                        <div key={sg.id}>
+                          <button
+                            onClick={() => toggleModule(sg.id)}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200
+                              ${sgActive
+                                ? 'text-white bg-white/5'
+                                : 'text-brand-300 hover:text-white hover:bg-white/5'}`}
+                          >
+                            <sg.icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="flex-1 text-left">{sg.label}</span>
+                            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${sgOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                          {sgOpen && (
+                            <div className="mt-0.5 ml-3 pl-3 border-l border-white/5 space-y-0.5">
+                              {visibleChildren.map((child) => (
+                                <NavLink
+                                  key={child.to}
+                                  to={child.to}
+                                  className={({ isActive }) =>
+                                    `flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] transition-all duration-200
+                                    ${isActive
+                                      ? 'text-white bg-brand-600/30 font-medium'
+                                      : 'text-brand-300/80 hover:text-white hover:bg-white/5'}`
+                                  }
+                                  onClick={() => isMobile && onMobileClose?.()}
+                                >
+                                  <child.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                  <span>{child.label}</span>
+                                </NavLink>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
