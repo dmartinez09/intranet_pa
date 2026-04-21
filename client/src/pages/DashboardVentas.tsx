@@ -66,10 +66,11 @@ export default function DashboardVentas() {
   const [ventasFamilia, setVentasFamilia] = useState<any[]>([]);
   const [ventasDiarias, setVentasDiarias] = useState<any[]>([]);
   const [ventasVendedor, setVentasVendedor] = useState<any[]>([]);
-  const [detalleData, setDetalleData] = useState<{ rows: any[]; total_rows: number; returned: number } | null>(null);
+  const [detalleData, setDetalleData] = useState<any | null>(null);
   const [detalleLoading, setDetalleLoading] = useState(false);
   const [detalleSearch, setDetalleSearch] = useState('');
-  const [onlyAnomalias, setOnlyAnomalias] = useState(false);
+  const [filtroSeveridad, setFiltroSeveridad] = useState<'todas' | 'alta' | 'media' | 'baja'>('todas');
+  const [filtroCodigo, setFiltroCodigo] = useState<string>('');
   const [detallePage, setDetallePage] = useState(1);
   const [lastParams, setLastParams] = useState<any>(null);
   const [opcionesFiltro, setOpcionesFiltro] = useState<any>(null);
@@ -159,7 +160,8 @@ export default function DashboardVentas() {
     const headers = [
       'Fecha','N SAP','Tipo Doc','División','Maestro','RUC','Cliente','Grupo',
       'Vendedor','Cód Vend','Zona','Dpto Despacho','Familia','SubFamilia','Ingr. Activo',
-      'Cantidad','Venta USD','Costo','Ganancia','Gan %','Margen Unit','% Gan Unit','Alerta',
+      'Cantidad','Venta USD','Costo','Ganancia','Gan %','Moneda','TC','Severidad',
+      'Códigos Error','Motivo',
     ];
     const csv = [headers.join(';')]
       .concat(rows.map(r => [
@@ -168,8 +170,10 @@ export default function DashboardVentas() {
         `"${(r.vendedor||'').replace(/"/g,'""')}"`, r.codigo_vendedor, r.zona, r.departamento_despacho,
         r.familia, r.sub_familia, r.ingrediente_activo,
         r.cantidad, r.valor_venta_dolares, r.costo_total, r.ganancia,
-        r.ganancia_pct, r.margen_unitario, r.porcentaje_ganancia_unitario,
-        r.alerta_signo ? 'SIGNO_COSTO_INCONSISTENTE' : '',
+        r.ganancia_pct, r.moneda_emision, r.tipo_de_cambio,
+        r.severidad_max,
+        (r.errores || []).map((e: any) => e.code).join('|'),
+        (r.errores || []).map((e: any) => e.label).join(' / '),
       ].join(';'))).join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -184,8 +188,9 @@ export default function DashboardVentas() {
 
   function filteredDetalle(): any[] {
     if (!detalleData?.rows) return [];
-    let rows = detalleData.rows;
-    if (onlyAnomalias) rows = rows.filter(r => r.alerta_signo);
+    let rows = detalleData.rows as any[];
+    if (filtroSeveridad !== 'todas') rows = rows.filter(r => r.severidad_max === filtroSeveridad);
+    if (filtroCodigo) rows = rows.filter(r => (r.errores || []).some((e: any) => e.code === filtroCodigo));
     if (detalleSearch.trim()) {
       const q = detalleSearch.toLowerCase();
       rows = rows.filter(r =>
@@ -545,11 +550,11 @@ export default function DashboardVentas() {
         <div className="chart-container">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-base font-bold text-gray-900 mb-1">Detalle de Transacciones — Auditoría</h3>
+              <h3 className="text-base font-bold text-gray-900 mb-1">Inconsistencias Detectadas — Auditoría SAP</h3>
               <p className="text-xs text-gray-400">
                 {detalleData
-                  ? `Mostrando ${filteredDetalle().length} de ${detalleData.total_rows.toLocaleString('es-PE')} registros (límite ${detalleData.returned.toLocaleString('es-PE')}) — incluye costo, ganancia y alertas de signo`
-                  : 'Aplique filtros arriba para cargar el detalle por transacción'}
+                  ? `${detalleData.total_errores?.toLocaleString('es-PE') ?? 0} filas con errores de ${detalleData.total_rows?.toLocaleString('es-PE') ?? 0} analizadas · mostrando ${filteredDetalle().length} tras filtros`
+                  : 'Aplique filtros arriba para cargar el detalle de inconsistencias'}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -562,15 +567,26 @@ export default function DashboardVentas() {
                   className="input-field text-sm pl-3 w-64"
                 />
               </div>
-              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none bg-amber-50 text-amber-700 px-2.5 py-1.5 rounded-lg border border-amber-200">
-                <input
-                  type="checkbox"
-                  checked={onlyAnomalias}
-                  onChange={e => { setOnlyAnomalias(e.target.checked); setDetallePage(1); }}
-                  className="rounded text-amber-600"
-                />
-                <span className="font-semibold">Solo alertas de signo</span>
-              </label>
+              <select
+                value={filtroSeveridad}
+                onChange={e => { setFiltroSeveridad(e.target.value as any); setDetallePage(1); }}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+              >
+                <option value="todas">Todas las severidades</option>
+                <option value="alta">Solo severidad ALTA</option>
+                <option value="media">Solo severidad MEDIA</option>
+                <option value="baja">Solo severidad BAJA</option>
+              </select>
+              <select
+                value={filtroCodigo}
+                onChange={e => { setFiltroCodigo(e.target.value); setDetallePage(1); }}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+              >
+                <option value="">Todos los motivos</option>
+                {detalleData?.etiquetas_errores && Object.entries(detalleData.etiquetas_errores).map(([code, meta]: any) => (
+                  <option key={code} value={code}>{code} — {meta.label.slice(0, 40)}</option>
+                ))}
+              </select>
               <button onClick={exportDetalleExcel}
                 disabled={!detalleData?.rows?.length}
                 className="btn-secondary text-xs">
@@ -595,91 +611,159 @@ export default function DashboardVentas() {
             const PAGE_SIZE = 100;
             const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
             const pageRows = all.slice((detallePage - 1) * PAGE_SIZE, detallePage * PAGE_SIZE);
-            const totVenta = all.reduce((s, r) => s + (r.valor_venta_dolares || 0), 0);
-            const totCosto = all.reduce((s, r) => s + (r.costo_total || 0), 0);
-            const totGan = all.reduce((s, r) => s + (r.ganancia || 0), 0);
-            const anomalias = all.filter(r => r.alerta_signo).length;
+            const totVenta = all.reduce((s: number, r: any) => s + (r.valor_venta_dolares || 0), 0);
+            const totCosto = all.reduce((s: number, r: any) => s + (r.costo_total || 0), 0);
+            const totGan = all.reduce((s: number, r: any) => s + (r.ganancia || 0), 0);
+
+            const ref = detalleData.referencia_finanzas;
+            const intra = detalleData.totales_intranet;
+            const diffVenta = ref && intra ? (intra.venta_usd - ref.venta_usd) : 0;
+            const diffGan = ref && intra ? (intra.ganancia_usd - ref.ganancia_usd) : 0;
+            const conteo = detalleData.conteo_por_tipo || {};
+            const etiquetas = detalleData.etiquetas_errores || {};
+            const sevColor: Record<string,string> = {
+              alta: 'bg-red-100 text-red-800 border-red-300',
+              media: 'bg-amber-100 text-amber-800 border-amber-300',
+              baja: 'bg-blue-100 text-blue-800 border-blue-300',
+            };
 
             return (
               <>
-                {anomalias > 0 && !onlyAnomalias && (
-                  <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-                    ⚠️ <strong>{anomalias}</strong> transacciones con signo de costo inconsistente vs. venta (probables errores de origen SAP).
-                    Activa el checkbox <strong>"Solo alertas de signo"</strong> para aislarlas.
+                {/* BANNER RECONCILIACIÓN vs CIERRE FINANZAS */}
+                {ref && intra && (
+                  <div className="mb-4 rounded-xl border border-gray-200 bg-gradient-to-r from-brand-50 to-amber-50 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-900">Reconciliación KPIs vs. Cierre Finanzas</h4>
+                        <p className="text-[11px] text-gray-500">Referencia: cierre {ref.periodo} presentado a Directorio y C-Suite</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                      <div className="bg-white rounded-lg p-3 border border-gray-100">
+                        <p className="text-[10px] text-gray-500 uppercase">Venta USD</p>
+                        <p className="font-bold text-gray-900">{formatUSD(intra.venta_usd)}</p>
+                        <p className="text-[10px] text-gray-400">Finanzas: {formatUSD(ref.venta_usd)}</p>
+                        <p className={`text-[10px] font-semibold ${Math.abs(diffVenta) > 1000 ? 'text-red-600' : 'text-brand-700'}`}>
+                          Δ {formatUSD(diffVenta)}
+                        </p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-gray-100">
+                        <p className="text-[10px] text-gray-500 uppercase">Costo USD</p>
+                        <p className="font-bold text-gray-900">{formatUSD(intra.costo_usd)}</p>
+                        <p className="text-[10px] text-gray-400">Finanzas: {formatUSD(ref.costo_usd)}</p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-gray-100">
+                        <p className="text-[10px] text-gray-500 uppercase">Ganancia USD</p>
+                        <p className={`font-bold ${intra.ganancia_usd < 0 ? 'text-red-600' : 'text-gray-900'}`}>{formatUSD(intra.ganancia_usd)}</p>
+                        <p className="text-[10px] text-gray-400">Finanzas: {formatUSD(ref.ganancia_usd)}</p>
+                        <p className={`text-[10px] font-semibold ${Math.abs(diffGan) > 1000 ? 'text-red-600' : 'text-brand-700'}`}>
+                          Δ {formatUSD(diffGan)}
+                        </p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-gray-100">
+                        <p className="text-[10px] text-gray-500 uppercase">Margen</p>
+                        <p className={`font-bold ${intra.margen_pct < 0 ? 'text-red-600' : 'text-gray-900'}`}>{(intra.margen_pct || 0).toFixed(2)}%</p>
+                        <p className="text-[10px] text-gray-400">Finanzas: {ref.margen_pct.toFixed(2)}%</p>
+                      </div>
+                    </div>
                   </div>
                 )}
+
+                {/* CONTEO POR TIPO DE ERROR */}
+                <div className="mb-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {Object.entries(conteo).filter(([, n]: any) => n > 0).map(([code, n]: any) => {
+                    const meta = etiquetas[code] || { severity: 'baja', label: code };
+                    return (
+                      <button key={code}
+                        onClick={() => { setFiltroCodigo(filtroCodigo === code ? '' : code); setDetallePage(1); }}
+                        className={`text-left rounded-lg border p-2 hover:shadow-sm transition ${sevColor[meta.severity]} ${filtroCodigo === code ? 'ring-2 ring-offset-1 ring-brand-500' : ''}`}>
+                        <p className="text-[10px] font-mono opacity-70">{code}</p>
+                        <p className="text-lg font-extrabold leading-none">{n}</p>
+                        <p className="text-[10px] mt-1 leading-tight">{meta.label.slice(0, 60)}</p>
+                      </button>
+                    );
+                  })}
+                </div>
 
                 <div className="overflow-x-auto border border-gray-100 rounded-lg">
                   <table className="table-modern text-xs">
                     <thead>
                       <tr>
+                        <th>Severidad</th>
+                        <th>Motivo(s)</th>
                         <th>Fecha</th>
                         <th>N SAP</th>
                         <th>Tipo Doc</th>
                         <th>División</th>
-                        <th>Maestro</th>
                         <th>RUC</th>
                         <th>Cliente</th>
-                        <th>Grupo</th>
                         <th>Vendedor</th>
-                        <th>Zona</th>
-                        <th>Dpto Despacho</th>
+                        <th>Dpto</th>
                         <th>Familia</th>
-                        <th>Sub Familia</th>
                         <th>Ingr. Activo</th>
                         <th className="text-right">Cantidad</th>
                         <th className="text-right">Venta USD</th>
                         <th className="text-right">Costo</th>
                         <th className="text-right">Ganancia</th>
                         <th className="text-right">Gan %</th>
-                        <th>Alerta</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {pageRows.map((r, i) => (
-                        <tr key={`${r.numero_sap}-${i}`}
-                          className={r.alerta_signo ? 'bg-amber-50' : ''}>
+                      {pageRows.map((r: any, i: number) => (
+                        <tr key={`${r.numero_sap}-${i}`} className={r.severidad_max === 'alta' ? 'bg-red-50' : r.severidad_max === 'media' ? 'bg-amber-50' : ''}>
+                          <td>
+                            <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${sevColor[r.severidad_max] || ''}`}>
+                              {r.severidad_max}
+                            </span>
+                          </td>
+                          <td className="max-w-[280px]">
+                            <div className="flex flex-wrap gap-1">
+                              {(r.errores || []).map((e: any, j: number) => (
+                                <span key={j}
+                                  title={e.label}
+                                  className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-mono border ${sevColor[e.severity] || ''}`}>
+                                  {e.code}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="text-[10px] text-gray-500 mt-1 leading-tight">
+                              {(r.errores || []).map((e: any) => e.label).join(' · ')}
+                            </div>
+                          </td>
                           <td className="whitespace-nowrap">
                             {r.fecha_emision ? new Date(r.fecha_emision).toLocaleDateString('es-PE') : '—'}
                           </td>
                           <td className="font-mono text-[11px]">{r.numero_sap || '—'}</td>
                           <td className="whitespace-nowrap">{r.tipo_documento || '—'}</td>
                           <td>{r.division || '—'}</td>
-                          <td>{r.maestro_tipo || '—'}</td>
                           <td className="font-mono text-[11px]">{r.ruc_cliente || '—'}</td>
-                          <td className="max-w-[180px] truncate" title={r.cliente || ''}>{r.cliente || '—'}</td>
-                          <td>{r.grupo_cliente || '—'}</td>
+                          <td className="max-w-[160px] truncate" title={r.cliente || ''}>{r.cliente || '—'}</td>
                           <td className="max-w-[140px] truncate" title={r.vendedor || ''}>{r.vendedor || '—'}</td>
-                          <td>{r.zona || '—'}</td>
                           <td>{r.departamento_despacho || '—'}</td>
                           <td className="max-w-[120px] truncate" title={r.familia || ''}>{r.familia || '—'}</td>
-                          <td className="max-w-[120px] truncate" title={r.sub_familia || ''}>{r.sub_familia || '—'}</td>
                           <td className="max-w-[120px] truncate" title={r.ingrediente_activo || ''}>{r.ingrediente_activo || '—'}</td>
                           <td className="text-right font-mono">{Number(r.cantidad || 0).toLocaleString('es-PE')}</td>
                           <td className={`text-right font-mono ${r.valor_venta_dolares < 0 ? 'text-red-600' : ''}`}>
                             {formatUSD(r.valor_venta_dolares)}
                           </td>
-                          <td className={`text-right font-mono ${r.alerta_signo ? 'text-amber-700 font-bold' : ''}`}>
-                            {formatUSD(r.costo_total)}
-                          </td>
+                          <td className="text-right font-mono">{formatUSD(r.costo_total)}</td>
                           <td className={`text-right font-mono ${r.ganancia < 0 ? 'text-red-600' : 'text-brand-700'}`}>
                             {formatUSD(r.ganancia)}
                           </td>
                           <td className="text-right font-mono">{Number(r.ganancia_pct || 0).toFixed(2)}%</td>
-                          <td>
-                            {r.alerta_signo && (
-                              <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                                ⚠ signo
-                              </span>
-                            )}
-                          </td>
                         </tr>
                       ))}
+                      {pageRows.length === 0 && (
+                        <tr>
+                          <td colSpan={17} className="text-center py-8 text-gray-400">
+                            Sin inconsistencias para los filtros actuales ✓
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                     <tfoot className="bg-gray-50 font-semibold">
                       <tr>
-                        <td colSpan={14}>Totales ({all.length} registros filtrados)</td>
-                        <td></td>
+                        <td colSpan={13}>Totales ({all.length} filas con errores)</td>
                         <td className="text-right font-mono">{formatUSD(totVenta)}</td>
                         <td className="text-right font-mono">{formatUSD(totCosto)}</td>
                         <td className={`text-right font-mono ${totGan < 0 ? 'text-red-600' : 'text-brand-700'}`}>
@@ -688,7 +772,6 @@ export default function DashboardVentas() {
                         <td className="text-right font-mono">
                           {totVenta !== 0 ? ((totGan / totVenta) * 100).toFixed(2) : '0.00'}%
                         </td>
-                        <td></td>
                       </tr>
                     </tfoot>
                   </table>

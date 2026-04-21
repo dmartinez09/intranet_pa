@@ -564,26 +564,85 @@ export const dbService = {
     }).sort((a, b) => b.total_venta_usd - a.total_venta_usd);
   },
 
-  // Detalle de transacciones para auditoría / revisión de errores de origen
-  // Expone todas las columnas clave (incluye costo, ganancia, signos, tipo doc)
+  // Detalle de transacciones para auditoría / revisión de errores de origen SAP.
+  // Aplica 11 reglas de validación y retorna SOLO las filas con inconsistencias.
+  // Cada fila lleva `errores: { code, label, severity }[]` explicando el motivo.
   async getVentasDetalle(filtros: any) {
     const ventas = await this.getVentas(filtros);
-    // Limita a 5000 filas para evitar payload enorme
-    const LIMIT = Math.min(Math.max(Number(filtros?.limit) || 2000, 1), 5000);
-    const limited = ventas.slice(0, LIMIT);
 
-    return {
-      total_rows: ventas.length,
-      returned: limited.length,
-      limit: LIMIT,
-      rows: limited.map((v: any) => ({
+    // Totales globales (sobre TODAS las filas) para reconciliación con Finanzas
+    const totVenta = ventas.reduce((s: number, v: any) => s + (Number(v.valor_venta_dolares) || 0), 0);
+    const totCosto = ventas.reduce((s: number, v: any) => s + (Number(v.costo_total) || 0), 0);
+    const totGanancia = ventas.reduce((s: number, v: any) => s + (Number(v.ganancia) || 0), 0);
+
+    type ErrorCode =
+      | 'SIGNO_COSTO' | 'COSTO_CERO' | 'VENTA_CERO' | 'MARGEN_NEGATIVO'
+      | 'MARGEN_EXCESIVO' | 'SIN_VENDEDOR' | 'SIN_RUC' | 'SIN_IA'
+      | 'DPTO_VACIO' | 'MONEDA_INCONSISTENTE' | 'CANTIDAD_CERO';
+
+    const ERROR_LABELS: Record<ErrorCode, { label: string; severity: 'alta' | 'media' | 'baja' }> = {
+      SIGNO_COSTO:          { label: 'Signo de costo inconsistente vs. venta (NC mal cargada en SAP)', severity: 'alta' },
+      COSTO_CERO:           { label: 'Venta > 0 pero costo = 0 (producto sin costeo SAP)',             severity: 'alta' },
+      VENTA_CERO:           { label: 'Cantidad > 0 pero venta = 0 (muestra mal categorizada)',          severity: 'media' },
+      MARGEN_NEGATIVO:      { label: 'Venta debajo del costo (ganancia negativa)',                      severity: 'alta' },
+      MARGEN_EXCESIVO:      { label: 'Margen > 80% (revisar costo faltante en SAP)',                    severity: 'media' },
+      SIN_VENDEDOR:         { label: 'Vendedor vacío o no asignado',                                    severity: 'media' },
+      SIN_RUC:              { label: 'Cliente sin RUC registrado',                                      severity: 'alta' },
+      SIN_IA:               { label: 'AGROCHEM sin Ingrediente Activo (maestro producto incompleto)',   severity: 'baja' },
+      DPTO_VACIO:           { label: 'Departamento de despacho vacío',                                  severity: 'baja' },
+      MONEDA_INCONSISTENTE: { label: 'Emisión PEN sin tipo de cambio (conversión USD dudosa)',          severity: 'media' },
+      CANTIDAD_CERO:        { label: 'Venta > 0 pero cantidad y unidades = 0',                          severity: 'media' },
+    };
+
+    const rowsConErrores: any[] = [];
+    const conteoErrores: Record<ErrorCode, number> = {
+      SIGNO_COSTO: 0, COSTO_CERO: 0, VENTA_CERO: 0, MARGEN_NEGATIVO: 0,
+      MARGEN_EXCESIVO: 0, SIN_VENDEDOR: 0, SIN_RUC: 0, SIN_IA: 0,
+      DPTO_VACIO: 0, MONEDA_INCONSISTENTE: 0, CANTIDAD_CERO: 0,
+    };
+
+    for (const v of ventas) {
+      const venta = Number(v.valor_venta_dolares) || 0;
+      const costo = Number(v.costo_total) || 0;
+      const ganancia = Number(v.ganancia) || 0;
+      const cantKL = Number(v.cantidad_kg_lt) || 0;
+      const cantUN = Number(v.unidades_presentacion) || 0;
+      const tc = Number(v.tipo_de_cambio) || 0;
+      const division = String(v.division || '').toUpperCase();
+      const tipoDoc = String(v.tipo_documento || '');
+      const moneda = String(v.moneda_emision || '');
+      const esNC = tipoDoc.includes('07') || tipoDoc.toUpperCase().includes('CR');
+      const esND = tipoDoc.includes('08');
+      const esDI = tipoDoc.includes('DI');
+
+      const errores: { code: ErrorCode; label: string; severity: string }[] = [];
+      const push = (c: ErrorCode) => {
+        errores.push({ code: c, ...ERROR_LABELS[c] });
+        conteoErrores[c]++;
+      };
+
+      if (!esDI && ((venta < 0 && costo > 0) || (venta > 0 && costo < 0))) push('SIGNO_COSTO');
+      if (venta > 10 && costo === 0 && !esDI) push('COSTO_CERO');
+      if ((cantKL > 0 || cantUN > 0) && venta === 0 && !esDI) push('VENTA_CERO');
+      if (venta > 0 && ganancia < 0 && !esNC) push('MARGEN_NEGATIVO');
+      if (venta > 100 && ganancia > 0 && (ganancia / venta) > 0.80) push('MARGEN_EXCESIVO');
+      if (!v.vendedor && !esDI && !esNC) push('SIN_VENDEDOR');
+      if (!v.ruc_cliente || String(v.ruc_cliente).trim() === '') push('SIN_RUC');
+      if (division === 'AGROCHEM' && (!v.ingrediente_activo || String(v.ingrediente_activo).trim() === '')) push('SIN_IA');
+      if (venta > 0 && (!v.departamento_despacho || String(v.departamento_despacho).trim() === '')) push('DPTO_VACIO');
+      if (moneda === 'PEN' && tc === 0) push('MONEDA_INCONSISTENTE');
+      if (venta > 0 && cantKL === 0 && cantUN === 0 && !esDI && !esND && !esNC) push('CANTIDAD_CERO');
+
+      if (errores.length === 0) continue;
+
+      rowsConErrores.push({
         fecha_emision: v.fecha_emision,
         numero_sap: v.numero_sap,
         tipo_documento: v.tipo_documento,
         division: v.division,
         maestro_tipo: v.maestro_tipo,
         ruc_cliente: v.ruc_cliente,
-        cliente: v.cliente,
+        cliente: v.razon_social_cliente || v.cliente,
         grupo_cliente: v.grupo_cliente,
         vendedor: v.vendedor,
         codigo_vendedor: v.codigo_vendedor,
@@ -592,17 +651,50 @@ export const dbService = {
         familia: v.familia,
         sub_familia: v.sub_familia,
         ingrediente_activo: v.ingrediente_activo,
-        cantidad: v.cantidad,
-        valor_venta_dolares: Number(v.valor_venta_dolares) || 0,
-        costo_total: Number(v.costo_total) || 0,
-        ganancia: Number(v.ganancia) || 0,
+        cantidad: cantKL || cantUN || 0,
+        valor_venta_dolares: venta,
+        costo_total: costo,
+        ganancia,
         ganancia_pct: Number(v.ganancia_pct) || 0,
-        margen_unitario: Number(v.margen_unitario) || 0,
-        porcentaje_ganancia_unitario: Number(v.porcentaje_ganancia_unitario) || 0,
-        // Bandera de alerta: costo con signo contrario al de venta (típico en NC mal cargadas)
-        alerta_signo: (Number(v.valor_venta_dolares) < 0 && Number(v.costo_total) > 0) ||
-                      (Number(v.valor_venta_dolares) > 0 && Number(v.costo_total) < 0),
-      })),
+        moneda_emision: moneda,
+        tipo_de_cambio: tc,
+        errores,
+        severidad_max: errores.some(e => e.severity === 'alta') ? 'alta'
+                     : errores.some(e => e.severity === 'media') ? 'media' : 'baja',
+      });
+    }
+
+    // Orden: severidad alta primero, luego por valor absoluto de venta descendente
+    const rank: Record<string, number> = { alta: 0, media: 1, baja: 2 };
+    rowsConErrores.sort((a, b) =>
+      (rank[a.severidad_max] - rank[b.severidad_max]) ||
+      (Math.abs(b.valor_venta_dolares) - Math.abs(a.valor_venta_dolares))
+    );
+
+    const LIMIT = Math.min(Math.max(Number(filtros?.limit) || 5000, 1), 10000);
+    const limited = rowsConErrores.slice(0, LIMIT);
+
+    // Referencia cierre Finanzas Marzo 2026 Perú (proporcionado por Gerencia de Finanzas)
+    const REFERENCIA_FINANZAS = {
+      periodo: 'MARZO 2026', venta_usd: 1316793.64, costo_usd: 1056691.70,
+      ganancia_usd: 260101.94, margen_pct: 19.75, transacciones: 1907, clientes: 264,
+    };
+
+    return {
+      total_rows: ventas.length,
+      total_errores: rowsConErrores.length,
+      returned: limited.length,
+      limit: LIMIT,
+      conteo_por_tipo: conteoErrores,
+      etiquetas_errores: ERROR_LABELS,
+      totales_intranet: {
+        venta_usd: Math.round(totVenta * 100) / 100,
+        costo_usd: Math.round(totCosto * 100) / 100,
+        ganancia_usd: Math.round(totGanancia * 100) / 100,
+        margen_pct: totVenta > 0 ? Math.round((totGanancia / totVenta) * 10000) / 100 : 0,
+      },
+      referencia_finanzas: REFERENCIA_FINANZAS,
+      rows: limited,
     };
   },
 
