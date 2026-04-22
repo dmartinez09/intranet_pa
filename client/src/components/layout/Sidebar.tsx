@@ -74,9 +74,9 @@ const grupoChildren = (base: string): SubGroup[] => [
     label: 'Agroindustrias',
     icon: Store,
     children: [
-      { to: `/${base}/agroindustrias/dashboard`, icon: TrendingUp, label: 'Dashboard' },
-      { to: `/${base}/agroindustrias/presupuesto`, icon: Target, label: 'Presupuesto' },
-      { to: `/${base}/agroindustrias/avance-comercial`, icon: Users, label: 'Avance Comercial' },
+      { to: `/${base}/agroindustrias/dashboard`, icon: TrendingUp, label: 'Dashboard', module: 'venta_rc_agro' },
+      { to: `/${base}/agroindustrias/presupuesto`, icon: Target, label: 'Presupuesto', module: 'venta_rc_agro' },
+      { to: `/${base}/agroindustrias/avance-comercial`, icon: Users, label: 'Avance Comercial', module: 'venta_rc_agro' },
     ],
   },
   {
@@ -84,9 +84,9 @@ const grupoChildren = (base: string): SubGroup[] => [
     label: 'Dist. Sierra / Selva',
     icon: Mountain,
     children: [
-      { to: `/${base}/sierra-selva/dashboard`, icon: TrendingUp, label: 'Dashboard' },
-      { to: `/${base}/sierra-selva/presupuesto`, icon: Target, label: 'Presupuesto' },
-      { to: `/${base}/sierra-selva/avance-comercial`, icon: Users, label: 'Avance Comercial' },
+      { to: `/${base}/sierra-selva/dashboard`, icon: TrendingUp, label: 'Dashboard', module: 'venta_rc_sierra_selva' },
+      { to: `/${base}/sierra-selva/presupuesto`, icon: Target, label: 'Presupuesto', module: 'venta_rc_sierra_selva' },
+      { to: `/${base}/sierra-selva/avance-comercial`, icon: Users, label: 'Avance Comercial', module: 'venta_rc_sierra_selva' },
     ],
   },
   {
@@ -94,9 +94,9 @@ const grupoChildren = (base: string): SubGroup[] => [
     label: 'Dist. Costa',
     icon: Truck,
     children: [
-      { to: `/${base}/costa/dashboard`, icon: TrendingUp, label: 'Dashboard' },
-      { to: `/${base}/costa/presupuesto`, icon: Target, label: 'Presupuesto' },
-      { to: `/${base}/costa/avance-comercial`, icon: Users, label: 'Avance Comercial' },
+      { to: `/${base}/costa/dashboard`, icon: TrendingUp, label: 'Dashboard', module: 'venta_rc_costa' },
+      { to: `/${base}/costa/presupuesto`, icon: Target, label: 'Presupuesto', module: 'venta_rc_costa' },
+      { to: `/${base}/costa/avance-comercial`, icon: Users, label: 'Avance Comercial', module: 'venta_rc_costa' },
     ],
   },
   {
@@ -104,9 +104,9 @@ const grupoChildren = (base: string): SubGroup[] => [
     label: 'Online',
     icon: Package,
     children: [
-      { to: `/${base}/online/dashboard`, icon: TrendingUp, label: 'Dashboard' },
-      { to: `/${base}/online/presupuesto`, icon: Target, label: 'Presupuesto' },
-      { to: `/${base}/online/avance-comercial`, icon: Users, label: 'Avance Comercial' },
+      { to: `/${base}/online/dashboard`, icon: TrendingUp, label: 'Dashboard', module: 'venta_rc_online' },
+      { to: `/${base}/online/presupuesto`, icon: Target, label: 'Presupuesto', module: 'venta_rc_online' },
+      { to: `/${base}/online/avance-comercial`, icon: Users, label: 'Avance Comercial', module: 'venta_rc_online' },
     ],
   },
 ];
@@ -128,7 +128,7 @@ const navModules: NavModule[] = [
     id: 'venta_rc',
     icon: LineChart,
     label: 'Venta RC',
-    module: '__admin_only__',
+    module: 'venta_rc',
     subGroups: grupoChildren('venta-rc'),
   },
   {
@@ -192,11 +192,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, isMobile, onM
   const canSee = (mod?: string) => {
     if (!mod) return true;
     if (mod === '__admin_only__') return isAdmin;
+    // Los sub-módulos venta_rc_* heredan del umbrella venta_rc
+    if (mod.startsWith('venta_rc_') && hasModule('venta_rc')) return true;
     return hasModule(mod);
   };
   const moduleVisible = (m: NavModule) => {
     if (isAdmin) return true;
     if (m.children) return m.children.some(c => canSee(c.module || m.module));
+    if (m.subGroups) return m.subGroups.some(sg => sg.children.some(c => canSee(c.module)));
     return canSee(m.module);
   };
   const location = useLocation();

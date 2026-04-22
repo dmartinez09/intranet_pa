@@ -44,6 +44,13 @@ const MODULE_GROUPS: { group: string; icon: any; modules: { code: string; label:
     { code: 'presupuesto', label: 'Presupuesto' },
     { code: 'avance_comercial', label: 'Avance Comercial' },
   ]},
+  { group: 'Venta RC', icon: Target, modules: [
+    { code: 'venta_rc', label: 'Venta RC (todos los grupos)' },
+    { code: 'venta_rc_agro', label: 'Agroindustrias' },
+    { code: 'venta_rc_sierra_selva', label: 'Dist. Sierra / Selva' },
+    { code: 'venta_rc_costa', label: 'Dist. Costa' },
+    { code: 'venta_rc_online', label: 'Online' },
+  ]},
   { group: 'Crédito', icon: DollarSign, modules: [
     { code: 'cartera', label: 'Cartera y Recaudo' },
     { code: 'estado_cuenta', label: 'Estado de Cuenta' },

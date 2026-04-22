@@ -5,7 +5,7 @@ import { requireModule } from '../middleware/rbac';
 
 const router = Router();
 
-router.use(authenticateToken, requireModule('venta_rc'));
+router.use(authenticateToken, requireModule('venta_rc', 'venta_rc_agro', 'venta_rc_sierra_selva', 'venta_rc_costa', 'venta_rc_online'));
 
 router.get('/kpis', ventaRCController.getKPIs);
 router.get('/por-cliente', ventaRCController.getPorCliente);

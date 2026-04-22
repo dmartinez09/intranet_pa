@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth, type AuthUser } from './context/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import Login from './pages/Login';
@@ -32,6 +32,10 @@ const MapaFlujosCOMEX = lazy(() => import('./pages/MapaFlujosCOMEX'));
 const MODULE_ROUTES: Array<{ module: string; path: string }> = [
   { module: 'dashboard_ventas', path: '/ventas/dashboard' },
   { module: 'venta_rc', path: '/venta-rc/agroindustrias/dashboard' },
+  { module: 'venta_rc_agro', path: '/venta-rc/agroindustrias/dashboard' },
+  { module: 'venta_rc_sierra_selva', path: '/venta-rc/sierra-selva/dashboard' },
+  { module: 'venta_rc_costa', path: '/venta-rc/costa/dashboard' },
+  { module: 'venta_rc_online', path: '/venta-rc/online/dashboard' },
   { module: 'cartera', path: '/credito/cartera' },
   { module: 'facturacion', path: '/logistica/comprobantes' },
   { module: 'letras', path: '/logistica/letras' },
@@ -40,6 +44,14 @@ const MODULE_ROUTES: Array<{ module: string; path: string }> = [
   { module: 'mapa_interactivo', path: '/inteligencia/mapa' },
   { module: 'comex', path: '/inteligencia/comex/dashboard' },
 ];
+
+// Mapping grupo URL → venta_rc submódulo granular
+const VENTA_RC_GRUPO_MODULE: Record<string, string> = {
+  agroindustrias: 'venta_rc_agro',
+  'sierra-selva': 'venta_rc_sierra_selva',
+  costa: 'venta_rc_costa',
+  online: 'venta_rc_online',
+};
 
 function getDefaultRoute(user: AuthUser | null): string {
   if (!user) return '/login';
@@ -64,7 +76,7 @@ function SinAcceso() {
   );
 }
 
-function ProtectedRoute({ children, module }: { children: React.ReactNode; module?: string }) {
+function ProtectedRoute({ children, module, anyOf }: { children: React.ReactNode; module?: string; anyOf?: string[] }) {
   const { user, loading, hasModule } = useAuth();
 
   if (loading) {
@@ -80,7 +92,16 @@ function ProtectedRoute({ children, module }: { children: React.ReactNode; modul
 
   if (!user) return <Navigate to="/login" replace />;
   if (module && !hasModule(module)) return <Navigate to={getDefaultRoute(user)} replace />;
+  if (anyOf && anyOf.length > 0 && !anyOf.some((m) => hasModule(m))) return <Navigate to={getDefaultRoute(user)} replace />;
   return <>{children}</>;
+}
+
+// Guard wrapper for venta_rc grupo routes: permite umbrella `venta_rc` o el sub-módulo del grupo
+function VentaRCGrupoRoute({ children }: { children: React.ReactNode }) {
+  const { grupo } = useParams<{ grupo: string }>();
+  const grupoMod = grupo ? VENTA_RC_GRUPO_MODULE[grupo] : undefined;
+  const mods = grupoMod ? ['venta_rc', grupoMod] : ['venta_rc'];
+  return <ProtectedRoute anyOf={mods}>{children}</ProtectedRoute>;
 }
 
 const LazyFallback = (
@@ -121,9 +142,9 @@ export default function App() {
         <Route path="/ventas/margenes-zona" element={<ProtectedRoute module="dashboard_ventas"><Suspense fallback={LazyFallback}><VentasMargenesZona /></Suspense></ProtectedRoute>} />
 
         {/* Venta RC module — parameterized by grupo */}
-        <Route path="/venta-rc/:grupo/dashboard" element={<ProtectedRoute module="venta_rc"><DashboardVentaRC /></ProtectedRoute>} />
-        <Route path="/venta-rc/:grupo/presupuesto" element={<ProtectedRoute module="venta_rc"><Suspense fallback={LazyFallback}><PresupuestoRC /></Suspense></ProtectedRoute>} />
-        <Route path="/venta-rc/:grupo/avance-comercial" element={<ProtectedRoute module="venta_rc"><Suspense fallback={LazyFallback}><AvanceComercialRC /></Suspense></ProtectedRoute>} />
+        <Route path="/venta-rc/:grupo/dashboard" element={<VentaRCGrupoRoute><DashboardVentaRC /></VentaRCGrupoRoute>} />
+        <Route path="/venta-rc/:grupo/presupuesto" element={<VentaRCGrupoRoute><Suspense fallback={LazyFallback}><PresupuestoRC /></Suspense></VentaRCGrupoRoute>} />
+        <Route path="/venta-rc/:grupo/avance-comercial" element={<VentaRCGrupoRoute><Suspense fallback={LazyFallback}><AvanceComercialRC /></Suspense></VentaRCGrupoRoute>} />
 
         {/* Legacy redirects for old flat routes */}
         <Route path="/venta-rc/dashboard" element={<Navigate to="/venta-rc/agroindustrias/dashboard" replace />} />
@@ -140,7 +161,7 @@ export default function App() {
 
         {/* Standalone */}
         <Route path="/alertas" element={<ProtectedRoute module="alertas"><Alertas /></ProtectedRoute>} />
-        <Route path="/diccionario" element={<ProtectedRoute module="dashboard_ventas"><Diccionario /></ProtectedRoute>} />
+        <Route path="/diccionario" element={<ProtectedRoute module="diccionario"><Diccionario /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute module="admin"><Admin /></ProtectedRoute>} />
 
         {/* Inteligencia Comercial Beta */}

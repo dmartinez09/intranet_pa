@@ -121,6 +121,7 @@ const MOCK_VENTAS = generateMockVentas(500);
 // ---- Módulos disponibles (catálogo compartido) ----
 export const ALL_MODULES = [
   'dashboard_ventas', 'presupuesto', 'avance_comercial',
+  'venta_rc', 'venta_rc_agro', 'venta_rc_sierra_selva', 'venta_rc_costa', 'venta_rc_online',
   'cartera', 'estado_cuenta',
   'facturacion', 'letras',
   'alertas', 'diccionario',
