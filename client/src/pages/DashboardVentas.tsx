@@ -629,61 +629,99 @@ export default function DashboardVentas() {
 
             return (
               <>
-                {/* BANNER RECONCILIACIÓN vs CIERRE FINANZAS */}
+                {/* RECONCILIACIÓN vs CIERRE FINANZAS */}
                 {ref && intra && (
-                  <div className="mb-4 rounded-xl border border-gray-200 bg-gradient-to-r from-brand-50 to-amber-50 p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-900">Reconciliación KPIs vs. Cierre Finanzas</h4>
-                        <p className="text-[11px] text-gray-500">Referencia: cierre {ref.periodo} presentado a Directorio y C-Suite</p>
-                      </div>
+                  <div className="mb-6 rounded-lg border border-gray-200 bg-white">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <h4 className="text-sm font-semibold text-gray-800">Reconciliación con cierre de Finanzas</h4>
+                      <p className="text-[11px] text-gray-500 mt-0.5">Periodo de referencia: {ref.periodo}</p>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                      <div className="bg-white rounded-lg p-3 border border-gray-100">
-                        <p className="text-[10px] text-gray-500 uppercase">Venta USD</p>
-                        <p className="font-bold text-gray-900">{formatUSD(intra.venta_usd)}</p>
-                        <p className="text-[10px] text-gray-400">Finanzas: {formatUSD(ref.venta_usd)}</p>
-                        <p className={`text-[10px] font-semibold ${Math.abs(diffVenta) > 1000 ? 'text-red-600' : 'text-brand-700'}`}>
-                          Δ {formatUSD(diffVenta)}
-                        </p>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 border border-gray-100">
-                        <p className="text-[10px] text-gray-500 uppercase">Costo USD</p>
-                        <p className="font-bold text-gray-900">{formatUSD(intra.costo_usd)}</p>
-                        <p className="text-[10px] text-gray-400">Finanzas: {formatUSD(ref.costo_usd)}</p>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 border border-gray-100">
-                        <p className="text-[10px] text-gray-500 uppercase">Ganancia USD</p>
-                        <p className={`font-bold ${intra.ganancia_usd < 0 ? 'text-red-600' : 'text-gray-900'}`}>{formatUSD(intra.ganancia_usd)}</p>
-                        <p className="text-[10px] text-gray-400">Finanzas: {formatUSD(ref.ganancia_usd)}</p>
-                        <p className={`text-[10px] font-semibold ${Math.abs(diffGan) > 1000 ? 'text-red-600' : 'text-brand-700'}`}>
-                          Δ {formatUSD(diffGan)}
-                        </p>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 border border-gray-100">
-                        <p className="text-[10px] text-gray-500 uppercase">Margen</p>
-                        <p className={`font-bold ${intra.margen_pct < 0 ? 'text-red-600' : 'text-gray-900'}`}>{(intra.margen_pct || 0).toFixed(2)}%</p>
-                        <p className="text-[10px] text-gray-400">Finanzas: {ref.margen_pct.toFixed(2)}%</p>
-                      </div>
-                    </div>
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-100">
+                          <th className="text-left px-4 py-2 font-semibold text-gray-600 uppercase tracking-wide text-[10px]">Indicador</th>
+                          <th className="text-right px-4 py-2 font-semibold text-gray-600 uppercase tracking-wide text-[10px]">Intranet</th>
+                          <th className="text-right px-4 py-2 font-semibold text-gray-600 uppercase tracking-wide text-[10px]">Finanzas</th>
+                          <th className="text-right px-4 py-2 font-semibold text-gray-600 uppercase tracking-wide text-[10px]">Δ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-gray-50">
+                          <td className="px-4 py-2 text-gray-700">Venta USD</td>
+                          <td className="px-4 py-2 text-right font-medium text-gray-900 tabular-nums">{formatUSD(intra.venta_usd)}</td>
+                          <td className="px-4 py-2 text-right text-gray-500 tabular-nums">{formatUSD(ref.venta_usd)}</td>
+                          <td className={`px-4 py-2 text-right font-medium tabular-nums ${Math.abs(diffVenta) > 1000 ? 'text-red-600' : 'text-gray-500'}`}>{formatUSD(diffVenta)}</td>
+                        </tr>
+                        <tr className="border-b border-gray-50">
+                          <td className="px-4 py-2 text-gray-700">Costo USD</td>
+                          <td className="px-4 py-2 text-right font-medium text-gray-900 tabular-nums">{formatUSD(intra.costo_usd)}</td>
+                          <td className="px-4 py-2 text-right text-gray-500 tabular-nums">{formatUSD(ref.costo_usd)}</td>
+                          <td className={`px-4 py-2 text-right font-medium tabular-nums ${Math.abs(intra.costo_usd - ref.costo_usd) > 1000 ? 'text-red-600' : 'text-gray-500'}`}>{formatUSD(intra.costo_usd - ref.costo_usd)}</td>
+                        </tr>
+                        <tr className="border-b border-gray-50">
+                          <td className="px-4 py-2 text-gray-700">Ganancia USD</td>
+                          <td className={`px-4 py-2 text-right font-medium tabular-nums ${intra.ganancia_usd < 0 ? 'text-red-600' : 'text-gray-900'}`}>{formatUSD(intra.ganancia_usd)}</td>
+                          <td className="px-4 py-2 text-right text-gray-500 tabular-nums">{formatUSD(ref.ganancia_usd)}</td>
+                          <td className={`px-4 py-2 text-right font-medium tabular-nums ${Math.abs(diffGan) > 1000 ? 'text-red-600' : 'text-gray-500'}`}>{formatUSD(diffGan)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2 text-gray-700">Margen</td>
+                          <td className={`px-4 py-2 text-right font-medium tabular-nums ${intra.margen_pct < 0 ? 'text-red-600' : 'text-gray-900'}`}>{(intra.margen_pct || 0).toFixed(2)}%</td>
+                          <td className="px-4 py-2 text-right text-gray-500 tabular-nums">{ref.margen_pct.toFixed(2)}%</td>
+                          <td className={`px-4 py-2 text-right font-medium tabular-nums ${Math.abs((intra.margen_pct || 0) - ref.margen_pct) > 2 ? 'text-red-600' : 'text-gray-500'}`}>{((intra.margen_pct || 0) - ref.margen_pct).toFixed(2)} pts</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 )}
 
-                {/* CONTEO POR TIPO DE ERROR */}
-                <div className="mb-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {Object.entries(conteo).filter(([, n]: any) => n > 0).map(([code, n]: any) => {
-                    const meta = etiquetas[code] || { severity: 'baja', label: code };
-                    return (
-                      <button key={code}
-                        onClick={() => { setFiltroCodigo(filtroCodigo === code ? '' : code); setDetallePage(1); }}
-                        className={`text-left rounded-lg border p-2 hover:shadow-sm transition ${sevColor[meta.severity]} ${filtroCodigo === code ? 'ring-2 ring-offset-1 ring-brand-500' : ''}`}>
-                        <p className="text-[10px] font-mono opacity-70">{code}</p>
-                        <p className="text-lg font-extrabold leading-none">{n}</p>
-                        <p className="text-[10px] mt-1 leading-tight">{meta.label.slice(0, 60)}</p>
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* RESUMEN DE INCONSISTENCIAS POR TIPO */}
+                {Object.entries(conteo).filter(([, n]: any) => n > 0).length > 0 && (
+                  <div className="mb-6 rounded-lg border border-gray-200 bg-white">
+                    <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-gray-800">Resumen de inconsistencias por tipo</h4>
+                      {filtroCodigo && (
+                        <button onClick={() => { setFiltroCodigo(''); setDetallePage(1); }}
+                          className="text-[11px] text-gray-500 hover:text-gray-700 underline">
+                          Limpiar filtro
+                        </button>
+                      )}
+                    </div>
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-100">
+                          <th className="text-left px-4 py-2 font-semibold text-gray-600 uppercase tracking-wide text-[10px]">Código</th>
+                          <th className="text-left px-4 py-2 font-semibold text-gray-600 uppercase tracking-wide text-[10px]">Severidad</th>
+                          <th className="text-left px-4 py-2 font-semibold text-gray-600 uppercase tracking-wide text-[10px]">Descripción</th>
+                          <th className="text-right px-4 py-2 font-semibold text-gray-600 uppercase tracking-wide text-[10px]">Filas</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(conteo)
+                          .filter(([, n]: any) => n > 0)
+                          .sort((a: any, b: any) => b[1] - a[1])
+                          .map(([code, n]: any) => {
+                            const meta = etiquetas[code] || { severity: 'baja', label: code };
+                            const isActive = filtroCodigo === code;
+                            return (
+                              <tr key={code}
+                                onClick={() => { setFiltroCodigo(isActive ? '' : code); setDetallePage(1); }}
+                                className={`border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition ${isActive ? 'bg-brand-50' : ''}`}>
+                                <td className="px-4 py-2 font-mono text-gray-700">{code}</td>
+                                <td className="px-4 py-2">
+                                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${sevColor[meta.severity] || ''}`}>
+                                    {meta.severity}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2 text-gray-600">{meta.label}</td>
+                                <td className="px-4 py-2 text-right font-semibold text-gray-900 tabular-nums">{n.toLocaleString('es-PE')}</td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
                 <div className="overflow-x-auto border border-gray-100 rounded-lg">
                   <table className="table-modern text-xs">

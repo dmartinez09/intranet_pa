@@ -152,7 +152,7 @@ async function buildAndSendForLetra(
     }];
 
     for (const email of matching.filter((e: any) => e.hasAttachments)) {
-      const isFac = (email.tipoDocumento || '').toUpperCase() === 'FAC';
+      const isFac = (email.tipoDocumento || '').toUpperCase() === 'FACTURA';
       const atts = await graphService.getFacturacionAttachments(email.id);
       for (const att of (atts || [])) {
         if ((att as any).isInline) continue;

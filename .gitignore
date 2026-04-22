@@ -37,6 +37,9 @@ web.config
 server/tmp/
 server/data/budgets.json
 
+# Ops scripts data exports (contienen data de clientes / finanzas)
+server/scripts/_*.json
+
 # Memoria de Claude
 memory/
 

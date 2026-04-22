@@ -50,8 +50,8 @@ router.get('/emails', async (req, res) => {
       };
     });
 
-    // Module "Facturas Electrónicas" — restrict to FAC only
-    let filtered = enriched.filter(e => e.tipoDocumento === 'FAC');
+    // Module "Facturas Electrónicas" — restrict to FACTURA only
+    let filtered = enriched.filter(e => e.tipoDocumento === 'FACTURA');
     const tipoDoc = req.query.tipoDocumento as string | undefined;
     const cliente = req.query.cliente as string | undefined;
     const numero = req.query.numero as string | undefined;
@@ -363,7 +363,7 @@ router.post('/letras-send', async (req, res) => {
           return tails.some((t: string) => allDigits.includes(t));
         });
         for (const email of matching) {
-          const isFac = (email.tipoDocumento || '').toUpperCase() === 'FAC';
+          const isFac = (email.tipoDocumento || '').toUpperCase() === 'FACTURA';
           const emailAttachments = await graphService.getFacturacionAttachments(email.id);
           for (const att of (emailAttachments || [])) {
             if (att.isInline) continue;
