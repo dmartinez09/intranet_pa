@@ -380,15 +380,23 @@ export const dbService = {
     const totalKL = ventas.reduce((sum: number, v: any) => sum + (Number(v.cantidad_kg_lt) || 0), 0);
     const totalUnidades = ventas.reduce((sum: number, v: any) => sum + (Number(v.unidades_presentacion) || 0), 0);
     const totalCosto = ventas.reduce((sum: number, v: any) => sum + (Number(v.costo_total) || 0), 0);
-    const totalGanancia = ventas.reduce((sum: number, v: any) => sum + (Number(v.ganancia) || 0), 0);
-    const clientesUnicos = new Set(ventas.map((v: any) => v.ruc_cliente).filter(Boolean)).size;
+    // Ganancia real = Venta - Costo (no usar columna SAP `Ganancia` que queda desactualizada
+    // respecto a correcciones de costo aplicadas a nivel de BD)
+    const totalGanancia = totalVenta - totalCosto;
+    // Clientes activos = RUCs únicos con venta POSITIVA (excluye clientes que solo devolvieron/NC)
+    const clientesActivos = new Set(
+      ventas
+        .filter((v: any) => Number(v.valor_venta_dolares) > 0)
+        .map((v: any) => v.ruc_cliente)
+        .filter(Boolean)
+    ).size;
     const margenPromedio = totalVenta > 0 ? (totalGanancia / totalVenta) * 100 : 0;
 
     return {
       total_venta_usd: Math.round(totalVenta * 100) / 100,
       total_kilolitros: Math.round(totalKL * 100) / 100,
       total_unidades: Math.round(totalUnidades * 100) / 100,
-      total_clientes: clientesUnicos,
+      total_clientes: clientesActivos,
       total_transacciones: ventas.length,
       ticket_promedio: ventas.length > 0 ? Math.round((totalVenta / ventas.length) * 100) / 100 : 0,
       meta_mensual_usd: 1500000,
