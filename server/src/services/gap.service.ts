@@ -79,7 +79,7 @@ class GapService {
     const ventasRes = await pool.request().query(`
       SELECT
         UPPER(LTRIM(RTRIM(Departamento_Despacho))) AS dpto,
-        SUM(CAST([Valor_Venta_Dolares_Presentación] AS DECIMAL(18,2))) AS ventas_usd,
+        SUM(CAST(Valor_Venta_Dolares_Presentacion AS DECIMAL(18,2))) AS ventas_usd,
         COUNT(*) AS tx
       FROM dbo.stg_rpt_ventas_detallado
       WHERE Pais = 'Peru'
@@ -160,7 +160,7 @@ class GapService {
     const ventasRes = await pool.request().query(`
       SELECT
         UPPER(LTRIM(RTRIM(Departamento_Despacho))) AS dpto,
-        SUM(CAST([Valor_Venta_Dolares_Presentación] AS DECIMAL(18,2))) AS ventas_usd
+        SUM(CAST(Valor_Venta_Dolares_Presentacion AS DECIMAL(18,2))) AS ventas_usd
       FROM dbo.stg_rpt_ventas_detallado
       WHERE Pais = 'Peru'
         AND Departamento_Despacho IS NOT NULL

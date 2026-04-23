@@ -275,7 +275,7 @@ export const dbService = {
     }
     if (filtros.sub_familia) {
       const vals = (filtros.sub_familia as string).split(',');
-      where.push(`[Sub Familia] IN (${vals.map((_: string, i: number) => `@sf${i}`).join(',')})`);
+      where.push(`Sub_Familia IN (${vals.map((_: string, i: number) => `@sf${i}`).join(',')})`);
       vals.forEach((v: string, i: number) => request.input(`sf${i}`, sql.NVarChar, v));
     }
     if (filtros.vendedor) {
@@ -295,12 +295,12 @@ export const dbService = {
     }
     if (filtros.tipo_documento) {
       const vals = (filtros.tipo_documento as string).split(',');
-      where.push(`[Tipo Documento] IN (${vals.map((_: string, i: number) => `@td${i}`).join(',')})`);
+      where.push(`Tipo_Documento IN (${vals.map((_: string, i: number) => `@td${i}`).join(',')})`);
       vals.forEach((v: string, i: number) => request.input(`td${i}`, sql.NVarChar, v));
     }
     if (filtros.division) {
       const vals = (filtros.division as string).split(',');
-      where.push(`[División] IN (${vals.map((_: string, i: number) => `@div${i}`).join(',')})`);
+      where.push(`Division IN (${vals.map((_: string, i: number) => `@div${i}`).join(',')})`);
       vals.forEach((v: string, i: number) => request.input(`div${i}`, sql.NVarChar, v));
     }
     if (filtros.maestro_tipo) {
@@ -322,7 +322,7 @@ export const dbService = {
 
     const query = `
       SELECT
-        [Tipo Venta]                     AS tipo_venta,
+        Tipo_Venta                       AS tipo_venta,
         Pais                             AS pais,
         Facturador                       AS facturador,
         Orden_de_Venta                   AS orden_de_venta,
@@ -335,22 +335,22 @@ export const dbService = {
         Razon_Social_Cliente             AS razon_social_cliente,
         RUC_Cliente                      AS ruc_cliente,
         Codigo_Producto                  AS codigo_producto,
-        [División]                       AS division,
+        Division                       AS division,
         Familia                          AS familia,
-        [Sub Familia]                    AS sub_familia,
+        Sub_Familia                    AS sub_familia,
         Ingrediente_Activo               AS ingrediente_activo,
-        [Producto Formulado]             AS producto_formulado,
+        Producto_Formulado             AS producto_formulado,
         Marca                            AS marca,
         Nombre_Producto                  AS nombre_producto,
-        [Cantidad KG/LT]                AS cantidad_kg_lt,
-        [Unidades Presentación]          AS unidades_presentacion,
-        [Precio Unitario de Venta Dolares_Presentación] AS precio_unitario_venta_dolares,
-        [Valor_Venta_Dolares_Presentación] AS valor_venta_dolares,
+        [Cantidad_KG/LT]                AS cantidad_kg_lt,
+        Unidades_Presentacion          AS unidades_presentacion,
+        Precio_Unitario_de_Venta_Dolares_Presentacion AS precio_unitario_venta_dolares,
+        Valor_Venta_Dolares_Presentacion AS valor_venta_dolares,
         Tipo_de_Cambio                   AS tipo_de_cambio,
         Moneda_Emision                   AS moneda_emision,
         Ganancia                         AS ganancia,
-        [Ganancia (%)]                   AS ganancia_pct,
-        [Tipo Documento]                 AS tipo_documento,
+        [Ganancia_(%)]                   AS ganancia_pct,
+        Tipo_Documento                 AS tipo_documento,
         Numero_SAP                       AS numero_sap,
         Doc_Referencia_Orden             AS doc_referencia_orden,
         Condicion_Pago                   AS condicion_pago,
@@ -358,13 +358,13 @@ export const dbService = {
         Usuario_Creador                  AS usuario_creador,
         Grupo_Cliente                    AS grupo_cliente,
         Maestro_Tipo                     AS maestro_tipo,
-        [Tipo de Cliente]                AS tipo_de_cliente,
+        Tipo_de_Cliente                AS tipo_de_cliente,
         Clasificacion_BCG                AS clasificacion_bcg,
-        [UPPER(Origen_Producto)]         AS origen_producto,
-        [Costo Total _Presentación]      AS costo_total,
-        [Costo_unitario_Presentación]    AS costo_unitario,
+        UPPER(Origen_Producto)         AS origen_producto,
+        Costo_Total_Presentacion      AS costo_total,
+        Costo_unitario_Presentacion    AS costo_unitario,
         Magen_Unitario                   AS margen_unitario,
-        [Porcentaje_Unitario_Ganancia (%)] AS porcentaje_ganancia_unitario,
+        [Porcentaje_Unitario_Ganancia_(%)] AS porcentaje_ganancia_unitario,
         Departamento_Despacho            AS departamento_despacho,
         Distrito_Despacho                AS distrito_despacho
       FROM dbo.stg_rpt_ventas_detallado
@@ -717,12 +717,12 @@ export const dbService = {
     const pool = await getDbPool();
     const [fam, sf, ia, vend, zon, td, div, mt, gc] = await Promise.all([
       pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Familia IS NOT NULL ORDER BY Familia`),
-      pool.request().query(`SELECT DISTINCT [Sub Familia] AS sub_familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [Sub Familia] IS NOT NULL ORDER BY [Sub Familia]`),
+      pool.request().query(`SELECT DISTINCT Sub_Familia AS sub_familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Sub_Familia IS NOT NULL ORDER BY Sub_Familia`),
       pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
       pool.request().query(`SELECT DISTINCT Codigo_Vendedor, Vendedor, Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Vendedor IS NOT NULL AND Vendedor != '' AND Zona IS NOT NULL AND Zona != '' ORDER BY Vendedor`),
       pool.request().query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Zona IS NOT NULL AND Zona != '' ORDER BY Zona`),
-      pool.request().query(`SELECT DISTINCT [Tipo Documento] AS tipo_documento FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [Tipo Documento] IS NOT NULL ORDER BY [Tipo Documento]`),
-      pool.request().query(`SELECT DISTINCT [División] AS division FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [División] IS NOT NULL AND [División] != '' ORDER BY [División]`),
+      pool.request().query(`SELECT DISTINCT Tipo_Documento AS tipo_documento FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Tipo_Documento IS NOT NULL ORDER BY Tipo_Documento`),
+      pool.request().query(`SELECT DISTINCT Division AS division FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Division IS NOT NULL AND Division != '' ORDER BY Division`),
       pool.request().query(`SELECT DISTINCT Maestro_Tipo FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Maestro_Tipo IS NOT NULL ORDER BY Maestro_Tipo`),
       pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
     ]);
@@ -965,7 +965,7 @@ export const dbService = {
           [Importe Pendiente]                        AS saldo_pendiente,
           DATEDIFF(day, [Fecha Vencimiento], GETDATE()) AS dias_mora,
           [Condición de Pago]                        AS condicion_pago,
-          [Tipo Documento]                           AS tipo_documento,
+          Tipo_Documento                           AS tipo_documento,
           Moneda                                     AS moneda,
           [Estado Letra / Factura Negociable]        AS estado_letra,
           [Grupo Cliente]                            AS grupo_cliente,
@@ -1034,7 +1034,7 @@ export const dbService = {
         SELECT TOP 500
           Ruc                      AS ruc,
           Cliente                  AS cliente,
-          [Tipo Documento]         AS tipo_documento,
+          Tipo_Documento         AS tipo_documento,
           [Número Documento]       AS numero_documento,
           [N° de la letra]         AS numero_letra,
           [Fecha Creación]         AS fecha_creacion,
@@ -1193,11 +1193,11 @@ export const dbService = {
     const pool = await getDbPool();
     const [familias, subFam, ia, vendedores, zonas, divisiones, gc] = await Promise.all([
       pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Familia IS NOT NULL ORDER BY Familia`),
-      pool.request().query(`SELECT DISTINCT [Sub Familia] AS sf FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [Sub Familia] IS NOT NULL ORDER BY [Sub Familia]`),
+      pool.request().query(`SELECT DISTINCT Sub_Familia AS sf FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Sub_Familia IS NOT NULL ORDER BY Sub_Familia`),
       pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
       pool.request().query(`SELECT DISTINCT Codigo_Vendedor, Vendedor, Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Vendedor IS NOT NULL AND Vendedor != '' AND Zona IS NOT NULL AND Zona != '' ORDER BY Vendedor`),
       pool.request().query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Zona IS NOT NULL AND Zona != '' ORDER BY Zona`),
-      pool.request().query(`SELECT DISTINCT [División] AS div FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND [División] IS NOT NULL AND [División] != '' ORDER BY [División]`),
+      pool.request().query(`SELECT DISTINCT Division AS div FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Division IS NOT NULL AND Division != '' ORDER BY Division`),
       pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
     ]);
     return {
