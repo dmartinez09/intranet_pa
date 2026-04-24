@@ -3,6 +3,7 @@ import Header from '../components/layout/Header';
 import MultiSelect from '../components/filters/MultiSelect';
 import DateRangeFilter from '../components/filters/DateRangeFilter';
 import { ventasApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { formatUSD, formatNumber, formatPercent } from '../lib/utils';
 import {
   DollarSign,
@@ -58,6 +59,7 @@ interface Filtros {
 
 
 export default function DashboardVentas() {
+  const { isAdmin } = useAuth();
   const [grupoCliente, setGrupoCliente] = useState('');
 
   const [kpis, setKpis] = useState<KPIs | null>(null);
@@ -546,7 +548,8 @@ export default function DashboardVentas() {
           </div>
         </div>
 
-        {/* Detalle de transacciones para auditoría / revisión de errores de origen */}
+        {/* Detalle de transacciones para auditoría / revisión de errores de origen — solo admin */}
+        {isAdmin && (
         <div className="chart-container">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div>
@@ -832,6 +835,7 @@ export default function DashboardVentas() {
             );
           })()}
         </div>
+        )}
 
       </div>
     </div>
