@@ -5,7 +5,7 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simp
 import {
   Map as MapIcon, AlertCircle, CheckCircle2, RefreshCw, Clock,
   Filter, ChevronDown, X, Sprout, Tag, TrendingUp, MapPin,
-  DollarSign, Target,
+  Award, Layers,
 } from 'lucide-react';
 import peruGeo from '../data/peru-departments.json';
 
@@ -21,18 +21,11 @@ interface GeoSummary {
   opportunity_avg: number | null;
   opportunity_level: string | null;
   crops: string[];
-}
-
-interface MarketGapRow {
-  departamento: string;
-  region_code: string | null;
-  hectareas_potenciales: number;
-  snapshots_count: number;
-  ventas_usd: number;
-  transacciones: number;
-  ventas_por_hectarea: number;
-  penetration_level: 'Alta' | 'Media' | 'Baja';
-  opportunity_gap_usd: number;
+  crop_count: number;
+  top_crop_name: string | null;
+  top_crop_hectares: number | null;
+  top_crop_group: string | null;
+  top_senasa_class: string | null;
 }
 
 interface Crop { crop_id: number; crop_name_standard: string; }
@@ -56,26 +49,11 @@ const COLOR_SCALE_HA = [
   { min: 300000, max: Infinity, color: '#15803d' },
 ];
 
-// Paleta para escala de penetración (USD/ha) - rojo = baja penetración = alta oportunidad
-const COLOR_SCALE_GAP = [
-  { min: 0,       max: 1,       color: '#f1f5f9' }, // Sin data
-  { min: 1,       max: 10,      color: '#fecaca' }, // muy baja penetracion
-  { min: 10,      max: 25,      color: '#fca5a5' },
-  { min: 25,      max: 50,      color: '#fdba74' },
-  { min: 50,      max: 80,      color: '#fde68a' },
-  { min: 80,      max: 120,     color: '#bef264' },
-  { min: 120,     max: 200,     color: '#86efac' },
-  { min: 200,     max: Infinity, color: '#22c55e' },
-];
-
-function getColor(value: number, mode: MapMode): string {
-  const scale = mode === 'gap' ? COLOR_SCALE_GAP : COLOR_SCALE_HA;
+function getColor(value: number): string {
   if (value <= 0) return '#f1f5f9';
-  for (const s of scale) if (value >= s.min && value < s.max) return s.color;
-  return scale[scale.length - 1].color;
+  for (const s of COLOR_SCALE_HA) if (value >= s.min && value < s.max) return s.color;
+  return COLOR_SCALE_HA[COLOR_SCALE_HA.length - 1].color;
 }
-
-type MapMode = 'hectares' | 'gap';
 
 // Normaliza nombres para matcheo con GeoJSON
 function normalizeDeptName(name: string): string {
@@ -91,36 +69,32 @@ function normalizeDeptName(name: string): string {
 export default function MapaInteractivo() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [data, setData] = useState<GeoSummary[]>([]);
-  const [marketGap, setMarketGap] = useState<MarketGapRow[]>([]);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(true);
-  const [hoveredDept, setHoveredDept] = useState<(GeoSummary & { gap?: MarketGapRow | null }) | null>(null);
+  const [hoveredDept, setHoveredDept] = useState<GeoSummary | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   // Filtros
   const [cropId, setCropId] = useState<number | ''>('');
   const [categoryId, setCategoryId] = useState<number | ''>('');
-  const [mapMode, setMapMode] = useState<MapMode>('hectares');
 
   useEffect(() => { void loadAll(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadAll() {
     setLoading(true);
     try {
-      const [m, c, cat, g, mg] = await Promise.all([
+      const [m, c, cat, g] = await Promise.all([
         inteligenciaApi.getMeta(),
         inteligenciaApi.getCrops(),
         inteligenciaApi.getCategories(),
         inteligenciaApi.getGeoSummary({}),
-        inteligenciaApi.getMarketGap().catch(() => ({ data: { data: [] } })),
       ]);
       setMeta(m.data.data);
       setCrops(c.data.data || []);
       setCategories(cat.data.data || []);
       setData(g.data.data || []);
-      setMarketGap(mg.data.data || []);
     } catch (err) {
       console.error('[MapaInteractivo] error:', err);
     } finally {
@@ -158,13 +132,6 @@ export default function MapaInteractivo() {
     data.forEach(d => m.set(normalizeDeptName(d.department), d));
     return m;
   }, [data]);
-
-  // Mapa de gaps por departamento (Fase 4)
-  const gapMap = useMemo(() => {
-    const m = new Map<string, MarketGapRow>();
-    marketGap.forEach(g => m.set(normalizeDeptName(g.departamento), g));
-    return m;
-  }, [marketGap]);
 
   const totalHectares = useMemo(() =>
     data.reduce((sum, d) => sum + (d.total_hectares || 0), 0), [data]);
@@ -278,7 +245,7 @@ export default function MapaInteractivo() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Categoría Point Andina</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Clasificación SENASA</label>
                 <select
                   value={categoryId}
                   onChange={e => setCategoryId(e.target.value === '' ? '' : parseInt(e.target.value))}
@@ -322,32 +289,11 @@ export default function MapaInteractivo() {
           <div className="lg:col-span-2 chart-container relative">
             <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
               <h3 className="text-base font-bold text-gray-900">
-                {mapMode === 'hectares' ? 'Superficie Agrícola por Departamento' : 'Penetración Comercial por Departamento'}
+                Superficie Agrícola por Departamento — Perú
               </h3>
-              <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                <button
-                  onClick={() => setMapMode('hectares')}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                    mapMode === 'hectares' ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <Sprout className="w-3.5 h-3.5" /> Hectáreas
-                </button>
-                <button
-                  onClick={() => setMapMode('gap')}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                    mapMode === 'gap' ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                  title="Ver penetración USD/ha (rojo = baja = alta oportunidad)"
-                >
-                  <Target className="w-3.5 h-3.5" /> Brecha (USD/ha)
-                </button>
-              </div>
             </div>
             <p className="text-xs text-gray-400 mb-4">
-              {mapMode === 'hectares'
-                ? 'Escala coroplética por hectáreas agrícolas | Pasa el cursor sobre un departamento'
-                : 'Escala roja = baja penetración (alta oportunidad comercial) | Verde = alta penetración'}
+              Escala coroplética por hectáreas · Pasa el cursor para ver perfil agrícola del departamento
             </p>
 
             <div className="relative" style={{ minHeight: 500 }}>
@@ -363,11 +309,8 @@ export default function MapaInteractivo() {
                         const deptName: string = geo.properties.NOMBDEP || geo.properties.name || '';
                         const key = normalizeDeptName(deptName);
                         const match = deptMap.get(key);
-                        const gap = gapMap.get(key) || null;
-                        const value = mapMode === 'hectares'
-                          ? (match?.total_hectares || 0)
-                          : (gap?.ventas_por_hectarea || 0);
-                        const color = getColor(value, mapMode);
+                        const value = match?.total_hectares || 0;
+                        const color = getColor(value);
                         return (
                           <Geography
                             key={geo.rsmKey}
@@ -376,16 +319,16 @@ export default function MapaInteractivo() {
                             stroke="#ffffff"
                             strokeWidth={0.6}
                             onMouseEnter={(evt) => {
-                              setHoveredDept({
-                                ...(match || {
-                                  region_code: '',
-                                  department: deptName,
-                                  latitude: null, longitude: null,
-                                  total_hectares: 0, total_snapshots: 0,
-                                  opportunity_avg: null, opportunity_level: null,
-                                  crops: [],
-                                }),
-                                gap,
+                              setHoveredDept(match || {
+                                region_code: '',
+                                department: deptName,
+                                latitude: null, longitude: null,
+                                total_hectares: 0, total_snapshots: 0,
+                                opportunity_avg: null, opportunity_level: null,
+                                crops: [],
+                                crop_count: 0,
+                                top_crop_name: null, top_crop_hectares: null,
+                                top_crop_group: null, top_senasa_class: null,
                               });
                               setTooltipPos({ x: evt.clientX, y: evt.clientY });
                             }}
@@ -404,75 +347,111 @@ export default function MapaInteractivo() {
                 </ZoomableGroup>
               </ComposableMap>
 
-              {/* Tooltip flotante */}
+              {/* Tooltip flotante — perfil agrícola del departamento (datos públicos peruanos) */}
               {hoveredDept && (
                 <div
-                  className="fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-gray-200 p-3 text-xs min-w-[220px]"
+                  className="fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-gray-200 p-3 text-xs min-w-[280px] max-w-[320px]"
                   style={{
-                    left: Math.min(tooltipPos.x + 12, window.innerWidth - 240),
-                    top: Math.min(tooltipPos.y + 12, window.innerHeight - 180),
+                    left: Math.min(tooltipPos.x + 12, window.innerWidth - 340),
+                    top: Math.min(tooltipPos.y + 12, window.innerHeight - 280),
                   }}
                 >
-                  <div className="font-bold text-gray-900 text-sm mb-2 flex items-center gap-1.5">
+                  <div className="font-bold text-gray-900 text-sm mb-2 flex items-center gap-1.5 pb-2 border-b border-gray-100">
                     <MapPin className="w-3.5 h-3.5 text-brand-600" />
                     {hoveredDept.department}
+                    {hoveredDept.total_hectares > 0 && totalHectares > 0 && (
+                      <span className="ml-auto text-[10px] font-semibold bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded">
+                        {((hoveredDept.total_hectares / totalHectares) * 100).toFixed(1)}% nacional
+                      </span>
+                    )}
                   </div>
-                  <div className="space-y-1 text-gray-600">
-                    <div className="flex justify-between gap-3">
-                      <span>Hectáreas:</span>
-                      <span className="font-semibold">{Math.round(hoveredDept.total_hectares).toLocaleString('es-PE')}</span>
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <span>Snapshots:</span>
-                      <span className="font-semibold">{hoveredDept.total_snapshots}</span>
-                    </div>
-                    {hoveredDept.gap && (
-                      <>
-                        <div className="pt-1 mt-1 border-t border-gray-100">
-                          <div className="flex justify-between gap-3">
-                            <span>Ventas 12m:</span>
-                            <span className="font-semibold text-green-700">
-                              ${hoveredDept.gap.ventas_usd.toLocaleString('es-PE', { maximumFractionDigits: 0 })}
-                            </span>
-                          </div>
-                          <div className="flex justify-between gap-3">
-                            <span>USD/ha:</span>
-                            <span className="font-semibold">${hoveredDept.gap.ventas_por_hectarea.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between gap-3">
-                            <span>Penetración:</span>
-                            <span className={`font-bold ${
-                              hoveredDept.gap.penetration_level === 'Alta' ? 'text-green-600' :
-                              hoveredDept.gap.penetration_level === 'Media' ? 'text-amber-600' : 'text-red-600'
-                            }`}>{hoveredDept.gap.penetration_level}</span>
-                          </div>
-                          <div className="flex justify-between gap-3">
-                            <span>Gap USD:</span>
-                            <span className="font-bold text-amber-700">
-                              ${hoveredDept.gap.opportunity_gap_usd.toLocaleString('es-PE', { maximumFractionDigits: 0 })}
-                            </span>
+
+                  {hoveredDept.total_hectares === 0 ? (
+                    <div className="text-gray-400 text-center py-3 italic">Sin datos disponibles</div>
+                  ) : (
+                    <div className="space-y-2 text-gray-700">
+                      {/* Resumen agrícola */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-gray-50 rounded p-2">
+                          <div className="text-[10px] text-gray-400 uppercase">Hectáreas totales</div>
+                          <div className="font-bold text-gray-900">
+                            {Math.round(hoveredDept.total_hectares).toLocaleString('es-PE')}
                           </div>
                         </div>
-                      </>
-                    )}
-                    {hoveredDept.crops.length > 0 && (
-                      <div className="pt-1 border-t border-gray-100 mt-1">
-                        <div className="text-gray-400 text-[10px] uppercase mb-0.5">Cultivos</div>
-                        <div className="text-gray-700">{hoveredDept.crops.slice(0, 5).join(', ')}</div>
+                        <div className="bg-gray-50 rounded p-2">
+                          <div className="text-[10px] text-gray-400 uppercase">Cultivos</div>
+                          <div className="font-bold text-gray-900">
+                            {hoveredDept.crop_count} <span className="text-[10px] font-normal text-gray-500">distintos</span>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
+
+                      {/* Cultivo principal */}
+                      {hoveredDept.top_crop_name && (
+                        <div className="bg-amber-50 rounded p-2 border border-amber-100">
+                          <div className="text-[10px] text-amber-700 uppercase font-semibold flex items-center gap-1">
+                            <Award className="w-3 h-3" /> Cultivo Principal
+                          </div>
+                          <div className="font-bold text-gray-900">{hoveredDept.top_crop_name}</div>
+                          <div className="text-[11px] text-gray-600">
+                            {hoveredDept.top_crop_hectares
+                              ? `${Math.round(hoveredDept.top_crop_hectares).toLocaleString('es-PE')} ha`
+                              : ''}
+                            {hoveredDept.top_crop_group && (
+                              <span className="ml-1.5 inline-block px-1.5 py-0.5 bg-white rounded text-[9px] font-semibold text-amber-700 border border-amber-200">
+                                {hoveredDept.top_crop_group}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Clase SENASA dominante */}
+                      {hoveredDept.top_senasa_class && (
+                        <div className="flex items-center gap-2 bg-brand-50 rounded p-2 border border-brand-100">
+                          <Tag className="w-3.5 h-3.5 text-brand-700 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="text-[10px] text-brand-700 uppercase font-semibold">Clase SENASA dominante</div>
+                            <div className="font-bold text-gray-900 text-[12px]">{hoveredDept.top_senasa_class}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Lista cultivos */}
+                      {hoveredDept.crops.length > 0 && (
+                        <div className="pt-1.5 border-t border-gray-100">
+                          <div className="text-[10px] text-gray-400 uppercase mb-1 flex items-center gap-1">
+                            <Layers className="w-3 h-3" /> Cultivos en el dpto
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {hoveredDept.crops.slice(0, 8).map((c, i) => (
+                              <span key={i} className="inline-block bg-gray-100 text-gray-700 text-[10px] px-1.5 py-0.5 rounded">
+                                {c}
+                              </span>
+                            ))}
+                            {hoveredDept.crops.length > 8 && (
+                              <span className="text-[10px] text-gray-400 italic">+{hoveredDept.crops.length - 8} más</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Footer trazabilidad */}
+                      <div className="pt-1.5 border-t border-gray-100 text-[10px] text-gray-400 flex items-center justify-between">
+                        <span>{hoveredDept.total_snapshots} snapshots</span>
+                        <span>Fuente: MIDAGRI / SIEA / SENASA</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Leyenda */}
             <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-400 mb-2">
-                {mapMode === 'hectares' ? 'Escala por hectáreas' : 'Escala por USD/ha (rojo = baja penetración, verde = alta)'}
-              </p>
+              <p className="text-xs text-gray-400 mb-2">Escala por hectáreas agrícolas</p>
               <div className="flex items-center gap-1 flex-wrap">
-                {(mapMode === 'hectares' ? COLOR_SCALE_HA : COLOR_SCALE_GAP).map((s, i) => (
+                {COLOR_SCALE_HA.map((s, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-[10px] text-gray-600">
                     <div className="w-5 h-3 rounded" style={{ backgroundColor: s.color }} />
                     <span>

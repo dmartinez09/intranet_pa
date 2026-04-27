@@ -17,6 +17,7 @@ import { SenasaReportesCollector } from './collectors/senasa-reportes.collector'
 import { SenasaSigiaCollector } from './collectors/senasa-sigia.collector';
 import { PointAndinaCatCollector } from './collectors/point-andina-cat.collector';
 import { BaselineCropsCollector } from './collectors/baseline-crops.collector';
+import { BaselineCropsExtendedCollector } from './collectors/baseline-crops-extended.collector';
 
 // Registro centralizado
 const COLLECTORS: BaseCollector[] = [
@@ -30,6 +31,7 @@ const COLLECTORS: BaseCollector[] = [
   new SenasaSigiaCollector(),
   new PointAndinaCatCollector(),
   new BaselineCropsCollector(),
+  new BaselineCropsExtendedCollector(),
 ];
 
 export function listCollectors(): Array<{

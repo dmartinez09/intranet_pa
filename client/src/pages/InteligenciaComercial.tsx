@@ -128,6 +128,8 @@ const CROP_COLORS = ['#00A651', '#008C44', '#007038', '#F59E0B', '#EF4444', '#8B
 
 export default function InteligenciaComercial() {
   const { isAdmin } = useAuth();
+  // Estudio de mercado peruano: NO cruzar con SAP (Resumen Ejecutivo, Recomendaciones, Brecha)
+  const SHOW_SAP_CROSS = false;
   const [meta, setMeta] = useState<Meta | null>(null);
   const [sources, setSources] = useState<Source[]>([]);
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -334,6 +336,33 @@ export default function InteligenciaComercial() {
     return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
   }, [snapshots]);
 
+  // Distribución por grupo de cultivo (Frutales, Granos, Hortalizas, etc.)
+  const cropGroupDist = useMemo(() => {
+    const map = new Map<string, number>();
+    snapshots.forEach(s => {
+      if (s.crop_group && s.hectares) {
+        map.set(s.crop_group, (map.get(s.crop_group) || 0) + Number(s.hectares));
+      }
+    });
+    return Array.from(map.entries())
+      .map(([name, hectares]) => ({ name, hectares }))
+      .sort((a, b) => b.hectares - a.hectares);
+  }, [snapshots]);
+
+  // Top 10 departamentos por superficie agrícola
+  const topDepartments = useMemo(() => {
+    const map = new Map<string, number>();
+    snapshots.forEach(s => {
+      if (s.department && s.hectares) {
+        map.set(s.department, (map.get(s.department) || 0) + Number(s.hectares));
+      }
+    });
+    return Array.from(map.entries())
+      .map(([department, hectares]) => ({ department, hectares }))
+      .sort((a, b) => b.hectares - a.hectares)
+      .slice(0, 10);
+  }, [snapshots]);
+
   if (loading && !meta) {
     return (
       <div className="min-h-screen">
@@ -398,7 +427,7 @@ export default function InteligenciaComercial() {
           <KpiCard icon={Database} label="Fuentes" value={meta?.sources ?? 0} gradient="from-brand-500 to-brand-700" />
           <KpiCard icon={Sprout} label="Cultivos" value={meta?.crops ?? 0} gradient="from-accent-400 to-accent-600" />
           <KpiCard icon={MapPin} label="Departamentos" value={meta?.regions ?? 0} gradient="from-purple-400 to-purple-600" />
-          <KpiCard icon={Tag} label="Categorías PA" value={meta?.categories ?? 0} gradient="from-brand-400 to-brand-600" />
+          <KpiCard icon={Tag} label="Clases SENASA" value={meta?.categories ?? 0} gradient="from-brand-400 to-brand-600" />
           <KpiCard icon={Layers} label="Registros" value={meta?.snapshots ?? 0} gradient="from-cyan-400 to-cyan-600" />
         </div>
 
@@ -440,7 +469,7 @@ export default function InteligenciaComercial() {
                 options={crops.map(c => ({ value: c.crop_id, label: c.crop_name_standard }))} />
               <FilterSelect label="Departamento" value={regionId} onChange={setRegionId}
                 options={regions.map(r => ({ value: r.region_id, label: r.department }))} />
-              <FilterSelect label="Categoría PA" value={categoryId} onChange={setCategoryId}
+              <FilterSelect label="Clasificación SENASA" value={categoryId} onChange={setCategoryId}
                 options={categories.map(c => ({ value: c.category_id, label: c.category_name }))} />
               <FilterSelect label="Fuente" value={sourceId} onChange={setSourceId}
                 options={sources.map(s => ({ value: s.source_id, label: s.source_name }))} />
@@ -490,10 +519,10 @@ export default function InteligenciaComercial() {
               </ResponsiveContainer>
             </div>
 
-            {/* Distribución categorías PA */}
+            {/* Clasificación SENASA — Plaguicidas de Uso Agrícola */}
             <div className="chart-container">
-              <h3 className="text-base font-bold text-gray-900 mb-1">Distribución por Categoría Point Andina</h3>
-              <p className="text-xs text-gray-400 mb-4">Snapshots clasificados por categoría comercial</p>
+              <h3 className="text-base font-bold text-gray-900 mb-1">Clasificación SENASA — Plaguicidas de Uso Agrícola</h3>
+              <p className="text-xs text-gray-400 mb-4">Distribución de snapshots por clase regulatoria del SENASA</p>
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
@@ -511,6 +540,49 @@ export default function InteligenciaComercial() {
                   <Tooltip />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* Estudio de mercado: 2 gráficos adicionales orientados a Peru */}
+        {hasData && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Distribución por Grupo de Cultivo */}
+            <div className="chart-container">
+              <h3 className="text-base font-bold text-gray-900 mb-1">Superficie por Grupo de Cultivo</h3>
+              <p className="text-xs text-gray-400 mb-4">Distribución de hectáreas según clasificación MIDAGRI · Total Perú</p>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={cropGroupDist} layout="vertical" margin={{ left: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={80} />
+                  <Tooltip formatter={(value: any) => [`${Number(value).toLocaleString('es-PE')} ha`, 'Hectáreas']} />
+                  <Bar dataKey="hectares" radius={[0, 6, 6, 0]}>
+                    {cropGroupDist.map((_, i) => (
+                      <Cell key={i} fill={CROP_COLORS[i % CROP_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Top 10 Departamentos por Superficie Agrícola */}
+            <div className="chart-container">
+              <h3 className="text-base font-bold text-gray-900 mb-1">Top 10 Departamentos por Superficie Agrícola</h3>
+              <p className="text-xs text-gray-400 mb-4">Hectáreas acumuladas por dpto · Estudio de mercado nacional</p>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={topDepartments} layout="vertical" margin={{ left: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                  <YAxis type="category" dataKey="department" tick={{ fontSize: 11 }} width={80} />
+                  <Tooltip formatter={(value: any) => [`${Number(value).toLocaleString('es-PE')} ha`, 'Hectáreas']} />
+                  <Bar dataKey="hectares" radius={[0, 6, 6, 0]}>
+                    {topDepartments.map((_, i) => (
+                      <Cell key={i} fill={CROP_COLORS[i % CROP_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -621,8 +693,8 @@ export default function InteligenciaComercial() {
           </div>
         )}
 
-        {/* FASE 4 - Resumen Ejecutivo de Brecha */}
-        {hasData && execSummary && execSummary.hectareas_totales > 0 && (
+        {/* FASE 4 - Resumen Ejecutivo de Brecha — DESACTIVADO: este módulo es solo estudio de mercado peruano, no cruza SAP */}
+        {SHOW_SAP_CROSS && hasData && execSummary && execSummary.hectareas_totales > 0 && (
           <div className="chart-container bg-gradient-to-br from-brand-50 via-white to-amber-50 border-brand-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center">
@@ -688,8 +760,8 @@ export default function InteligenciaComercial() {
           </div>
         )}
 
-        {/* FASE 4 - Recomendaciones Comerciales */}
-        {hasData && recommendations.length > 0 && (
+        {/* FASE 4 - Recomendaciones Comerciales — DESACTIVADO: cruza con ventas SAP */}
+        {SHOW_SAP_CROSS && hasData && recommendations.length > 0 && (
           <div className="chart-container">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
@@ -728,8 +800,8 @@ export default function InteligenciaComercial() {
           </div>
         )}
 
-        {/* FASE 4 - Tabla de Brecha por Departamento */}
-        {hasData && marketGap.length > 0 && (
+        {/* FASE 4 - Tabla de Brecha por Departamento — DESACTIVADO: cruza con ventas SAP */}
+        {SHOW_SAP_CROSS && hasData && marketGap.length > 0 && (
           <div className="chart-container">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
@@ -811,7 +883,7 @@ export default function InteligenciaComercial() {
                     <th>Documento</th>
                     <th>Cultivo</th>
                     <th>Departamento</th>
-                    <th>Categoría PA</th>
+                    <th>Clasificación SENASA</th>
                     <th>Período</th>
                     <th className="text-right">Hectáreas</th>
                     <th>Oportunidad</th>
@@ -1047,7 +1119,7 @@ export default function InteligenciaComercial() {
                     <Field label="Cultivo" value={detailData.crop_name} />
                     <Field label="Grupo" value={detailData.crop_group} />
                     <Field label="Departamento" value={detailData.department} />
-                    <Field label="Categoría Point Andina" value={detailData.category_name} />
+                    <Field label="Clasificación SENASA" value={detailData.category_name} />
                     <Field label="Período" value={detailData.period_label} />
                     <Field label="Hectáreas" value={detailData.hectares ? `${Number(detailData.hectares).toLocaleString('es-PE')} ha` : null} />
                     <Field label="Producción" value={detailData.production_value ? Number(detailData.production_value).toLocaleString('es-PE') : null} />

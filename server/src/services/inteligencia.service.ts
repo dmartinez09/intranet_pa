@@ -75,6 +75,11 @@ export interface IcbGeoSummary {
   opportunity_avg: number | null;
   opportunity_level: string | null;
   crops: string[];
+  crop_count: number;
+  top_crop_name: string | null;
+  top_crop_hectares: number | null;
+  top_crop_group: string | null;
+  top_senasa_class: string | null;
 }
 
 export interface IcbMeta {
@@ -273,6 +278,7 @@ class InteligenciaService {
 
     const res = await req.query(`
       SELECT
+        r.region_id,
         r.region_code,
         r.department,
         r.latitude,
@@ -281,13 +287,40 @@ class InteligenciaService {
         COUNT(s.snapshot_id) AS total_snapshots,
         AVG(s.opportunity_score) AS opportunity_avg,
         MAX(s.opportunity_level) AS opportunity_level,
+        (SELECT COUNT(DISTINCT s2.crop_id)
+           FROM dbo.icb_fact_agri_market_snapshot s2
+           WHERE s2.region_id = r.region_id AND s2.crop_id IS NOT NULL) AS crop_count,
         STUFF((
           SELECT DISTINCT ', ' + c2.crop_name_standard
           FROM dbo.icb_fact_agri_market_snapshot s2
           LEFT JOIN dbo.icb_dim_crop c2 ON s2.crop_id = c2.crop_id
           WHERE s2.region_id = r.region_id AND c2.crop_name_standard IS NOT NULL
           FOR XML PATH('')
-        ), 1, 2, '') AS crops_list
+        ), 1, 2, '') AS crops_list,
+        (SELECT TOP 1 c3.crop_name_standard
+           FROM dbo.icb_fact_agri_market_snapshot s3
+           INNER JOIN dbo.icb_dim_crop c3 ON s3.crop_id = c3.crop_id
+           WHERE s3.region_id = r.region_id
+           GROUP BY c3.crop_name_standard
+           ORDER BY SUM(s3.hectares) DESC) AS top_crop_name,
+        (SELECT TOP 1 SUM(s3.hectares)
+           FROM dbo.icb_fact_agri_market_snapshot s3
+           INNER JOIN dbo.icb_dim_crop c3 ON s3.crop_id = c3.crop_id
+           WHERE s3.region_id = r.region_id
+           GROUP BY c3.crop_name_standard
+           ORDER BY SUM(s3.hectares) DESC) AS top_crop_hectares,
+        (SELECT TOP 1 c4.crop_group
+           FROM dbo.icb_fact_agri_market_snapshot s4
+           INNER JOIN dbo.icb_dim_crop c4 ON s4.crop_id = c4.crop_id
+           WHERE s4.region_id = r.region_id AND c4.crop_group IS NOT NULL
+           GROUP BY c4.crop_group
+           ORDER BY SUM(s4.hectares) DESC) AS top_crop_group,
+        (SELECT TOP 1 cat.category_name
+           FROM dbo.icb_fact_agri_market_snapshot s5
+           INNER JOIN dbo.icb_dim_point_category cat ON s5.category_id = cat.category_id
+           WHERE s5.region_id = r.region_id
+           GROUP BY cat.category_name
+           ORDER BY COUNT(*) DESC) AS top_senasa_class
       FROM dbo.icb_dim_region r
       LEFT JOIN dbo.icb_fact_agri_market_snapshot s ON s.region_id = r.region_id
       WHERE ${where.join(' AND ')}
@@ -304,6 +337,11 @@ class InteligenciaService {
       opportunity_avg: row.opportunity_avg ? Number(row.opportunity_avg) : null,
       opportunity_level: row.opportunity_level,
       crops: row.crops_list ? String(row.crops_list).split(', ').filter(Boolean) : [],
+      crop_count: row.crop_count || 0,
+      top_crop_name: row.top_crop_name || null,
+      top_crop_hectares: row.top_crop_hectares ? Number(row.top_crop_hectares) : null,
+      top_crop_group: row.top_crop_group || null,
+      top_senasa_class: row.top_senasa_class || null,
     }));
   }
 
