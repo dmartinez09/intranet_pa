@@ -92,16 +92,22 @@ interface BotHistoryEntry {
   errorMessage: string | null;
 }
 
-function timeAgo(iso: string | null): string {
+function timeAgo(iso: string | Date | null | undefined): string {
   if (!iso) return 'nunca';
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'hace segundos';
-  if (m < 60) return `hace ${m} min`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `hace ${h}h ${m % 60}m`;
-  const d = Math.floor(h / 24);
-  return `hace ${d}d`;
+  try {
+    const t = new Date(iso).getTime();
+    if (isNaN(t)) return '—';
+    const diff = Date.now() - t;
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'hace segundos';
+    if (m < 60) return `hace ${m} min`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `hace ${h}h ${m % 60}m`;
+    const d = Math.floor(h / 24);
+    return `hace ${d}d`;
+  } catch {
+    return '—';
+  }
 }
 
 function formatDateTime(iso: string | null): string {
@@ -158,10 +164,26 @@ export default function Letras() {
   async function loadSendsSummary() {
     try {
       const r = await facturacionApi.getLetrasSendsSummary();
+      const rows = Array.isArray(r?.data?.data) ? r.data.data : [];
       const map: Record<string, LetraSendSummary> = {};
-      (r.data?.data || []).forEach((s: LetraSendSummary) => { map[s.letra_id] = s; });
+      rows.forEach((s: any) => {
+        if (s && s.letra_id) {
+          // Normalizar tipos: history_id puede venir como string desde mssql
+          map[s.letra_id] = {
+            ...s,
+            history_id: typeof s.history_id === 'string' ? Number(s.history_id) : (s.history_id ?? 0),
+            total_sends: Number(s.total_sends ?? 0),
+            total_opens: Number(s.total_opens ?? 0),
+            real_opens: Number(s.real_opens ?? 0),
+            unique_openers: Number(s.unique_openers ?? 0),
+          };
+        }
+      });
       setSendsByLetra(map);
-    } catch (e) { console.warn('[letras] sends-summary error', e); }
+    } catch (e) {
+      console.warn('[letras] sends-summary error', e);
+      setSendsByLetra({});  // garantizar estado consistente
+    }
   }
   // Refresh status every 60s
   useEffect(() => {
@@ -890,7 +912,7 @@ function ExpandableRow({ file, isExpanded, onToggle, loadingComprobantes, compro
         {/* Estado de envío: Bot/Manual badge + fecha + sello idempotencia */}
         <td className="text-center" onClick={e => e.stopPropagation()}>
           {sendSummary ? (
-            <div className="flex flex-col items-center gap-0.5" title={`Enviado ${sendSummary.total_sends} vez(es) — última: ${new Date(sendSummary.last_sent_at).toLocaleString('es-PE')}`}>
+            <div className="flex flex-col items-center gap-0.5" title={`Enviado ${sendSummary.total_sends || 0} vez(es) — última: ${formatDateTime(sendSummary.last_sent_at)}`}>
               <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase
                 ${sendSummary.trigger_type === 'auto'
                   ? 'bg-blue-100 text-blue-700 border border-blue-200'
