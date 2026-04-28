@@ -266,7 +266,9 @@ export const dbService = {
     }
     const pool = await getDbPool();
     const request = pool.request();
-    const where: string[] = ["Pais = 'Peru'"];
+    // Filtro país abierto — todas las filas son Facturador='POINT ANDINA S.A.'
+    // Finanzas reporta consolidado (Peru + ventas inter-filial Ecuador)
+    const where: string[] = ['1=1'];
 
     if (filtros.familia) {
       const vals = (filtros.familia as string).split(',');
@@ -724,15 +726,15 @@ export const dbService = {
     }
     const pool = await getDbPool();
     const [fam, sf, ia, vend, zon, td, div, mt, gc] = await Promise.all([
-      pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Familia IS NOT NULL ORDER BY Familia`),
-      pool.request().query(`SELECT DISTINCT Sub_Familia AS sub_familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Sub_Familia IS NOT NULL ORDER BY Sub_Familia`),
-      pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
-      pool.request().query(`SELECT DISTINCT Codigo_Vendedor, Vendedor, Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Vendedor IS NOT NULL AND Vendedor != '' AND Zona IS NOT NULL AND Zona != '' ORDER BY Vendedor`),
-      pool.request().query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Zona IS NOT NULL AND Zona != '' ORDER BY Zona`),
-      pool.request().query(`SELECT DISTINCT Tipo_Documento AS tipo_documento FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Tipo_Documento IS NOT NULL ORDER BY Tipo_Documento`),
-      pool.request().query(`SELECT DISTINCT Division AS division FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Division IS NOT NULL AND Division != '' ORDER BY Division`),
-      pool.request().query(`SELECT DISTINCT Maestro_Tipo FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Maestro_Tipo IS NOT NULL ORDER BY Maestro_Tipo`),
-      pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
+      pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Familia IS NOT NULL ORDER BY Familia`),
+      pool.request().query(`SELECT DISTINCT Sub_Familia AS sub_familia FROM dbo.stg_rpt_ventas_detallado WHERE Sub_Familia IS NOT NULL ORDER BY Sub_Familia`),
+      pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
+      pool.request().query(`SELECT DISTINCT Codigo_Vendedor, Vendedor, Zona FROM dbo.stg_rpt_ventas_detallado WHERE Vendedor IS NOT NULL AND Vendedor != '' AND Zona IS NOT NULL AND Zona != '' ORDER BY Vendedor`),
+      pool.request().query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Zona IS NOT NULL AND Zona != '' ORDER BY Zona`),
+      pool.request().query(`SELECT DISTINCT Tipo_Documento AS tipo_documento FROM dbo.stg_rpt_ventas_detallado WHERE Tipo_Documento IS NOT NULL ORDER BY Tipo_Documento`),
+      pool.request().query(`SELECT DISTINCT Division AS division FROM dbo.stg_rpt_ventas_detallado WHERE Division IS NOT NULL AND Division != '' ORDER BY Division`),
+      pool.request().query(`SELECT DISTINCT Maestro_Tipo FROM dbo.stg_rpt_ventas_detallado WHERE Maestro_Tipo IS NOT NULL ORDER BY Maestro_Tipo`),
+      pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
     ]);
     return {
       familias: fam.recordset.map((r: any) => r.Familia),
@@ -1200,13 +1202,13 @@ export const dbService = {
     }
     const pool = await getDbPool();
     const [familias, subFam, ia, vendedores, zonas, divisiones, gc] = await Promise.all([
-      pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Familia IS NOT NULL ORDER BY Familia`),
-      pool.request().query(`SELECT DISTINCT Sub_Familia AS sf FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Sub_Familia IS NOT NULL ORDER BY Sub_Familia`),
-      pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
-      pool.request().query(`SELECT DISTINCT Codigo_Vendedor, Vendedor, Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Vendedor IS NOT NULL AND Vendedor != '' AND Zona IS NOT NULL AND Zona != '' ORDER BY Vendedor`),
-      pool.request().query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Zona IS NOT NULL AND Zona != '' ORDER BY Zona`),
-      pool.request().query(`SELECT DISTINCT Division AS div FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Division IS NOT NULL AND Division != '' ORDER BY Division`),
-      pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Pais='Peru' AND Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
+      pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Familia IS NOT NULL ORDER BY Familia`),
+      pool.request().query(`SELECT DISTINCT Sub_Familia AS sf FROM dbo.stg_rpt_ventas_detallado WHERE Sub_Familia IS NOT NULL ORDER BY Sub_Familia`),
+      pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
+      pool.request().query(`SELECT DISTINCT Codigo_Vendedor, Vendedor, Zona FROM dbo.stg_rpt_ventas_detallado WHERE Vendedor IS NOT NULL AND Vendedor != '' AND Zona IS NOT NULL AND Zona != '' ORDER BY Vendedor`),
+      pool.request().query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Zona IS NOT NULL AND Zona != '' ORDER BY Zona`),
+      pool.request().query(`SELECT DISTINCT Division AS div FROM dbo.stg_rpt_ventas_detallado WHERE Division IS NOT NULL AND Division != '' ORDER BY Division`),
+      pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
     ]);
     return {
       familias: familias.recordset.map((r: any) => r.Familia),
@@ -1234,7 +1236,7 @@ export const dbService = {
           Vendedor,
           Zona
         FROM dbo.stg_rpt_ventas_detallado
-        WHERE Pais = 'Peru' AND Numero_SAP IS NOT NULL AND Numero_SAP != ''
+        WHERE Numero_SAP IS NOT NULL AND Numero_SAP != ''
         GROUP BY SUBSTRING(Numero_SAP, CHARINDEX('-', Numero_SAP) + 1, LEN(Numero_SAP)), Vendedor, Zona
       `);
 
@@ -1257,7 +1259,7 @@ export const dbService = {
       const pool = await getDbPool();
       const result = await pool.request().query(`
         SELECT DISTINCT Vendedor FROM dbo.stg_rpt_ventas_detallado
-        WHERE Pais = 'Peru' AND Vendedor IS NOT NULL AND Vendedor != ''
+        WHERE Vendedor IS NOT NULL AND Vendedor != ''
         ORDER BY Vendedor
       `);
       return result.recordset.map((r: any) => r.Vendedor);

@@ -128,6 +128,10 @@ export const facturacionApi = {
     api.put('/facturacion/letras-bot/config', data),
   getLetrasBotHistory: (limit = 50) => api.get('/facturacion/letras-bot/history', { params: { limit } }),
   runLetrasBotNow: () => api.post('/facturacion/letras-bot/run-now'),
+  // Tracking de envíos y aperturas
+  getLetrasSendsSummary: () => api.get('/facturacion/letras-sends-summary'),
+  getLetrasSends: (letraId: string) => api.get(`/facturacion/letras-sends/${encodeURIComponent(letraId)}`),
+  getLetrasOpens: (historyId: number) => api.get(`/facturacion/letras-opens/${historyId}`),
 };
 
 // Inteligencia Comercial Beta
@@ -194,6 +198,20 @@ export const configApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+};
+
+// Uruguay Daily Sales Bot
+export const uruguayBotApi = {
+  getConfig: () => api.get('/uruguay-bot/config'),
+  saveConfig: (cfg: { enabled?: boolean; scheduleHour?: number; scheduleMinute?: number; sharepointUrl?: string }) =>
+    api.put('/uruguay-bot/config', cfg),
+  dataInfo: () => api.get('/uruguay-bot/data-info'),
+  resolveSharePoint: (url?: string) => api.get('/uruguay-bot/sharepoint/resolve', { params: { url } }),
+  listSharePoint: (path?: string, url?: string) => api.get('/uruguay-bot/sharepoint/list', { params: { path, url } }),
+  run: (dateFrom?: string, dateTo?: string) => api.post('/uruguay-bot/run', { dateFrom, dateTo }),
+  getRuns: (limit = 50) => api.get('/uruguay-bot/runs', { params: { limit } }),
+  schedulerStart: () => api.post('/uruguay-bot/scheduler/start'),
+  schedulerStop: () => api.post('/uruguay-bot/scheduler/stop'),
 };
 
 export default api;

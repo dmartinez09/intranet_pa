@@ -7,6 +7,7 @@ import apiRoutes from './routes';
 import { letrasScheduler } from './services/letras-scheduler.service';
 import { letrasBot } from './services/letras-bot.service';
 import { etlScheduler } from './services/etl/scheduler';
+import { uruguayBotScheduler } from './services/uruguay-bot-scheduler.service';
 
 const app = express();
 
@@ -55,6 +56,13 @@ app.listen(env.port, () => {
     letrasBot.start().catch(err => console.error('[letras-bot] start error:', err));
   } catch (err) {
     console.error('[letras] scheduler boot error:', err);
+  }
+
+  // Start Uruguay daily-sales bot scheduler (lee config + dispara a hora parametrizada)
+  try {
+    uruguayBotScheduler.start();
+  } catch (err) {
+    console.error('[uruguay-bot] scheduler boot error:', err);
   }
 
   // Start ETL scheduler (Inteligencia Comercial) - daily + weekly

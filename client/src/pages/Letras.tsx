@@ -6,7 +6,23 @@ import {
   Search, Download, FileText, Loader2, ScrollText, AlertCircle,
   ChevronDown, ChevronRight, Mail, Paperclip, Send, CheckCircle2, XCircle, X,
   RefreshCw, Clock, Bot, Settings, History, Play, AlertTriangle,
+  Eye, User, Hand,
 } from 'lucide-react';
+
+// Resumen de envíos y aperturas por letra (cargado en bulk)
+interface LetraSendSummary {
+  letra_id: string;
+  last_sent_at: string;
+  total_sends: number;
+  history_id: number;
+  trigger_type: 'auto' | 'manual';
+  recipients_to: string;
+  recipients_cc: string | null;
+  total_opens: number;
+  real_opens: number;
+  unique_openers: number;
+  last_open_at: string | null;
+}
 
 interface LetraFile {
   id: string;
@@ -133,7 +149,20 @@ export default function Letras() {
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  useEffect(() => { loadFiles(); loadStatus(); }, []);
+  // Resumen de envíos/aperturas por letra
+  const [sendsByLetra, setSendsByLetra] = useState<Record<string, LetraSendSummary>>({});
+  const [opensModalHistoryId, setOpensModalHistoryId] = useState<number | null>(null);
+
+  useEffect(() => { loadFiles(); loadStatus(); loadSendsSummary(); }, []);
+
+  async function loadSendsSummary() {
+    try {
+      const r = await facturacionApi.getLetrasSendsSummary();
+      const map: Record<string, LetraSendSummary> = {};
+      (r.data?.data || []).forEach((s: LetraSendSummary) => { map[s.letra_id] = s; });
+      setSendsByLetra(map);
+    } catch (e) { console.warn('[letras] sends-summary error', e); }
+  }
   // Refresh status every 60s
   useEffect(() => {
     const iv = setInterval(loadStatus, 60000);
@@ -385,6 +414,8 @@ export default function Letras() {
                   <th>Cliente</th>
                   <th className="w-[100px]">Fecha</th>
                   <th className="w-[70px] text-right">Tamaño</th>
+                  <th className="w-[110px] text-center" title="Estado del envío del email">Estado envío</th>
+                  <th className="w-[100px] text-center" title="Aperturas del cliente">Aperturas</th>
                   <th className="w-[80px] text-center">PDF</th>
                 </tr>
               </thead>
@@ -400,11 +431,13 @@ export default function Letras() {
                       loadingComprobantes={isExpanded && loadingComprobantes}
                       comprobantes={isExpanded ? comprobantesData : null}
                       onSend={(comp) => openSendModal(f, comp)}
+                      sendSummary={sendsByLetra[f.id] || null}
+                      onShowOpens={(historyId) => setOpensModalHistoryId(historyId)}
                     />
                   );
                 })}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={7} className="text-center py-12 text-gray-400">
+                  <tr><td colSpan={9} className="text-center py-12 text-gray-400">
                     <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     {search ? 'Sin resultados' : 'No se encontraron letras'}
                   </td></tr>
@@ -608,28 +641,215 @@ export default function Letras() {
           </div>
         </div>
       )}
+
+      {/* Modal: Detalle de aperturas */}
+      {opensModalHistoryId !== null && (
+        <OpensDetailModal historyId={opensModalHistoryId} onClose={() => setOpensModalHistoryId(null)} />
+      )}
+    </div>
+  );
+}
+
+/* Modal de detalle de aperturas */
+function OpensDetailModal({ historyId, onClose }: { historyId: number; onClose: () => void }) {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<{
+    send: any;
+    summary: Array<{
+      recipient: string; recipient_role: string;
+      total_opens: number; real_opens: number; proxy_opens: number;
+      first_open_at: string | null; last_open_at: string | null;
+    }>;
+    detail: Array<{
+      open_id: number; recipient: string; recipient_role: string;
+      opened_at: string; ip_address: string | null; user_agent: string | null; is_proxied: boolean;
+    }>;
+  } | null>(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const r = await facturacionApi.getLetrasOpens(historyId);
+        if (!mounted) return;
+        setData(r.data?.data || null);
+      } catch (e: any) {
+        setError(e?.response?.data?.message || e.message || 'Error');
+      } finally { if (mounted) setLoading(false); }
+    })();
+    return () => { mounted = false; };
+  }, [historyId]);
+
+  function summarizeUA(ua: string | null): string {
+    if (!ua) return '—';
+    const u = ua.toLowerCase();
+    if (u.includes('googleimageproxy') || /^66\.249\./.test(u)) return 'Gmail (proxy)';
+    if (u.includes('outlook')) return 'Outlook';
+    if (u.includes('mimecast')) return 'Mimecast (proxy)';
+    if (u.includes('chrome')) return 'Chrome';
+    if (u.includes('firefox')) return 'Firefox';
+    if (u.includes('safari') && !u.includes('chrome')) return 'Safari';
+    if (u.includes('edge')) return 'Edge';
+    if (u.includes('thunderbird')) return 'Thunderbird';
+    return ua.length > 60 ? ua.slice(0, 60) + '…' : ua;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <Eye className="w-5 h-5 text-brand-600" />
+            Aperturas del email — Letra
+          </h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {loading && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+              <Loader2 className="w-4 h-4 animate-spin" /> Cargando...
+            </div>
+          )}
+          {error && (
+            <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+              <AlertCircle className="w-4 h-4" /> {error}
+            </div>
+          )}
+
+          {!loading && data && (
+            <>
+              {/* Send info */}
+              <div className="bg-gradient-to-br from-brand-50 to-blue-50 rounded-xl p-4 border border-brand-100 text-sm space-y-1">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-bold uppercase
+                    ${data.send?.trigger_type === 'auto'
+                      ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {data.send?.trigger_type === 'auto' ? <><Bot className="w-3 h-3" /> Bot automático</> : <><Hand className="w-3 h-3" /> Manual (intranet)</>}
+                  </span>
+                  <span className="text-gray-500">enviado el</span>
+                  <span className="font-mono text-gray-700">{data.send?.run_at ? new Date(data.send.run_at).toLocaleString('es-PE') : '—'}</span>
+                </div>
+                <div><span className="text-gray-500">Cliente:</span> <strong>{data.send?.cliente || '—'}</strong></div>
+                <div><span className="text-gray-500">Factura:</span> <span className="font-mono">{data.send?.factura_code || '—'}</span></div>
+                <div><span className="text-gray-500">Letra:</span> <span className="font-mono text-xs">{data.send?.letra_name}</span></div>
+                <div><span className="text-gray-500">Para:</span> <span className="font-mono text-xs">{data.send?.recipients_to}</span></div>
+                {data.send?.recipients_cc && (
+                  <div><span className="text-gray-500">CC:</span> <span className="font-mono text-xs">{data.send.recipients_cc}</span></div>
+                )}
+              </div>
+
+              {/* Resumen por destinatario */}
+              <div>
+                <h4 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-500" /> Resumen por destinatario
+                </h4>
+                {data.summary.length === 0 ? (
+                  <div className="text-sm text-gray-400 italic bg-gray-50 rounded-lg p-3 text-center">
+                    Aún no hay aperturas registradas
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-50 text-gray-600 uppercase">
+                        <tr>
+                          <th className="text-left p-2 font-semibold">Destinatario</th>
+                          <th className="text-center p-2 font-semibold">Rol</th>
+                          <th className="text-right p-2 font-semibold">Reales</th>
+                          <th className="text-right p-2 font-semibold">Proxy</th>
+                          <th className="text-left p-2 font-semibold">Primera</th>
+                          <th className="text-left p-2 font-semibold">Última</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {data.summary.map((s, i) => (
+                          <tr key={i} className="hover:bg-gray-50">
+                            <td className="p-2 font-mono">{s.recipient}</td>
+                            <td className="p-2 text-center uppercase text-gray-600">{s.recipient_role}</td>
+                            <td className="p-2 text-right font-bold text-brand-700">{s.real_opens}</td>
+                            <td className="p-2 text-right text-yellow-700">{s.proxy_opens}</td>
+                            <td className="p-2 text-gray-600">{s.first_open_at ? new Date(s.first_open_at).toLocaleString('es-PE') : '—'}</td>
+                            <td className="p-2 text-gray-600">{s.last_open_at ? new Date(s.last_open_at).toLocaleString('es-PE') : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Detalle (últimas 100) */}
+              {data.detail.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <History className="w-4 h-4 text-gray-500" /> Detalle ({data.detail.length} aperturas)
+                  </h4>
+                  <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                    <table className="w-full text-[11px]">
+                      <thead className="bg-gray-50 text-gray-600 uppercase sticky top-0">
+                        <tr>
+                          <th className="text-left p-2 font-semibold">Fecha/Hora</th>
+                          <th className="text-left p-2 font-semibold">Destinatario</th>
+                          <th className="text-left p-2 font-semibold">Cliente / Proxy</th>
+                          <th className="text-left p-2 font-semibold">IP</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {data.detail.map((d) => (
+                          <tr key={d.open_id} className={d.is_proxied ? 'bg-yellow-50/40' : 'hover:bg-gray-50'}>
+                            <td className="p-2 font-mono text-gray-700">{new Date(d.opened_at).toLocaleString('es-PE')}</td>
+                            <td className="p-2 font-mono text-gray-700">{d.recipient}</td>
+                            <td className="p-2 text-gray-600">
+                              {summarizeUA(d.user_agent)}
+                              {d.is_proxied && <span className="ml-1 text-[9px] uppercase bg-yellow-200 text-yellow-800 px-1 rounded">proxy</span>}
+                            </td>
+                            <td className="p-2 font-mono text-gray-500">{d.ip_address || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[11px] text-gray-400 italic">
+                Las aperturas marcadas como <strong>proxy</strong> corresponden a precargas automáticas
+                de Gmail/Outlook (no son aperturas reales del cliente). Algunos clientes de email
+                bloquean el tracking pixel por defecto, así que es posible que existan aperturas no registradas.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
 /* Expandable Row Component */
-function ExpandableRow({ file, isExpanded, onToggle, loadingComprobantes, comprobantes, onSend }: {
+function ExpandableRow({ file, isExpanded, onToggle, loadingComprobantes, comprobantes, onSend, sendSummary, onShowOpens }: {
   file: LetraFile;
   isExpanded: boolean;
   onToggle: () => void;
   loadingComprobantes: boolean;
   comprobantes: ComprobantesData | null;
   onSend: (comp: ComprobantesData) => void;
+  sendSummary: LetraSendSummary | null;
+  onShowOpens: (historyId: number) => void;
 }) {
+  const DEFAULT_CC = 'cobranzas@pointamericas.com';
   const [editTo, setEditTo] = useState('');
-  const [editCc, setEditCc] = useState('');
+  const [editCc, setEditCc] = useState(DEFAULT_CC);
   const [showBody, setShowBody] = useState(false);
 
-  // Sync destinatarios when comprobantes load
+  // Sync destinatarios when comprobantes load — el CC siempre arranca con cobranzas
   useEffect(() => {
     if (comprobantes?.destinatarios) {
       setEditTo(comprobantes.destinatarios.join('; '));
-      setEditCc('');
+      setEditCc(DEFAULT_CC);
     }
   }, [comprobantes]);
 
@@ -666,6 +886,62 @@ function ExpandableRow({ file, isExpanded, onToggle, loadingComprobantes, compro
         </td>
         <td className="text-sm text-gray-500">{formatDate(file.lastModified)}</td>
         <td className="text-sm text-gray-400 text-right">{formatFileSize(file.size)}</td>
+
+        {/* Estado de envío: Bot/Manual badge + fecha + sello idempotencia */}
+        <td className="text-center" onClick={e => e.stopPropagation()}>
+          {sendSummary ? (
+            <div className="flex flex-col items-center gap-0.5" title={`Enviado ${sendSummary.total_sends} vez(es) — última: ${new Date(sendSummary.last_sent_at).toLocaleString('es-PE')}`}>
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase
+                ${sendSummary.trigger_type === 'auto'
+                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
+                {sendSummary.trigger_type === 'auto'
+                  ? <><Bot className="w-3 h-3" /> Bot</>
+                  : <><Hand className="w-3 h-3" /> Manual</>}
+              </span>
+              <span className="text-[10px] text-gray-500">{timeAgo(sendSummary.last_sent_at)}</span>
+              {sendSummary.total_sends > 1 && (
+                <span className="text-[9px] text-gray-400">×{sendSummary.total_sends} envíos</span>
+              )}
+            </div>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">
+              <Clock className="w-3 h-3" /> Sin enviar
+            </span>
+          )}
+        </td>
+
+        {/* Aperturas: ojo + count */}
+        <td className="text-center" onClick={e => e.stopPropagation()}>
+          {sendSummary ? (
+            <button
+              type="button"
+              onClick={() => onShowOpens(sendSummary.history_id)}
+              title={
+                sendSummary.real_opens > 0
+                  ? `${sendSummary.real_opens} apertura(s) real(es) · ${sendSummary.unique_openers} destinatario(s) — click para detalle`
+                  : sendSummary.total_opens > 0
+                    ? `${sendSummary.total_opens} apertura(s) (proxy/precarga) — click para detalle`
+                    : 'Aún no abierto — click para más info'
+              }
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold transition-colors
+                ${sendSummary.real_opens > 0
+                  ? 'bg-brand-100 text-brand-700 hover:bg-brand-200 border border-brand-200'
+                  : sendSummary.total_opens > 0
+                    ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border border-yellow-200'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200'}`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span className="font-mono">{sendSummary.real_opens || sendSummary.total_opens || 0}</span>
+              {sendSummary.unique_openers > 0 && (
+                <span className="text-[10px] opacity-70">/{sendSummary.unique_openers}u</span>
+              )}
+            </button>
+          ) : (
+            <span className="text-gray-300 text-xs">—</span>
+          )}
+        </td>
+
         <td className="text-center" onClick={e => e.stopPropagation()}>
           <button type="button" onClick={async () => {
             try {
@@ -685,7 +961,7 @@ function ExpandableRow({ file, isExpanded, onToggle, loadingComprobantes, compro
       {/* Expanded detail */}
       {isExpanded && (
         <tr>
-          <td colSpan={7} className="p-0">
+          <td colSpan={9} className="p-0">
             <div className="bg-gray-50 border-t border-b border-gray-100 px-6 py-4 animate-fade-in">
               {loadingComprobantes ? (
                 <div className="flex items-center gap-2 py-4 text-sm text-gray-500">

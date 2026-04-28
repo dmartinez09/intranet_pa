@@ -309,10 +309,15 @@ router.get('/letras-comprobantes', async (req, res) => {
 // Send letra + comprobantes email to client
 router.post('/letras-send', async (req, res) => {
   try {
-    const { letraDriveItemId, facturaCode, to, cc, cliente, force } = req.body;
-    console.log('[letras-send] request:', { letraDriveItemId, facturaCode, to, cc, cliente, force });
+    const { letraDriveItemId, facturaCode, to, cc: ccRaw, cliente, force } = req.body;
+    console.log('[letras-send] request:', { letraDriveItemId, facturaCode, to, cc: ccRaw, cliente, force });
     if (!to || !to.length) return res.status(400).json({ success: false, message: 'Destinatarios requeridos' });
     if (!letraDriveItemId) return res.status(400).json({ success: false, message: 'ID de letra requerido' });
+
+    // Garantizar que cobranzas@pointamericas.com SIEMPRE esté en CC (regla de negocio)
+    const FIXED_CC = 'cobranzas@pointamericas.com';
+    const cc: string[] = Array.isArray(ccRaw) ? [...ccRaw] : [];
+    if (!cc.some((e: string) => (e || '').toLowerCase() === FIXED_CC.toLowerCase())) cc.unshift(FIXED_CC);
 
     const DRIVE_ID = 'b!aDBAYXgyCUifG71OViKVOiShCsAuAlVOqAljzYTa1vGXuJpv-DDtTZw_GIbFTKRX';
 
@@ -397,7 +402,43 @@ router.post('/letras-send', async (req, res) => {
       return true;
     });
 
-    // 4. Send email
+    // 4. PRIMERO crear el registro en historial para obtener el history_id
+    let historyId: number | null = null;
+    try {
+      const pool = await (await import('../config/database')).getDbPool();
+      const ins = await pool.request()
+        .input('rd', new Date().toISOString().slice(0, 10))
+        .input('tt', 'manual')
+        .input('lid', letraDriveItemId)
+        .input('ln', letraFile.name)
+        .input('fc', facturaCode || null)
+        .input('cl', cliente || null)
+        .input('rt', (to || []).join('; '))
+        .input('rc', (cc || []).join('; '))
+        .input('aq', uniqueAttachments.length)
+        .input('st', 'sending')
+        .input('em', null)
+        .query(`INSERT INTO dbo.intranet_letras_bot_history
+                  (run_date, trigger_type, letra_id, letra_name, factura_code, cliente,
+                   recipients_to, recipients_cc, attachments_qty, status, error_message)
+                OUTPUT INSERTED.id
+                VALUES (@rd, @tt, @lid, @ln, @fc, @cl, @rt, @rc, @aq, @st, @em)`);
+      historyId = ins.recordset[0]?.id;
+    } catch (e) { console.error('[letras-send] history pre-insert failed:', (e as Error).message); }
+
+    // 5. Construir tracking pixels por destinatario
+    const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+    const buildPixel = (recipient: string, role: 'to' | 'cc'): string => {
+      if (!historyId) return '';
+      const token = Buffer.from(JSON.stringify({ h: historyId, r: recipient, role })).toString('base64url');
+      return `<img src="${baseUrl}/api/track/letras/${token}.gif" width="1" height="1" alt="" style="display:block;border:0;" />`;
+    };
+    const pixelsHtml = [
+      ...(to || []).map((r: string) => buildPixel(r, 'to')),
+      ...((cc || []).map((r: string) => buildPixel(r, 'cc'))),
+    ].join('\n');
+
+    // 6. Send email (con pixels embebidos al final del body)
     const subject = `Letra y Comprobantes de Pago — ${facturaCode || 'Sin referencia'} — ${cliente || 'Cliente'}`;
     const bodyHtml = `
       <div style="font-family:Arial,sans-serif;color:#333;">
@@ -410,6 +451,7 @@ router.post('/letras-send', async (req, res) => {
         </ul>
         <br/>
         <p>Atentamente,<br/><strong>Point Andina S.A.</strong><br/>Facturación y Despacho</p>
+        ${pixelsHtml}
       </div>
     `;
 
@@ -421,26 +463,15 @@ router.post('/letras-send', async (req, res) => {
       attachments: uniqueAttachments,
     });
 
-    // Log to bot history so the scheduler won't resend it
-    try {
-      const pool = await (await import('../config/database')).getDbPool();
-      await pool.request()
-        .input('rd', new Date().toISOString().slice(0, 10))
-        .input('tt', 'manual')
-        .input('lid', letraDriveItemId)
-        .input('ln', letraFile.name)
-        .input('fc', facturaCode || null)
-        .input('cl', cliente || null)
-        .input('rt', (to || []).join('; '))
-        .input('rc', (cc || []).join('; '))
-        .input('aq', uniqueAttachments.length)
-        .input('st', 'sent')
-        .input('em', null)
-        .query(`INSERT INTO dbo.intranet_letras_bot_history
-                  (run_date, trigger_type, letra_id, letra_name, factura_code, cliente,
-                   recipients_to, recipients_cc, attachments_qty, status, error_message)
-                VALUES (@rd, @tt, @lid, @ln, @fc, @cl, @rt, @rc, @aq, @st, @em)`);
-    } catch (e) { console.error('[letras-send] history log failed:', (e as Error).message); }
+    // 7. Marcar como enviado exitoso
+    if (historyId) {
+      try {
+        const pool = await (await import('../config/database')).getDbPool();
+        await pool.request().input('id', historyId).query(
+          `UPDATE dbo.intranet_letras_bot_history SET status='sent' WHERE id=@id`
+        );
+      } catch (e) { console.error('[letras-send] status update failed:', (e as Error).message); }
+    }
 
     return res.json({
       success: true,
@@ -450,6 +481,137 @@ router.post('/letras-send', async (req, res) => {
   } catch (error) {
     console.error('Error sending letra email:', error);
     return res.status(500).json({ success: false, message: 'Error al enviar email: ' + (error as any).message });
+  }
+});
+
+// ─────────── TRACKING DE ENVÍOS Y APERTURAS ───────────
+
+// Resumen agregado por letra_id (para mostrar badges en la lista principal sin N queries)
+router.get('/letras-sends-summary', async (_req, res) => {
+  try {
+    const pool = await (await import('../config/database')).getDbPool();
+    const r = await pool.request().query(`
+      WITH last_send AS (
+        SELECT letra_id,
+               MAX(run_at) AS last_sent_at,
+               COUNT(*) AS total_sends
+        FROM dbo.intranet_letras_bot_history
+        WHERE status = 'sent'
+        GROUP BY letra_id
+      ),
+      last_send_detail AS (
+        SELECT h.letra_id, h.id AS history_id, h.run_at, h.trigger_type, h.recipients_to, h.recipients_cc
+        FROM dbo.intranet_letras_bot_history h
+        INNER JOIN last_send ls ON h.letra_id = ls.letra_id AND h.run_at = ls.last_sent_at
+        WHERE h.status = 'sent'
+      ),
+      opens AS (
+        SELECT h.letra_id,
+               COUNT(*) AS total_opens,
+               SUM(CASE WHEN o.is_proxied = 0 THEN 1 ELSE 0 END) AS real_opens,
+               COUNT(DISTINCT o.recipient) AS unique_openers,
+               MAX(o.opened_at) AS last_open_at
+        FROM dbo.intranet_letras_email_opens o
+        INNER JOIN dbo.intranet_letras_bot_history h ON o.history_id = h.id
+        WHERE h.status = 'sent'
+        GROUP BY h.letra_id
+      )
+      SELECT
+        ls.letra_id, ls.last_sent_at, ls.total_sends,
+        lsd.history_id, lsd.trigger_type,
+        lsd.recipients_to, lsd.recipients_cc,
+        ISNULL(o.total_opens, 0)    AS total_opens,
+        ISNULL(o.real_opens, 0)     AS real_opens,
+        ISNULL(o.unique_openers, 0) AS unique_openers,
+        o.last_open_at
+      FROM last_send ls
+      INNER JOIN last_send_detail lsd ON lsd.letra_id = ls.letra_id
+      LEFT  JOIN opens o ON o.letra_id = ls.letra_id;
+    `);
+    return res.json({ success: true, data: r.recordset });
+  } catch (err) {
+    console.error('[letras-sends-summary] error:', err);
+    return res.status(500).json({ success: false, message: (err as any).message });
+  }
+});
+
+// Lista de envíos para una letra específica con resumen de aperturas por destinatario
+router.get('/letras-sends/:letraId', async (req, res) => {
+  try {
+    const letraId = String(req.params.letraId);
+    const pool = await (await import('../config/database')).getDbPool();
+    const r = await pool.request().input('lid', letraId).query(`
+      SELECT
+        h.id, h.run_at, h.trigger_type, h.status, h.factura_code, h.cliente,
+        h.recipients_to, h.recipients_cc, h.attachments_qty, h.error_message,
+        (SELECT COUNT(*) FROM dbo.intranet_letras_email_opens o WHERE o.history_id = h.id) AS total_opens,
+        (SELECT COUNT(DISTINCT o.recipient) FROM dbo.intranet_letras_email_opens o WHERE o.history_id = h.id) AS unique_openers,
+        (SELECT MIN(o.opened_at) FROM dbo.intranet_letras_email_opens o WHERE o.history_id = h.id AND o.is_proxied = 0) AS first_open_at,
+        (SELECT MAX(o.opened_at) FROM dbo.intranet_letras_email_opens o WHERE o.history_id = h.id AND o.is_proxied = 0) AS last_open_at
+      FROM dbo.intranet_letras_bot_history h
+      WHERE h.letra_id = @lid
+      ORDER BY h.run_at DESC;
+    `);
+    return res.json({ success: true, data: r.recordset });
+  } catch (err) {
+    console.error('[letras-sends] error:', err);
+    return res.status(500).json({ success: false, message: (err as any).message });
+  }
+});
+
+// Detalle de aperturas para un envío específico (history_id) — agregado por destinatario
+router.get('/letras-opens/:historyId', async (req, res) => {
+  try {
+    const historyId = parseInt(String(req.params.historyId));
+    if (!Number.isFinite(historyId)) {
+      return res.status(400).json({ success: false, message: 'history_id inválido' });
+    }
+    const pool = await (await import('../config/database')).getDbPool();
+
+    // Resumen por destinatario
+    const summary = await pool.request().input('id', historyId).query(`
+      SELECT
+        recipient, recipient_role,
+        COUNT(*) AS total_opens,
+        SUM(CASE WHEN is_proxied = 0 THEN 1 ELSE 0 END) AS real_opens,
+        SUM(CASE WHEN is_proxied = 1 THEN 1 ELSE 0 END) AS proxy_opens,
+        MIN(opened_at) AS first_open_at,
+        MAX(opened_at) AS last_open_at
+      FROM dbo.intranet_letras_email_opens
+      WHERE history_id = @id
+      GROUP BY recipient, recipient_role
+      ORDER BY MAX(opened_at) DESC;
+    `);
+
+    // Detalle (últimas 100 aperturas)
+    const detail = await pool.request().input('id', historyId).query(`
+      SELECT TOP 100
+        open_id, recipient, recipient_role, opened_at,
+        ip_address, user_agent, is_proxied
+      FROM dbo.intranet_letras_email_opens
+      WHERE history_id = @id
+      ORDER BY opened_at DESC;
+    `);
+
+    // Datos del envío
+    const send = await pool.request().input('id', historyId).query(`
+      SELECT id, run_at, trigger_type, status, factura_code, cliente,
+             recipients_to, recipients_cc, letra_name
+      FROM dbo.intranet_letras_bot_history
+      WHERE id = @id;
+    `);
+
+    return res.json({
+      success: true,
+      data: {
+        send: send.recordset[0] || null,
+        summary: summary.recordset,
+        detail: detail.recordset,
+      },
+    });
+  } catch (err) {
+    console.error('[letras-opens] error:', err);
+    return res.status(500).json({ success: false, message: (err as any).message });
   }
 });
 

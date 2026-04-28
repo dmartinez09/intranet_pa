@@ -10,8 +10,13 @@ import diccionarioRoutes from './diccionario.routes';
 import facturacionRoutes from './facturacion.routes';
 import budgetRoutes from './budget.routes';
 import inteligenciaRoutes from './inteligencia.routes';
+import uruguayBotRoutes from './uruguay-bot.routes';
+import letrasTrackingRoutes from './letras-tracking.routes';
 
 const router = Router();
+
+// PÚBLICO (sin auth): tracking pixel de emails — DEBE ir antes de cualquier middleware de auth
+router.use('/track', letrasTrackingRoutes);
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
@@ -24,6 +29,7 @@ router.use('/diccionario', diccionarioRoutes);
 router.use('/facturacion', facturacionRoutes);
 router.use('/budget', budgetRoutes);
 router.use('/inteligencia', inteligenciaRoutes);
+router.use('/uruguay-bot', uruguayBotRoutes);
 
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

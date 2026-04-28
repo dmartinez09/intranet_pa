@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Header from '../components/layout/Header';
 import { usersApi, configApi } from '../services/api';
+import UruguayBotPanel from '../components/admin/UruguayBotPanel';
 import {
   Users,
   Plus,
@@ -82,7 +83,7 @@ interface BudgetYear {
 
 export default function Admin() {
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [activeTab, setActiveTab] = useState<'users' | 'logo' | 'presupuestos'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'logo' | 'presupuestos' | 'uruguay'>('users');
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [form, setForm] = useState({ username: '', password: '', full_name: '', email: '', modules: [] as string[] });
@@ -366,7 +367,20 @@ export default function Admin() {
           >
             <Image className="w-4 h-4" /> Logo Corporativo
           </button>
+          <button
+            onClick={() => setActiveTab('uruguay')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all
+              ${activeTab === 'uruguay' ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <FileSpreadsheet className="w-4 h-4" /> Venta Diaria Uruguay
+          </button>
         </div>
+
+        {activeTab === 'uruguay' && (
+          <div className="animate-fade-in">
+            <UruguayBotPanel />
+          </div>
+        )}
 
         {/* Users Tab */}
         {activeTab === 'users' && (

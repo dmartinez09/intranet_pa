@@ -143,7 +143,11 @@ async function buildAndSendForLetra(
       return { status: 'skipped', error: 'Sin destinatarios en comprobantes' };
     }
 
-    const cc = defaultCc ? defaultCc.split(/[;,]/).map(s => s.trim()).filter(Boolean) : [];
+    // CC siempre incluye cobranzas@pointamericas.com (fijo) + lo que venga en defaultCc
+    const FIXED_CC = 'cobranzas@pointamericas.com';
+    const ccList = (defaultCc || '').split(/[;,]/).map(s => s.trim()).filter(Boolean);
+    if (!ccList.some(e => e.toLowerCase() === FIXED_CC.toLowerCase())) ccList.unshift(FIXED_CC);
+    const cc = ccList;
 
     // 3. Download letra + attachments
     const letraFile = await graphService.downloadDriveItem(DRIVE_ID, letra.id);
@@ -172,7 +176,40 @@ async function buildAndSendForLetra(
       return true;
     });
 
-    // 5. Send
+    // 5. Pre-insert history para tracking pixels
+    const pool = await getDbPool();
+    const ins = await pool.request()
+      .input('rd', runDate)
+      .input('tt', triggerType)
+      .input('lid', letra.id)
+      .input('ln', letra.name)
+      .input('fc', letra.facturaCode)
+      .input('cl', letra.cliente || null)
+      .input('rt', to.join('; '))
+      .input('rc', cc.join('; '))
+      .input('aq', unique.length)
+      .input('st', 'sending')
+      .input('em', null)
+      .query(`INSERT INTO dbo.intranet_letras_bot_history
+                (run_date, trigger_type, letra_id, letra_name, factura_code, cliente,
+                 recipients_to, recipients_cc, attachments_qty, status, error_message)
+              OUTPUT INSERTED.id
+              VALUES (@rd, @tt, @lid, @ln, @fc, @cl, @rt, @rc, @aq, @st, @em)`);
+    const historyId: number | null = ins.recordset[0]?.id ?? null;
+
+    // 6. Tracking pixels por destinatario
+    const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+    const buildPixel = (recipient: string, role: 'to' | 'cc'): string => {
+      if (!historyId) return '';
+      const token = Buffer.from(JSON.stringify({ h: historyId, r: recipient, role })).toString('base64url');
+      return `<img src="${baseUrl}/api/track/letras/${token}.gif" width="1" height="1" alt="" style="display:block;border:0;" />`;
+    };
+    const pixelsHtml = [
+      ...to.map(r => buildPixel(r, 'to')),
+      ...cc.map(r => buildPixel(r, 'cc')),
+    ].join('\n');
+
+    // 7. Send
     const subject = `Letra y Comprobantes de Pago — ${letra.facturaCode || ''} — ${letra.cliente || 'Cliente'}`;
     const bodyHtml = `
       <div style="font-family:Arial,sans-serif;color:#333;">
@@ -183,16 +220,23 @@ async function buildAndSendForLetra(
         <ul>${unique.map(a => `<li>${a.name}</li>`).join('')}</ul>
         <br/>
         <p>Atentamente,<br/><strong>Point Andina S.A.</strong><br/>Facturación y Despacho</p>
+        ${pixelsHtml}
       </div>`;
 
     await graphService.sendEmailWithAttachments({ to, cc, subject, bodyHtml, attachments: unique });
 
-    await logSend({
-      runDate, triggerType, letraId: letra.id, letraName: letra.name,
-      facturaCode: letra.facturaCode, cliente: letra.cliente || null,
-      recipientsTo: to.join('; '), recipientsCc: cc.join('; '),
-      attachmentsQty: unique.length, status: 'sent', errorMessage: null,
-    });
+    if (historyId) {
+      await pool.request().input('id', historyId).query(
+        `UPDATE dbo.intranet_letras_bot_history SET status='sent' WHERE id=@id`
+      );
+    } else {
+      await logSend({
+        runDate, triggerType, letraId: letra.id, letraName: letra.name,
+        facturaCode: letra.facturaCode, cliente: letra.cliente || null,
+        recipientsTo: to.join('; '), recipientsCc: cc.join('; '),
+        attachmentsQty: unique.length, status: 'sent', errorMessage: null,
+      });
+    }
     return { status: 'sent', recipients: to, attachments: unique.length };
   } catch (e) {
     const msg = (e as Error).message || 'Unknown error';
