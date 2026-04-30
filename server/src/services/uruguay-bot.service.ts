@@ -56,10 +56,10 @@ const COLUMNS: { key: keyof VentaUruguayRow; header: string; width: number; numF
   { key: 'UNIDADES_POR_PRESENTACION',  header: 'UNIDADES_POR_PRESENTACION',  width: 14, numFmt: '#,##0.00' },
   { key: 'EMPAQUE',                    header: 'EMPAQUE',                    width: 12, numFmt: '#,##0.00' },
   { key: 'FECHA2',                     header: 'FECHA2',                     width: 12, numFmt: 'yyyy-mm-dd' },
-  { key: 'GRUPO',                      header: 'GRUPO',                      width: 12 },
+  { key: 'Origen_producto',            header: 'Origen producto',            width: 14 },
   { key: 'IA',                         header: 'I.A.',                       width: 24 },
   { key: 'CANTIDAD_NEGATIVA',          header: 'CANTIDAD_NEGATIVA',          width: 14, numFmt: '#,##0.00' },
-  { key: 'AGROINDUSTRIA_DISTRIBUCION', header: 'AGROINDUSTRIA/DISTRIBUCION', width: 22 },
+  { key: 'Grupo_Cliente',              header: 'Grupo_Cliente',              width: 22 },
   { key: 'FOCO',                       header: 'FOCO',                       width: 12 },
 ];
 
@@ -165,11 +165,16 @@ function rebuildWorkbookWithMerge(
           console.warn('[UruguayBot] header read failed:', e?.message);
         }
 
-        // Aliasing para nombres antiguos
+        // Aliasing para nombres antiguos (Excels históricos pueden tener columnas
+        // con nombres previos). Grupo_Cliente: antes "AGROINDUSTRIA_DISTRIBUCION"
+        // o "AGROINDUSTRIA_DISTRITO" o "AGROINDUSTRIA/DISTRIBUCION" o "GRUPO".
+        // Origen_producto: antes "GRUPO" cuando contenía Origen_Producto.
         const aliasMap: Record<string, string> = {
-          'AGROINDUSTRIA_DISTRITO': 'AGROINDUSTRIA_DISTRIBUCION',
-          'AGROINDUSTRIA/DISTRIBUCION': 'AGROINDUSTRIA_DISTRIBUCION',
           'I.A.': 'IA',
+          'AGROINDUSTRIA_DISTRIBUCION': 'Grupo_Cliente',
+          'AGROINDUSTRIA/DISTRIBUCION': 'Grupo_Cliente',
+          'AGROINDUSTRIA_DISTRITO': 'Grupo_Cliente',
+          'GRUPO': 'Grupo_Cliente',
         };
         const resolveCol = (key: string, header: string): number | undefined => {
           return headerMap[header]

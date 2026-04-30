@@ -1,6 +1,7 @@
 import { getDbPool, sql } from '../config/database';
 
 export interface VentaUruguayRow {
+  TIPO: string | null;
   PAIS: string | null;
   FACTURADOR: string | null;
   Fecha: Date | null;
@@ -14,9 +15,10 @@ export interface VentaUruguayRow {
   UNIDADES_POR_PRESENTACION: number | null;
   EMPAQUE: number | null;
   FECHA2: Date | null;
+  Origen_producto: string | null;       // EXTERIOR / NACIONAL
   IA: string | null;
   CANTIDAD_NEGATIVA: number | null;
-  AGROINDUSTRIA_DISTRITO: string | null;
+  Grupo_Cliente: string | null;         // AGROINDUSTRIAS / DIST. COSTA / DIST. SIERRA / SELVA / ONLINE / CLIENTES EXTRANJEROS
   FOCO: string | null;
 }
 
