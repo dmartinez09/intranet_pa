@@ -47,6 +47,10 @@ jobs:
           cp -r server/node_modules deploy/server/node_modules
           cp server/package.json deploy/server/package.json
           cp -r client/dist deploy/client/dist
+          # Persistent server data (configs of bots, presupuestos, etc.)
+          if [ -d server/data ]; then cp -r server/data deploy/server/data; fi
+          # Logo y otros uploads del admin (si existen)
+          if [ -d server/uploads ]; then cp -r server/uploads deploy/server/uploads; fi
           cat > deploy/package.json << 'EOF'
           {
             "name": "intranet-point-andina",
