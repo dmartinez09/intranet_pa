@@ -42,24 +42,56 @@ export function writeConfig(c: UruguayBotConfig, by: string): void {
 // ============================================================
 
 const COLUMNS: { key: keyof VentaUruguayRow; header: string; width: number; numFmt?: string }[] = [
-  { key: 'PAIS',                     header: 'PAIS',                       width: 10 },
-  { key: 'FACTURADOR',               header: 'FACTURADOR',                 width: 22 },
-  { key: 'Fecha',                    header: 'Fecha',                      width: 12, numFmt: 'yyyy-mm-dd' },
-  { key: 'ZONA',                     header: 'ZONA',                       width: 14 },
-  { key: 'VENDEDOR',                 header: 'VENDEDOR',                   width: 22 },
-  { key: 'CLIENTE',                  header: 'CLIENTE',                    width: 30 },
-  { key: 'PRODUCTO',                 header: 'PRODUCTO',                   width: 30 },
-  { key: 'CANTIDAD_KG_LT',           header: 'CANTIDAD_KG_LT',             width: 14, numFmt: '#,##0.00' },
-  { key: 'VALOR_UNITARIO',           header: 'VALOR_UNITARIO',             width: 14, numFmt: '#,##0.00' },
-  { key: 'VALOR_TOTAL',              header: 'VALOR_TOTAL',                width: 14, numFmt: '#,##0.00' },
-  { key: 'UNIDADES_POR_PRESENTACION',header: 'UNIDADES_POR_PRESENTACION',  width: 14, numFmt: '#,##0.00' },
-  { key: 'EMPAQUE',                  header: 'EMPAQUE',                    width: 12, numFmt: '#,##0.00' },
-  { key: 'FECHA2',                   header: 'FECHA2',                     width: 12, numFmt: 'yyyy-mm-dd' },
-  { key: 'IA',                       header: 'IA',                         width: 24 },
-  { key: 'CANTIDAD_NEGATIVA',        header: 'CANTIDAD_NEGATIVA',          width: 14, numFmt: '#,##0.00' },
-  { key: 'AGROINDUSTRIA_DISTRITO',   header: 'AGROINDUSTRIA_DISTRITO',     width: 18 },
-  { key: 'FOCO',                     header: 'FOCO',                       width: 14 },
+  { key: 'TIPO',                       header: 'TIPO',                       width: 14 },
+  { key: 'PAIS',                       header: 'PAIS',                       width: 10 },
+  { key: 'FACTURADOR',                 header: 'FACTURADOR',                 width: 22 },
+  { key: 'Fecha',                      header: 'Fecha',                      width: 12, numFmt: 'yyyy-mm-dd' },
+  { key: 'ZONA',                       header: 'ZONA',                       width: 14 },
+  { key: 'VENDEDOR',                   header: 'VENDEDOR',                   width: 26 },
+  { key: 'CLIENTE',                    header: 'CLIENTE',                    width: 30 },
+  { key: 'PRODUCTO',                   header: 'PRODUCTO',                   width: 30 },
+  { key: 'CANTIDAD_KG_LT',             header: 'CANTIDAD_KG_LT',             width: 14, numFmt: '#,##0.00' },
+  { key: 'VALOR_UNITARIO',             header: 'VALOR_UNITARIO',             width: 14, numFmt: '#,##0.00' },
+  { key: 'VALOR_TOTAL',                header: 'VALOR_TOTAL',                width: 14, numFmt: '#,##0.00' },
+  { key: 'UNIDADES_POR_PRESENTACION',  header: 'UNIDADES_POR_PRESENTACION',  width: 14, numFmt: '#,##0.00' },
+  { key: 'EMPAQUE',                    header: 'EMPAQUE',                    width: 12, numFmt: '#,##0.00' },
+  { key: 'FECHA2',                     header: 'FECHA2',                     width: 12, numFmt: 'yyyy-mm-dd' },
+  { key: 'GRUPO',                      header: 'GRUPO',                      width: 12 },
+  { key: 'IA',                         header: 'I.A.',                       width: 24 },
+  { key: 'CANTIDAD_NEGATIVA',          header: 'CANTIDAD_NEGATIVA',          width: 14, numFmt: '#,##0.00' },
+  { key: 'AGROINDUSTRIA_DISTRIBUCION', header: 'AGROINDUSTRIA/DISTRIBUCION', width: 22 },
+  { key: 'FOCO',                       header: 'FOCO',                       width: 12 },
 ];
+
+/** Aplica estilo Point Andina (header verde) — versión simple y robusta. */
+function applyHeaderStyleAndClean(ws: ExcelJS.Worksheet): void {
+  // Estructura de columnas (anchos + numFmt)
+  ws.columns = COLUMNS.map(c => ({
+    header: c.header, key: c.key as string, width: c.width,
+    style: c.numFmt ? { numFmt: c.numFmt } : undefined,
+  }));
+
+  // Header verde Point Andina (#00A651), texto blanco, negrita
+  const head = ws.getRow(1);
+  head.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+  head.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00A651' } };
+  head.alignment = { horizontal: 'center', vertical: 'middle' };
+  head.commit();
+
+  // Page setup explícito para evitar el bug "reading 'margins' of null"
+  ws.pageSetup = {
+    margins: { left: 0.7, right: 0.7, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 },
+    paperSize: 9,
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+  };
+
+  // Filtros + freeze pane
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: COLUMNS.length } };
+  ws.views = [{ state: 'frozen', ySplit: 1 }];
+}
 
 function ymKey(d: Date | string): string {
   const dt = typeof d === 'string' ? new Date(d) : d;
@@ -73,93 +105,138 @@ function fmtDate(d: Date | string | null): string {
 }
 
 /**
- * Construye un workbook desde cero con los rows entregados.
+ * Construye un workbook desde cero con los rows entregados (header verde, sin comentarios).
  */
 async function buildWorkbookFromRows(rows: VentaUruguayRow[]): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'Intranet Point Andina';
   const ws = wb.addWorksheet('Ventas Diarias');
-  ws.columns = COLUMNS.map(c => ({ header: c.header, key: c.key as string, width: c.width, style: c.numFmt ? { numFmt: c.numFmt } : undefined }));
-
-  // estilo header
-  ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00A651' } };
-  ws.getRow(1).alignment = { horizontal: 'center', vertical: 'middle' };
-
-  rows.forEach(r => ws.addRow(r));
-  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: COLUMNS.length } };
-  ws.views = [{ state: 'frozen', ySplit: 1 }];
+  applyHeaderStyleAndClean(ws);
+  // FECHA2 espejo de Fecha (solicitud usuaria Uruguay)
+  rows.forEach(r => ws.addRow({ ...r, FECHA2: r.Fecha }));
   return wb;
 }
 
 /**
- * Carga workbook desde buffer existente o crea uno nuevo.
+ * Lee un workbook existente desde buffer (si existe) — solo para extraer filas.
+ * El output se reconstruye fresh con buildWorkbookWithMerge() para garantizar
+ * header verde y sin comentarios heredados.
  */
-async function loadOrInitWorkbook(buf: Buffer | null): Promise<ExcelJS.Workbook> {
-  if (buf) {
+async function loadExistingWorkbook(buf: Buffer | null): Promise<ExcelJS.Workbook | null> {
+  if (!buf) return null;
+  try {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf as any);
     return wb;
+  } catch (err) {
+    console.warn('[UruguayBot] Excel existente no se pudo leer, se reconstruye desde cero:', (err as any).message);
+    return null;
   }
-  return buildWorkbookFromRows([]);
 }
 
 /**
- * Reemplaza filas del rango [desde,hasta] por las nuevas, deja intactas las del resto.
+ * Reconstruye el workbook desde cero combinando filas preservadas (fuera del rango)
+ * con las filas nuevas (dentro del rango). Garantiza header verde y sin comentarios.
  */
-function mergeRowsIntoWorkbook(wb: ExcelJS.Workbook, rangoDesde: string, rangoHasta: string, rows: VentaUruguayRow[]): number {
-  let ws = wb.getWorksheet('Ventas Diarias');
-  if (!ws) {
-    ws = wb.addWorksheet('Ventas Diarias');
-    ws.columns = COLUMNS.map(c => ({ header: c.header, key: c.key as string, width: c.width, style: c.numFmt ? { numFmt: c.numFmt } : undefined }));
-    ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00A651' } };
-  }
-
-  // recolectar filas existentes
+function rebuildWorkbookWithMerge(
+  existingWb: ExcelJS.Workbook | null,
+  rangoDesde: string,
+  rangoHasta: string,
+  newRows: VentaUruguayRow[],
+): { wb: ExcelJS.Workbook; totalRows: number; preservedRows: number } {
+  // 1. Recolectar filas existentes fuera del rango (preservar)
+  // Envolvemos en try/catch defensivo: si el Excel viejo tiene estructuras raras
+  // (margins null, comentarios huérfanos, etc) lo descartamos y reconstruimos limpio.
   const existing: any[] = [];
-  ws.eachRow({ includeEmpty: false }, (row, rowNum) => {
-    if (rowNum === 1) return; // header
-    const obj: any = {};
-    COLUMNS.forEach((c, i) => { obj[c.key] = row.getCell(i + 1).value; });
-    existing.push(obj);
-  });
+  if (existingWb) {
+    try {
+      const existingWs = existingWb.getWorksheet('Ventas Diarias') || existingWb.worksheets[0];
+      if (existingWs) {
+        // Mapear headers del archivo existente para tolerar reordenamiento o nombres antiguos
+        const headerMap: Record<string, number> = {};
+        try {
+          existingWs.getRow(1).eachCell({ includeEmpty: true }, (cell, col) => {
+            try {
+              const v = cell.value;
+              if (v) headerMap[String(v).trim()] = col;
+            } catch {}
+          });
+        } catch (e: any) {
+          console.warn('[UruguayBot] header read failed:', e?.message);
+        }
 
-  // filtrar las que NO están en el rango (las preservamos)
+        // Aliasing para nombres antiguos
+        const aliasMap: Record<string, string> = {
+          'AGROINDUSTRIA_DISTRITO': 'AGROINDUSTRIA_DISTRIBUCION',
+          'AGROINDUSTRIA/DISTRIBUCION': 'AGROINDUSTRIA_DISTRIBUCION',
+          'I.A.': 'IA',
+        };
+        const resolveCol = (key: string, header: string): number | undefined => {
+          return headerMap[header]
+            || headerMap[header.replace(/_/g, ' ')]
+            || headerMap[key]
+            || headerMap[aliasMap[header] || ''];
+        };
+
+        // Iteración manual por número de fila — más tolerante que eachRow ante metadatos rotos
+        const totalRowsExisting = (existingWs.actualRowCount || existingWs.rowCount || 0);
+        for (let rNum = 2; rNum <= totalRowsExisting; rNum++) {
+          try {
+            const row = existingWs.getRow(rNum);
+            if (!row || (row as any).hasValues === false) continue;
+            const obj: any = {};
+            for (const c of COLUMNS) {
+              const colIdx = resolveCol(String(c.key), c.header);
+              if (colIdx) {
+                try {
+                  const val = row.getCell(colIdx).value;
+                  obj[c.key] = val && typeof val === 'object' && 'result' in (val as any)
+                    ? (val as any).result : val;
+                } catch {}
+              }
+            }
+            // Solo guardamos si tiene fecha o key válido
+            if (obj.Fecha || obj.CLIENTE || obj.PRODUCTO) existing.push(obj);
+          } catch (rowErr: any) {
+            console.warn(`[UruguayBot] skip row ${rNum}:`, rowErr?.message);
+          }
+        }
+      }
+    } catch (wsErr: any) {
+      console.warn('[UruguayBot] existing workbook unreadable, descartado:', wsErr?.message);
+    }
+  }
+  const recolectadasInfo = existing.length;
+
+  // 2. Filtrar filas FUERA del rango (las preservamos)
   const desdeMs = new Date(rangoDesde + 'T00:00:00Z').getTime();
   const hastaMs = new Date(rangoHasta + 'T23:59:59Z').getTime();
   const preserved = existing.filter(r => {
-    if (!r.Fecha) return true;
+    if (!r.Fecha) return false;
     const d = r.Fecha instanceof Date ? r.Fecha : new Date(r.Fecha);
     const ms = d.getTime();
+    if (isNaN(ms)) return false;
     return ms < desdeMs || ms > hastaMs;
   });
 
-  // limpiar todo y re-poblar
-  while (ws.rowCount > 1) ws.spliceRows(2, 1);
-  preserved.forEach(r => ws!.addRow(r));
-  rows.forEach(r => ws!.addRow(r));
-
-  // ordenar por Fecha asc
-  const allRows: any[] = [];
-  ws.eachRow({ includeEmpty: false }, (row, rowNum) => {
-    if (rowNum === 1) return;
-    const obj: any = {};
-    COLUMNS.forEach((c, i) => { obj[c.key] = row.getCell(i + 1).value; });
-    allRows.push(obj);
-  });
-  allRows.sort((a, b) => {
+  // 3. Combinar con las nuevas y ordenar por Fecha asc
+  const allRows = [...preserved, ...newRows].sort((a: any, b: any) => {
     const fa = a.Fecha ? new Date(a.Fecha).getTime() : 0;
     const fb = b.Fecha ? new Date(b.Fecha).getTime() : 0;
     return fa - fb;
   });
-  while (ws.rowCount > 1) ws.spliceRows(2, 1);
-  allRows.forEach(r => ws!.addRow(r));
 
-  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: COLUMNS.length } };
-  ws.views = [{ state: 'frozen', ySplit: 1 }];
+  // 4. Construir workbook FRESH (header verde, sin comentarios heredados)
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Intranet Point Andina';
+  const ws = wb.addWorksheet('Ventas Diarias');
+  applyHeaderStyleAndClean(ws);
+  // FECHA2 espejo de Fecha (solicitud usuaria Uruguay) — aplica también a filas
+  // preservadas del Excel anterior (puede traer FECHA2 distinta del histórico).
+  allRows.forEach((r: any) => ws.addRow({ ...r, FECHA2: r.Fecha }));
 
-  return allRows.length;
+  console.log(`[UruguayBot] merge: existentes=${recolectadasInfo} · preservadas=${preserved.length} · nuevas=${newRows.length} · total=${allRows.length}`);
+  return { wb, totalRows: allRows.length, preservedRows: preserved.length };
 }
 
 // ============================================================
@@ -290,12 +367,14 @@ export async function runBot(opts: {
       const effectiveFrom = opts.dateFrom > monthFirstDay ? opts.dateFrom : monthFirstDay;
       const effectiveTo = opts.dateTo < monthLastDay ? opts.dateTo : monthLastDay;
 
-      // descargar existente
+      // descargar existente (solo para preservar filas fuera del rango)
       const buf = await sharepointService.downloadFile(loc.driveId, filePath);
-      const wb = await loadOrInitWorkbook(buf);
+      const existingWb = await loadExistingWorkbook(buf);
 
-      // mergear
-      const rowCount = mergeRowsIntoWorkbook(wb, effectiveFrom, effectiveTo, monthRows);
+      // reconstruir workbook FRESH: header verde, sin comentarios
+      const { wb, totalRows: rowCount } = rebuildWorkbookWithMerge(
+        existingWb, effectiveFrom, effectiveTo, monthRows
+      );
       const xlsxBuf = await wb.xlsx.writeBuffer();
       const buffer: Buffer = Buffer.isBuffer(xlsxBuf) ? xlsxBuf : Buffer.from(xlsxBuf as ArrayBuffer);
 
