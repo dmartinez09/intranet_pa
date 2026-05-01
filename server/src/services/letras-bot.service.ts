@@ -332,11 +332,14 @@ export const letrasBot = {
       return;
     }
     const expr = `${c.sendMinute} ${c.sendHour} * * *`;
+    // IMPORTANTE: forzar timezone America/Lima para que el cron interprete
+    // sendHour como hora local Lima. Sin esto, node-cron usa la timezone del
+    // proceso (UTC en Azure Web App) y la ejecución se desfasa 5 horas.
     scheduledTask = cron.schedule(expr, () => {
       runDailyJob('auto').catch(err => console.error('[letras-bot] auto run error:', err));
-    });
+    }, { timezone: 'America/Lima' });
     currentCron = expr;
-    console.log(`[letras-bot] scheduled daily @ ${String(c.sendHour).padStart(2, '0')}:${String(c.sendMinute).padStart(2, '0')} (cron: ${expr})`);
+    console.log(`[letras-bot] scheduled daily @ ${String(c.sendHour).padStart(2, '0')}:${String(c.sendMinute).padStart(2, '0')} Lima (cron: ${expr} TZ:America/Lima)`);
   },
 
   async start() {

@@ -223,6 +223,18 @@ export default function Letras() {
     }
   }
 
+  // Garantiza que cobranzas@pointamericas.com aparezca SIEMPRE visible en
+  // el CC del bot. El backend lo fuerza al enviar, pero la usuaria debe
+  // verlo en la UI para confianza/transparencia.
+  function ensureCobranzasInCc(cfg: BotConfig): BotConfig {
+    const FIXED = 'cobranzas@pointamericas.com';
+    const list = (cfg.defaultCc || '').split(/[;,]/).map(s => s.trim()).filter(Boolean);
+    if (!list.some(e => e.toLowerCase() === FIXED.toLowerCase())) {
+      list.unshift(FIXED);
+    }
+    return { ...cfg, defaultCc: list.join('; ') };
+  }
+
   async function openBotPanel() {
     setShowBotPanel(true);
     setBotMessage(null);
@@ -231,7 +243,7 @@ export default function Letras() {
         facturacionApi.getLetrasBotConfig(),
         facturacionApi.getLetrasBotHistory(50),
       ]);
-      setBotConfig(cfgRes.data.data);
+      setBotConfig(ensureCobranzasInCc(cfgRes.data.data));
       setBotHistory(histRes.data.data || []);
     } catch (e: any) {
       setBotMessage({ type: 'err', text: e?.response?.data?.message || 'Error al cargar config del bot' });
@@ -249,7 +261,7 @@ export default function Letras() {
         sendMinute: botConfig.sendMinute,
         defaultCc: botConfig.defaultCc,
       });
-      setBotConfig(res.data.data);
+      setBotConfig(ensureCobranzasInCc(res.data.data));
       setBotMessage({ type: 'ok', text: 'Configuración guardada' });
     } catch (e: any) {
       setBotMessage({ type: 'err', text: e?.response?.data?.message || 'Error al guardar' });
@@ -299,7 +311,10 @@ export default function Letras() {
   function openSendModal(letra: LetraFile, comprobantes: ComprobantesData) {
     setSendModal({ letra, comprobantes });
     setSendTo(comprobantes.destinatarios.join('; ')); // Pre-filled from expandable row edits
-    setSendCc('');
+    // Regla de negocio: cobranzas@pointamericas.com siempre va en CC.
+    // El backend lo fuerza pero también lo mostramos visible en la UI para
+    // que la usuaria sepa que quedará incluido.
+    setSendCc('cobranzas@pointamericas.com');
     setSendResult(null);
   }
 
