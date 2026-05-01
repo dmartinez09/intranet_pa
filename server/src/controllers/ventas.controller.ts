@@ -82,9 +82,10 @@ export const ventasController = {
     }
   },
 
-  async getFiltros(_req: Request, res: Response) {
+  async getFiltros(req: Request, res: Response) {
     try {
-      const data = await dbService.getFiltrosOpciones();
+      const grupo = (req.query.grupo_cliente as string) || undefined;
+      const data = await dbService.getFiltrosOpciones(grupo);
       return res.json({ success: true, data });
     } catch (error) {
       console.error('[Ventas] Filtros error:', error);

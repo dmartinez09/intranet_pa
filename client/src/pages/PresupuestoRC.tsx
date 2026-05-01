@@ -1,12 +1,25 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { ventaRCApi } from '../services/api';
+import { ventaRCApi, ventasApi } from '../services/api';
+import MultiSelect from '../components/filters/MultiSelect';
+import DateRangeFilter from '../components/filters/DateRangeFilter';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ComposedChart, Line, Area, Cell, PieChart, Pie, Legend,
 } from 'recharts';
-import { Target, TrendingUp, TrendingDown, DollarSign, Calendar, Loader2, AlertCircle } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, DollarSign, Calendar, Loader2, AlertCircle, Filter, X, ChevronDown } from 'lucide-react';
 import { getGrupoFromSlug } from '../lib/utils';
+
+interface Filtros {
+  familias: string[];
+  sub_familias: string[];
+  ingredientes_activos: string[];
+  vendedores: string[];
+  zonas: string[];
+  tipos_documento: string[];
+  series_documentos: string[];
+  maestro_tipos: string[];
+}
 
 const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const COLORS = ['#00A651', '#34D67B', '#0EA5E9', '#6366F1', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
@@ -32,34 +45,73 @@ export default function PresupuestoRC() {
   const [ventasMensuales, setVentasMensuales] = useState<Record<number, number>>({});
   const [ventasData, setVentasData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [year] = useState(new Date().getFullYear());
+  const [opcionesFiltro, setOpcionesFiltro] = useState<any>(null);
+  const [showFilters, setShowFilters] = useState(true);
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const [year, setYear] = useState(currentYear);
+  const [monthStart, setMonthStart] = useState(1);
+  const [monthEnd, setMonthEnd] = useState(12);
+
+  const [filtros, setFiltros] = useState<Filtros>({
+    familias: [], sub_familias: [], ingredientes_activos: [], vendedores: [],
+    zonas: [], tipos_documento: [], series_documentos: [], maestro_tipos: [],
+  });
 
   useEffect(() => {
-    loadBudget();
-  }, []);
-
-  useEffect(() => {
-    loadVentas(grupoCliente);
+    loadFiltros();
+    loadAll({ year: currentYear, month_start: 1, month_end: 12 });
   }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function loadBudget() {
+  async function loadFiltros() {
     try {
-      const res = await fetch('/api/budget/2026', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      }).then(r => r.json());
-      setBudget(res.data || []);
+      const res = await ventasApi.getFiltros();
+      setOpcionesFiltro(res.data.data);
     } catch (err) {
-      console.error(err);
+      console.error('Error loading filtros:', err);
     }
   }
 
-  async function loadVentas(grupo: string) {
+  function buildParams() {
+    const params: any = {
+      year, month_start: monthStart, month_end: monthEnd,
+      grupo_cliente: grupoCliente,
+    };
+    if (filtros.familias.length) params.familia = filtros.familias.join(',');
+    if (filtros.sub_familias.length) params.sub_familia = filtros.sub_familias.join(',');
+    if (filtros.ingredientes_activos.length) params.ingrediente_activo = filtros.ingredientes_activos.join(',');
+    if (filtros.vendedores.length) params.vendedor = filtros.vendedores.join(',');
+    if (filtros.zonas.length) params.zona = filtros.zonas.join(',');
+    if (filtros.tipos_documento.length) params.tipo_documento = filtros.tipos_documento.join(',');
+    if (filtros.series_documentos.length) params.division = filtros.series_documentos.join(',');
+    if (filtros.maestro_tipos.length) params.maestro_tipo = filtros.maestro_tipos.join(',');
+    return params;
+  }
+
+  function applyFilters() { loadAll(buildParams()); }
+  function clearFilters() {
+    setFiltros({
+      familias: [], sub_familias: [], ingredientes_activos: [], vendedores: [],
+      zonas: [], tipos_documento: [], series_documentos: [], maestro_tipos: [],
+    });
+    setMonthStart(1); setMonthEnd(12); setYear(currentYear);
+    loadAll({ year: currentYear, month_start: 1, month_end: 12, grupo_cliente: grupoCliente });
+  }
+  const activeFilterCount = Object.values(filtros).filter(v => v.length > 0).length;
+
+  async function loadAll(params: any) {
     setLoading(true);
+    const finalParams = { ...params, grupo_cliente: grupoCliente };
     try {
-      const [diariaRes, vendedorRes] = await Promise.all([
-        ventaRCApi.getDiarias({ year: 2026, month_start: 1, month_end: 12, grupo_cliente: grupo }),
-        ventaRCApi.getPorVendedor({ year: 2026, month_start: 1, month_end: 12, grupo_cliente: grupo }),
+      const [budgetRes, diariaRes, vendedorRes] = await Promise.all([
+        fetch(`/api/budget/${finalParams.year}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        }).then(r => r.json()),
+        ventaRCApi.getDiarias(finalParams),
+        ventaRCApi.getPorVendedor(finalParams),
       ]);
+      setBudget(budgetRes.data?.entries || budgetRes.data || []);
       const diarias = diariaRes.data.data || [];
       const monthly: Record<number, number> = {};
       for (const d of diarias) {
@@ -144,8 +196,72 @@ export default function PresupuestoRC() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Presupuesto RC {year}</h1>
-        <p className="text-gray-500 text-sm mt-1">Avance de ventas vs presupuesto por grupo de clientes</p>
+        <p className="text-gray-500 text-sm mt-1">Avance de ventas vs presupuesto — {grupoInfo.label}</p>
       </div>
+
+      {/* Filter Toggle Bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowFilters(!showFilters)} className="btn-secondary">
+            <Filter className="w-4 h-4" />
+            <span>Filtros</span>
+            {activeFilterCount > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-brand-500 text-white text-xs font-semibold">
+                {activeFilterCount}
+              </span>
+            )}
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          </button>
+          {activeFilterCount > 0 && (
+            <button onClick={clearFilters} className="text-sm text-gray-500 hover:text-danger-500 flex items-center gap-1">
+              <X className="w-3.5 h-3.5" /> Limpiar filtros
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Filter Panel */}
+      {showFilters && opcionesFiltro && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
+            <div className="lg:col-span-1 lg:border-r border-gray-100 lg:pr-6 pb-4 lg:pb-0 border-b lg:border-b-0">
+              <DateRangeFilter
+                year={year} monthStart={monthStart} monthEnd={monthEnd}
+                onYearChange={setYear} onMonthStartChange={setMonthStart} onMonthEndChange={setMonthEnd}
+              />
+            </div>
+            <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <MultiSelect label="Familia"
+                options={(opcionesFiltro.familias || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.familias} onChange={(v) => setFiltros({ ...filtros, familias: v })} />
+              <MultiSelect label="Sub-familia"
+                options={(opcionesFiltro.sub_familias || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.sub_familias} onChange={(v) => setFiltros({ ...filtros, sub_familias: v })} />
+              <MultiSelect label="Ingrediente Activo"
+                options={(opcionesFiltro.ingredientes_activos || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.ingredientes_activos} onChange={(v) => setFiltros({ ...filtros, ingredientes_activos: v })} />
+              <MultiSelect label="Vendedor"
+                options={(opcionesFiltro.vendedores || []).map((v: any) => ({ value: v.nombre, label: v.nombre }))}
+                selected={filtros.vendedores} onChange={(v) => setFiltros({ ...filtros, vendedores: v })} />
+              <MultiSelect label="Zona"
+                options={(opcionesFiltro.zonas || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.zonas} onChange={(v) => setFiltros({ ...filtros, zonas: v })} />
+              <MultiSelect label="Tipo Documento"
+                options={(opcionesFiltro.tipos_documento || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.tipos_documento} onChange={(v) => setFiltros({ ...filtros, tipos_documento: v })} />
+              <MultiSelect label="División"
+                options={(opcionesFiltro.divisiones || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.series_documentos} onChange={(v) => setFiltros({ ...filtros, series_documentos: v })} />
+              <MultiSelect label="Maestro Tipo"
+                options={(opcionesFiltro.maestro_tipos || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.maestro_tipos} onChange={(v) => setFiltros({ ...filtros, maestro_tipos: v })} />
+            </div>
+          </div>
+          <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
+            <button onClick={applyFilters} className="btn-primary">Aplicar Filtros</button>
+          </div>
+        </div>
+      )}
 
       {budget.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">

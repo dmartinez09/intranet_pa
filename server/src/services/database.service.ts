@@ -709,7 +709,7 @@ export const dbService = {
     };
   },
 
-  async getFiltrosOpciones() {
+  async getFiltrosOpciones(grupoCliente?: string) {
     if (USE_MOCK_VENTAS) {
       return {
         familias: MOCK_FAMILIAS,
@@ -725,13 +725,18 @@ export const dbService = {
       };
     }
     const pool = await getDbPool();
+    // Cuando se pasa grupo_cliente, vendedores y zonas se filtran a los que pertenecen a ese grupo
+    const grupoFilter = grupoCliente ? `AND Grupo_Cliente = @grupo` : '';
+    const vendReq = pool.request();
+    const zonReq = pool.request();
+    if (grupoCliente) { vendReq.input('grupo', grupoCliente); zonReq.input('grupo', grupoCliente); }
+
     const [fam, sf, ia, vend, zon, td, div, mt, gc] = await Promise.all([
       pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Familia IS NOT NULL ORDER BY Familia`),
       pool.request().query(`SELECT DISTINCT Sub_Familia AS sub_familia FROM dbo.stg_rpt_ventas_detallado WHERE Sub_Familia IS NOT NULL ORDER BY Sub_Familia`),
       pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
-      // Dedupe por nombre de vendedor: 1 entrada por vendedor (aunque trabaje en varias zonas o tenga distintos códigos)
-      pool.request().query(`SELECT Vendedor, MIN(Codigo_Vendedor) AS Codigo_Vendedor, MIN(Zona) AS Zona FROM dbo.stg_rpt_ventas_detallado WHERE Vendedor IS NOT NULL AND Vendedor != '' GROUP BY Vendedor ORDER BY Vendedor`),
-      pool.request().query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Zona IS NOT NULL AND Zona != '' ORDER BY Zona`),
+      vendReq.query(`SELECT Vendedor, MIN(Codigo_Vendedor) AS Codigo_Vendedor, MIN(Zona) AS Zona FROM dbo.stg_rpt_ventas_detallado WHERE Vendedor IS NOT NULL AND Vendedor != '' ${grupoFilter} GROUP BY Vendedor ORDER BY Vendedor`),
+      zonReq.query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Zona IS NOT NULL AND Zona != '' ${grupoFilter} ORDER BY Zona`),
       pool.request().query(`SELECT DISTINCT Tipo_Documento AS tipo_documento FROM dbo.stg_rpt_ventas_detallado WHERE Tipo_Documento IS NOT NULL ORDER BY Tipo_Documento`),
       pool.request().query(`SELECT DISTINCT Division AS division FROM dbo.stg_rpt_ventas_detallado WHERE Division IS NOT NULL AND Division != '' ORDER BY Division`),
       pool.request().query(`SELECT DISTINCT Maestro_Tipo FROM dbo.stg_rpt_ventas_detallado WHERE Maestro_Tipo IS NOT NULL ORDER BY Maestro_Tipo`),
