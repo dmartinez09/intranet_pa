@@ -23,7 +23,7 @@ server/uploads/*
 !server/uploads/.gitkeep
 
 # Local data (persisted on server)
-server/data/budgets.json
+# server/data/budgets.json — tracked: necesario en deploy de Azure (filesystem ephemeral)
 
 # Claude Code (local context, settings, worktrees)
 .claude/
@@ -35,7 +35,6 @@ web.config
 
 # Server temp / data
 server/tmp/
-server/data/budgets.json
 
 # Ops scripts data exports (contienen data de clientes / finanzas)
 server/scripts/_*.json
