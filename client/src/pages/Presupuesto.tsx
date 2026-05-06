@@ -74,6 +74,7 @@ export default function Presupuesto() {
     });
   }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
+
   async function loadFiltros(grupo?: string) {
     try {
       const res = await ventasApi.getFiltros(grupo ? { grupo_cliente: grupo } : undefined);

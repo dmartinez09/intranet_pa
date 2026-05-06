@@ -11,6 +11,11 @@ export interface BudgetEntry {
   year: number;
   month: number;
   monto_usd: number;
+  // Campos opcionales del nuevo formato Fact_Metas_Consolidada
+  codigo_vendedor?: number;
+  tipo_meta?: string;        // "FOCO 2024" | "FORECAST GENERAL" | etc.
+  serie_documento?: string;  // "AGRO" | "BIOS" | ...
+  division?: string;         // "AGROCHEM" | "BIOSCIENCE"
 }
 
 export interface BudgetFile {

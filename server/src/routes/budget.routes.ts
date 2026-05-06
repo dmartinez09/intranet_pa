@@ -187,8 +187,11 @@ router.post('/upload', requireAdmin, (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 // POST /budget/upload-excel  —  upload Excel file with budget data (Admin only)
 // Supported Excel formats:
-//   Pivot: Zona | RC | Ene | Feb | ... | Dic     (month names as columns)
-//   Flat:  Zona | RC | Mes | Monto
+//   Pivot:        Zona | RC | Ene | Feb | ... | Dic            (month names as columns)
+//   Flat simple:  Zona | RC | Mes | Monto
+//   Flat NEW (Fact_Metas_Consolidada):
+//                 Codigo_Vendedor | Vendedor | Tipo_Meta | Serie_Documento |
+//                 Division | Zona | Nro_Mes | Mes | Forecast
 // The endpoint auto-detects the format.
 // ---------------------------------------------------------------------------
 router.post('/upload-excel', requireAdmin, excelUpload.single('file'), async (req: Request, res: Response) => {
@@ -236,7 +239,68 @@ router.post('/upload-excel', requireAdmin, excelUpload.single('file'), async (re
         headers[colNumber] = val ? String(val).trim().toLowerCase() : '';
       });
 
-      // Detect column indices
+      // -------------------------------------------------------------------
+      // Detector formato NUEVO (Fact_Metas_Consolidada): cols por nombre
+      // -------------------------------------------------------------------
+      const find = (...names: string[]) => {
+        for (let i = 1; i <= headers.length; i++) {
+          if (names.some(n => headers[i] === n)) return i;
+        }
+        return -1;
+      };
+      const cCodVend = find('codigo_vendedor', 'cod_vendedor');
+      const cVendedor = find('vendedor');
+      const cTipoMeta = find('tipo_meta');
+      const cSerieDoc = find('serie_documento');
+      const cDivision = find('division');
+      const cZonaNew = find('zona');
+      const cNroMes = find('nro_mes', 'mes_num', 'numero_mes');
+      const cForecast = find('forecast', 'monto', 'monto_usd');
+
+      const isNewFormat = cVendedor !== -1 && cNroMes !== -1 && cForecast !== -1 && cZonaNew !== -1;
+
+      if (isNewFormat) {
+        // Solo procesamos la pestaña "Presupuesto General" (tipo_meta=FORECAST GENERAL).
+        // Fact_Metas_Consolidada y otras hojas se ignoran para no doble-contar.
+        const sheetName = (worksheet.name || '').toLowerCase();
+        const isPresupuestoGeneral = sheetName.includes('presupuesto') && sheetName.includes('general');
+        if (!isPresupuestoGeneral) return;
+        worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+          if (rowNumber === 1) return; // header
+          const monthRaw = row.getCell(cNroMes).value;
+          const month = typeof monthRaw === 'number' ? monthRaw : parseInt(String(monthRaw), 10);
+          if (!month || month < 1 || month > 12) return;
+
+          const forecastRaw = row.getCell(cForecast).value;
+          let monto = 0;
+          if (typeof forecastRaw === 'number') monto = forecastRaw;
+          else if (forecastRaw != null) monto = parseFloat(String(forecastRaw).replace(/[,$\s]/g, '')) || 0;
+
+          const vendedor = String(row.getCell(cVendedor).value || '').trim();
+          const zona = String(row.getCell(cZonaNew).value || '').trim();
+          if (!vendedor || !zona) return;
+
+          const codVendCell = cCodVend !== -1 ? row.getCell(cCodVend).value : null;
+          const codVend = typeof codVendCell === 'number' ? codVendCell : (codVendCell ? parseInt(String(codVendCell), 10) || undefined : undefined);
+
+          entries.push({
+            zona,
+            rc: vendedor,
+            year: yearParam,
+            month,
+            monto_usd: Math.round(monto * 100) / 100,
+            codigo_vendedor: codVend,
+            tipo_meta: cTipoMeta !== -1 ? String(row.getCell(cTipoMeta).value || '').trim() || undefined : undefined,
+            serie_documento: cSerieDoc !== -1 ? String(row.getCell(cSerieDoc).value || '').trim() || undefined : undefined,
+            division: cDivision !== -1 ? String(row.getCell(cDivision).value || '').trim() || undefined : undefined,
+          });
+        });
+        return; // saltamos el resto (pivot/flat-simple) para esta hoja
+      }
+
+      // -------------------------------------------------------------------
+      // Formato legacy (pivot Zona|RC|Ene..Dic o flat Zona|RC|Mes|Monto)
+      // -------------------------------------------------------------------
       let zonaCol = -1;
       let rcCol = -1;
       const monthCols: { col: number; month: number }[] = [];

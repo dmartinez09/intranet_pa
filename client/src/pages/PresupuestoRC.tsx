@@ -64,6 +64,7 @@ export default function PresupuestoRC() {
     loadAll({ year: currentYear, month_start: 1, month_end: 12 });
   }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
+
   async function loadFiltros() {
     try {
       const res = await ventasApi.getFiltros();
