@@ -150,7 +150,7 @@ router.get('/estado-cuenta/export', async (req, res) => {
     const fechaCorte = data[0]?.fecha_corte
       ? new Date(data[0].fecha_corte).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0];
-    sheet.mergeCells('A1:N1');
+    sheet.mergeCells('A1:T1');
     const titleCell = sheet.getCell('A1');
     titleCell.value = `POINT ANDINA S.A. - Estado de Cuenta al ${fechaCorte}`;
     titleCell.font = { size: 14, bold: true, color: { argb: 'FF00A651' } };
@@ -172,6 +172,12 @@ router.get('/estado-cuenta/export', async (req, res) => {
       { header: 'Importe Original', key: 'importe_original', width: 18 },
       { header: 'A Cuenta', key: 'a_cuenta', width: 15 },
       { header: 'Saldo', key: 'saldo', width: 18 },
+      { header: 'Monto Retención', key: 'monto_retencion', width: 16 },
+      { header: 'Banco', key: 'banco', width: 18 },
+      { header: 'N° Único', key: 'n_unico', width: 18 },
+      { header: 'Observación', key: 'observacion', width: 35 },
+      { header: 'Año', key: 'anio', width: 8 },
+      { header: 'Mes', key: 'mes', width: 8 },
     ];
 
     // Set columns starting at row 3
@@ -204,7 +210,7 @@ router.get('/estado-cuenta/export', async (req, res) => {
       });
 
       // Number formatting
-      const numCols = ['cli_linea_credito', 'importe_original', 'a_cuenta', 'saldo'];
+      const numCols = ['cli_linea_credito', 'importe_original', 'a_cuenta', 'saldo', 'monto_retencion'];
       columns.forEach((col, ci) => {
         const cell = r.getCell(ci + 1);
         if (numCols.includes(col.key)) {
@@ -227,7 +233,7 @@ router.get('/estado-cuenta/export', async (req, res) => {
     });
 
     // Auto filter
-    sheet.autoFilter = { from: 'A3', to: `N${data.length + 3}` };
+    sheet.autoFilter = { from: 'A3', to: `T${data.length + 3}` };
 
     // Freeze panes
     sheet.views = [{ state: 'frozen', ySplit: 3 }];

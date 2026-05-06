@@ -37,6 +37,8 @@ interface EstadoCuentaRow {
   banco: string;
   n_unico: string;
   observacion: string;
+  anio: number;
+  mes: number;
 }
 
 interface Filtros {
@@ -460,6 +462,12 @@ export default function EstadoCuenta() {
                       { key: 'importe_original', label: 'Importe' },
                       { key: 'a_cuenta', label: 'A Cuenta' },
                       { key: 'saldo', label: 'Saldo' },
+                      { key: 'monto_retencion', label: 'Retención' },
+                      { key: 'banco', label: 'Banco' },
+                      { key: 'n_unico', label: 'N° Único' },
+                      { key: 'observacion', label: 'Observación' },
+                      { key: 'anio', label: 'Año' },
+                      { key: 'mes', label: 'Mes' },
                     ].map(col => (
                       <th
                         key={col.key}
@@ -498,6 +506,12 @@ export default function EstadoCuenta() {
                         <td className={`px-3 py-2.5 text-right font-mono text-xs font-semibold ${Number(row.saldo) < 0 ? 'text-red-600' : ''}`}>
                           {formatNumber(row.saldo)}
                         </td>
+                        <td className="px-3 py-2.5 text-right font-mono text-xs">{row.monto_retencion ? formatNumber(row.monto_retencion) : ''}</td>
+                        <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[120px] truncate" title={row.banco || ''}>{row.banco || ''}</td>
+                        <td className="px-3 py-2.5 text-xs text-gray-600 font-mono max-w-[140px] truncate" title={row.n_unico || ''}>{row.n_unico || ''}</td>
+                        <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[200px] truncate" title={row.observacion || ''}>{row.observacion || ''}</td>
+                        <td className="px-3 py-2.5 text-xs text-gray-600 text-center">{row.anio || ''}</td>
+                        <td className="px-3 py-2.5 text-xs text-gray-600 text-center">{row.mes || ''}</td>
                       </tr>
                     );
                   })}
@@ -510,6 +524,7 @@ export default function EstadoCuenta() {
                     <td className={`px-3 py-3 text-right font-mono ${filteredTotals.saldo < 0 ? 'text-red-600' : ''}`}>
                       {formatNumber(filteredTotals.saldo)}
                     </td>
+                    <td colSpan={6} />
                   </tr>
                 </tfoot>
               </table>

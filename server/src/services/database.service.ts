@@ -1335,7 +1335,9 @@ export const dbService = {
         Monto_Retencion AS monto_retencion,
         Banco AS banco,
         N_Unico AS n_unico,
-        Observacion AS observacion
+        Observacion AS observacion,
+        Anio AS anio,
+        Mes AS mes
       FROM dbo.stg_estado_cuenta_jdt
       WHERE ${where.join(' AND ')}
       ORDER BY Cli_Nombre, F_Vcto
