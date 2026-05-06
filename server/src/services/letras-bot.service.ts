@@ -261,13 +261,21 @@ async function alreadySent(letraId: string): Promise<boolean> {
   } catch { return false; }
 }
 
-async function runDailyJob(triggerType: 'auto' | 'manual' = 'auto') {
-  console.log(`[letras-bot] running daily job (${triggerType})`);
+async function runDailyJob(
+  triggerType: 'auto' | 'manual' = 'auto',
+  options?: { letraId?: string }
+) {
+  console.log(`[letras-bot] running daily job (${triggerType})${options?.letraId ? ` letraId=${options.letraId}` : ''}`);
   const cfg = await readConfig();
 
   // Ensure cache is fresh (force sync)
   await letrasScheduler.sync(triggerType);
-  const todayFiles = letrasScheduler.getTodayFiles();
+  let todayFiles = letrasScheduler.getTodayFiles();
+
+  // Test mode: limitar a una sola letra
+  if (options?.letraId) {
+    todayFiles = todayFiles.filter(f => f.id === options.letraId);
+  }
 
   if (!todayFiles.length) {
     console.log('[letras-bot] no letras uploaded today — skipping');
@@ -284,6 +292,66 @@ async function runDailyJob(triggerType: 'auto' | 'manual' = 'auto') {
   }
   console.log(`[letras-bot] daily job done: sent=${sent}, skipped=${skipped}, failed=${failed}`);
   return { processed: todayFiles.length, sent, skipped, failed };
+}
+
+// ---------------------------------------------------------------------------
+// Catchup-on-boot: protege contra suspensiones de iisnode/App Service
+// Si llegó la hora programada hoy y no se ejecutó ningún run auto exitoso,
+// dispara la corrida ahora. Mantiene la hora parametrizada como referencia.
+// ---------------------------------------------------------------------------
+
+function nowInLima(): { y: number; m: number; d: number; h: number; min: number } {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Lima',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  });
+  const parts = Object.fromEntries(fmt.formatToParts(new Date()).map(p => [p.type, p.value]));
+  return {
+    y: Number(parts.year), m: Number(parts.month), d: Number(parts.day),
+    h: Number(parts.hour), min: Number(parts.minute),
+  };
+}
+
+async function autoRunHappenedToday(): Promise<boolean> {
+  try {
+    const pool = await getDbPool();
+    const lima = nowInLima();
+    const isoDate = `${lima.y}-${String(lima.m).padStart(2, '0')}-${String(lima.d).padStart(2, '0')}`;
+    const r = await pool.request()
+      .input('d', isoDate)
+      .query(`SELECT TOP 1 id FROM dbo.intranet_letras_bot_history
+              WHERE trigger_type = 'auto' AND CAST(run_date AS DATE) = @d`);
+    return r.recordset.length > 0;
+  } catch (e) {
+    console.error('[letras-bot] autoRunHappenedToday error:', e);
+    return true; // ante duda, NO disparamos para no duplicar
+  }
+}
+
+async function catchupOnBoot() {
+  try {
+    const cfg = await readConfig();
+    if (!cfg.enabled) {
+      console.log('[letras-bot] catchup: bot disabled — skip');
+      return;
+    }
+    const lima = nowInLima();
+    const scheduledMinutes = cfg.sendHour * 60 + cfg.sendMinute;
+    const nowMinutes = lima.h * 60 + lima.min;
+    if (nowMinutes < scheduledMinutes) {
+      console.log(`[letras-bot] catchup: aún no es hora programada (Lima ${lima.h}:${String(lima.min).padStart(2,'0')} < ${cfg.sendHour}:${String(cfg.sendMinute).padStart(2,'0')}) — el cron disparará`);
+      return;
+    }
+    if (await autoRunHappenedToday()) {
+      console.log('[letras-bot] catchup: ya se ejecutó un run auto hoy — skip');
+      return;
+    }
+    console.log(`[letras-bot] catchup: hora programada ya pasó hoy y no hubo run auto — disparando ahora (Lima ${lima.h}:${String(lima.min).padStart(2,'0')})`);
+    await runDailyJob('auto');
+  } catch (e) {
+    console.error('[letras-bot] catchup error:', e);
+  }
 }
 
 export const letrasBot = {
@@ -321,7 +389,7 @@ export const letrasBot = {
     }));
   },
 
-  async runNow() { return runDailyJob('manual'); },
+  async runNow(options?: { letraId?: string }) { return runDailyJob('manual', options); },
 
   async reschedule(cfg?: BotConfig) {
     const c = cfg || await readConfig();
@@ -344,6 +412,10 @@ export const letrasBot = {
 
   async start() {
     await this.reschedule();
+    // Catchup: si el proceso estuvo suspendido durante la ventana programada,
+    // disparar ahora para no perder el envío de hoy.
+    // Demoramos 30s para que el resto del boot termine antes (DB, sync inicial).
+    setTimeout(() => { catchupOnBoot().catch(() => {}); }, 30000);
   },
 
   getCurrentCron() { return currentCron; },
