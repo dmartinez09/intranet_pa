@@ -379,7 +379,10 @@ export default function InteligenciaComercial() {
 
   return (
     <div className="min-h-screen">
-      <Header title="Inteligencia Comercial" subtitle="Datos agrícolas integrados desde fuentes peruanas" />
+      <Header
+        title="Inteligencia Comercial"
+        subtitle={`Datos agrícolas integrados desde fuentes peruanas · ${new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' })}`}
+      />
 
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
 

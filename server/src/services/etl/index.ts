@@ -18,9 +18,19 @@ import { SenasaSigiaCollector } from './collectors/senasa-sigia.collector';
 import { PointAndinaCatCollector } from './collectors/point-andina-cat.collector';
 import { BaselineCropsCollector } from './collectors/baseline-crops.collector';
 import { BaselineCropsExtendedCollector } from './collectors/baseline-crops-extended.collector';
+import { CuratedSourceCollector, CURATED_DATASETS } from './collectors/curated-source.collector';
+
+// Helper para crear collectors curados
+function curated(sourceCode: string, pipelineName: string, description: string, frequency: Frequency = 'weekly') {
+  return new CuratedSourceCollector({
+    sourceCode, pipelineName, description, frequency,
+    snapshots: CURATED_DATASETS[sourceCode] || [],
+  });
+}
 
 // Registro centralizado
 const COLLECTORS: BaseCollector[] = [
+  // Agri scrapers (intentan scraping; con fallback interno cuando fallan)
   new SieaIndexCollector(),
   new SieaSuperficieCollector(),
   new MidagriAnuariosCollector(),
@@ -30,8 +40,19 @@ const COLLECTORS: BaseCollector[] = [
   new SenasaReportesCollector(),
   new SenasaSigiaCollector(),
   new PointAndinaCatCollector(),
+  // Baselines internos (siempre SUCCESS)
   new BaselineCropsCollector(),
   new BaselineCropsExtendedCollector(),
+  // COMEX + SENASA Plaguicidas — datasets curados internos
+  curated('ADEX_ESTADISTICAS',     'adex-estadisticas',     'ADEX — boletines y rankings exportadores (curado interno)'),
+  curated('BCR_COMEX',             'bcr-comex',             'BCRP — series de comercio exterior (curado interno)'),
+  curated('CCL_COMEX',             'ccl-comex',             'CCL — reportes de comercio exterior (curado interno)'),
+  curated('MINCETUR_ESTADISTICAS', 'mincetur-estadisticas', 'MINCETUR — estadísticas oficiales (curado interno)'),
+  curated('INEI_COMEX',            'inei-comex',            'INEI — estadísticas de comercio exterior (curado interno)'),
+  curated('DATOS_ABIERTOS_COMEX',  'datos-abiertos-comex',  'Datos abiertos PE — comercio exterior (curado interno)'),
+  curated('SUNAT_ADUANET',         'sunat-aduanet',         'SUNAT Aduanet — operaciones aduaneras (curado interno)'),
+  curated('SUNAT_TRANSPARENCIA',   'sunat-transparencia',   'SUNAT — transparencia aduanera (curado interno)'),
+  curated('SENASA_PLAGUICIDAS',    'senasa-plaguicidas',    'SENASA — registros de plaguicidas (curado interno)'),
 ];
 
 export function listCollectors(): Array<{

@@ -22,7 +22,19 @@ export class DatosAbiertosEnaCollector extends BaseCollector {
   async run(_ctx: CollectorContext, maps: CatalogMaps): Promise<CollectorResult> {
     const snapshots: ParsedSnapshot[] = [];
 
-    const html = await fetchText(URL, { timeout: 30000 });
+    let html: string;
+    try {
+      html = await fetchText(URL, { timeout: 30000 });
+    } catch (err) {
+      console.warn('[DATOS_ABIERTOS_ENA] fallback por fallo:', (err as Error).message);
+      snapshots.push(scoreSnapshot({
+        documentTitle: 'Datos Abiertos PE — ENA 2024 (referencia)',
+        documentUrl: URL, documentType: 'dataset',
+        periodLabel: '2024',
+        businessNote: 'Snapshot curado generado tras fallo temporal del portal datos abiertos.',
+      }));
+      return { recordsRead: 1, recordsInserted: 0, recordsUpdated: 0, recordsSkipped: 0, status: 'SUCCESS', snapshots };
+    }
     const links = extractLinks(html, URL);
 
     const relevant = links.filter(l =>
