@@ -270,20 +270,26 @@ async function runDailyJob(
 
   // Ensure cache is fresh (force sync)
   await letrasScheduler.sync(triggerType);
-  let todayFiles = letrasScheduler.getTodayFiles();
+
+  // Ventana de 5 días hacia atrás: cubre letras que no se enviaron en días
+  // anteriores por el bug de timezone o por server suspendido. La protección
+  // contra duplicados la hace alreadySent() — sólo envía las que faltan.
+  const RECENT_DAYS = 5;
+  let candidates = letrasScheduler.getRecentFiles(RECENT_DAYS);
 
   // Test mode: limitar a una sola letra
   if (options?.letraId) {
-    todayFiles = todayFiles.filter(f => f.id === options.letraId);
+    candidates = candidates.filter(f => f.id === options.letraId);
   }
 
-  if (!todayFiles.length) {
-    console.log('[letras-bot] no letras uploaded today — skipping');
+  if (!candidates.length) {
+    console.log(`[letras-bot] no letras subidas en los últimos ${RECENT_DAYS} días — skipping`);
     return { processed: 0, sent: 0, skipped: 0, failed: 0 };
   }
 
+  console.log(`[letras-bot] candidatas en ventana ${RECENT_DAYS} días: ${candidates.length}`);
   let sent = 0, skipped = 0, failed = 0;
-  for (const letra of todayFiles) {
+  for (const letra of candidates) {
     if (await alreadySent(letra.id)) { skipped++; continue; }
     const r = await buildAndSendForLetra(letra, cfg.defaultCc, triggerType);
     if (r.status === 'sent') sent++;
@@ -291,7 +297,7 @@ async function runDailyJob(
     else failed++;
   }
   console.log(`[letras-bot] daily job done: sent=${sent}, skipped=${skipped}, failed=${failed}`);
-  return { processed: todayFiles.length, sent, skipped, failed };
+  return { processed: candidates.length, sent, skipped, failed };
 }
 
 // ---------------------------------------------------------------------------

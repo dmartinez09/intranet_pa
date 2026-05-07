@@ -34,13 +34,34 @@ let lastError: string | null = null;
 let syncInProgress = false;
 let scheduledTask: ScheduledTask | null = null;
 
+// Compara dos fechas como "mismo día" en timezone America/Lima.
+// CRITICAL: el servidor en Azure corre en UTC. A las 22:00 Lima ya son las 03:00 UTC
+// del día siguiente; usar getDate() local nos rompe el filtro.
+function ymdInLima(date: Date): string {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Lima',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+  return fmt.format(date); // "YYYY-MM-DD"
+}
+
 function isToday(iso: string): boolean {
   if (!iso) return false;
+  return ymdInLima(new Date(iso)) === ymdInLima(new Date());
+}
+
+// True si la fecha está dentro de los últimos N días (Lima), incluyendo hoy.
+function isWithinLastDays(iso: string, daysBack: number): boolean {
+  if (!iso) return false;
   const d = new Date(iso);
-  const now = new Date();
-  return d.getFullYear() === now.getFullYear() &&
-         d.getMonth() === now.getMonth() &&
-         d.getDate() === now.getDate();
+  if (isNaN(d.getTime())) return false;
+  const todayLimaYMD = ymdInLima(new Date());
+  // Calcula el límite: hoy - daysBack
+  const limit = new Date();
+  limit.setUTCDate(limit.getUTCDate() - daysBack);
+  const limitYMD = ymdInLima(limit);
+  const dYMD = ymdInLima(d);
+  return dYMD >= limitYMD && dYMD <= todayLimaYMD;
 }
 
 async function enrichWithClients(files: LetraFileCached[]): Promise<LetraFileCached[]> {
@@ -123,6 +144,13 @@ export const letrasScheduler = {
 
   getTodayFiles(): LetraFileCached[] {
     return cachedFiles.filter(f => isToday(f.lastModified));
+  },
+
+  // Devuelve letras subidas en los últimos N días (Lima), incluyendo hoy.
+  // Lo usa el bot diario para enviar las que quedaron pendientes (la
+  // verificación de "no enviar duplicados" la hace el bot vía alreadySent()).
+  getRecentFiles(daysBack: number): LetraFileCached[] {
+    return cachedFiles.filter(f => isWithinLastDays(f.lastModified, daysBack));
   },
 
   start() {
