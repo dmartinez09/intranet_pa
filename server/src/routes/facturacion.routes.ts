@@ -235,7 +235,11 @@ router.post('/letras-bot/run-now', requireAdmin, async (req, res) => {
     const result = await letrasBot.runNow(letraId ? { letraId } : undefined);
     return res.json({ success: true, data: result });
   } catch (e) {
-    return res.status(500).json({ success: false, message: (e as Error).message });
+    const msg = (e as Error).message || 'Error desconocido ejecutando bot';
+    console.error('[letras-bot] run-now error:', e);
+    // Devolvemos 200 con success=false + mensaje completo para que la UI
+    // muestre detalle al admin en vez del genérico "Error ejecutando bot".
+    return res.json({ success: false, message: msg, error: String(e) });
   }
 });
 

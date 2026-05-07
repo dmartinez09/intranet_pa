@@ -290,11 +290,17 @@ async function runDailyJob(
   console.log(`[letras-bot] candidatas en ventana ${RECENT_DAYS} días: ${candidates.length}`);
   let sent = 0, skipped = 0, failed = 0;
   for (const letra of candidates) {
-    if (await alreadySent(letra.id)) { skipped++; continue; }
-    const r = await buildAndSendForLetra(letra, cfg.defaultCc, triggerType);
-    if (r.status === 'sent') sent++;
-    else if (r.status === 'skipped') skipped++;
-    else failed++;
+    try {
+      if (await alreadySent(letra.id)) { skipped++; continue; }
+      const r = await buildAndSendForLetra(letra, cfg.defaultCc, triggerType);
+      if (r.status === 'sent') sent++;
+      else if (r.status === 'skipped') skipped++;
+      else failed++;
+    } catch (e) {
+      // Aislamos errores por letra — no tumbamos todo el run
+      console.error(`[letras-bot] error procesando letra ${letra.id}:`, (e as Error).message);
+      failed++;
+    }
   }
   console.log(`[letras-bot] daily job done: sent=${sent}, skipped=${skipped}, failed=${failed}`);
   return { processed: candidates.length, sent, skipped, failed };
