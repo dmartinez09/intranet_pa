@@ -22,6 +22,7 @@ const VentasMargenesZona = lazy(() => import('./pages/VentasMargenesZona'));
 // Inteligencia Comercial Beta
 const InteligenciaComercial = lazy(() => import('./pages/InteligenciaComercial'));
 const MapaInteractivo = lazy(() => import('./pages/MapaInteractivo'));
+const FichasTecnicas = lazy(() => import('./pages/FichasTecnicas'));
 // COMEX y Competidores
 const DashboardCOMEX = lazy(() => import('./pages/DashboardCOMEX'));
 const PartidasArancelarias = lazy(() => import('./pages/PartidasArancelarias'));
@@ -167,6 +168,7 @@ export default function App() {
         {/* Inteligencia Comercial Beta */}
         <Route path="/inteligencia/dashboard" element={<ProtectedRoute module="inteligencia_comercial"><Suspense fallback={LazyFallback}><InteligenciaComercial /></Suspense></ProtectedRoute>} />
         <Route path="/inteligencia/mapa" element={<ProtectedRoute module="mapa_interactivo"><Suspense fallback={LazyFallback}><MapaInteractivo /></Suspense></ProtectedRoute>} />
+        <Route path="/inteligencia/fichas-tecnicas" element={<ProtectedRoute module="inteligencia_comercial"><Suspense fallback={LazyFallback}><FichasTecnicas /></Suspense></ProtectedRoute>} />
 
         {/* COMEX y Competidores */}
         <Route path="/inteligencia/comex/dashboard" element={<ProtectedRoute module="comex"><Suspense fallback={LazyFallback}><DashboardCOMEX /></Suspense></ProtectedRoute>} />

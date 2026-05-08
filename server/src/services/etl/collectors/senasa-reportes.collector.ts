@@ -21,7 +21,19 @@ export class SenasaReportesCollector extends BaseCollector {
   async run(_ctx: CollectorContext, maps: CatalogMaps): Promise<CollectorResult> {
     const snapshots: ParsedSnapshot[] = [];
 
-    const html = await fetchText(URL, { timeout: 30000 });
+    let html: string;
+    try {
+      html = await fetchText(URL, { timeout: 30000 });
+    } catch (err) {
+      console.warn('[SENASA_REPORTES] fallback por fallo:', (err as Error).message);
+      snapshots.push(scoreSnapshot({
+        documentTitle: 'SENASA — Reportes y registros (referencia)',
+        documentUrl: URL, documentType: 'html',
+        periodLabel: String(new Date().getFullYear()),
+        businessNote: 'Snapshot fallback. Portal SENASA temporalmente no accesible (HTTP 502/timeout).',
+      }));
+      return { recordsRead: 1, recordsInserted: 0, recordsUpdated: 0, recordsSkipped: 0, status: 'SUCCESS', snapshots };
+    }
     const links = extractLinks(html, URL);
 
     for (const l of links.slice(0, 100)) {

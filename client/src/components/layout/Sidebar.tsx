@@ -170,6 +170,7 @@ const afterAdminModules: NavModule[] = [
     children: [
       { to: '/inteligencia/dashboard', icon: LineChart, label: 'Inteligencia Comercial', module: 'inteligencia_comercial' },
       { to: '/inteligencia/mapa', icon: Map, label: 'Mapa Interactivo', module: 'mapa_interactivo' },
+      { to: '/inteligencia/fichas-tecnicas', icon: FileText, label: 'Fichas Técnicas SENASA', module: 'inteligencia_comercial' },
     ],
     subGroups: [
       {

@@ -19,6 +19,7 @@ import { PointAndinaCatCollector } from './collectors/point-andina-cat.collector
 import { BaselineCropsCollector } from './collectors/baseline-crops.collector';
 import { BaselineCropsExtendedCollector } from './collectors/baseline-crops-extended.collector';
 import { CuratedSourceCollector, CURATED_DATASETS } from './collectors/curated-source.collector';
+import { SenasaSigiaFichasCollector } from './collectors/senasa-sigia-fichas.collector';
 
 // Helper para crear collectors curados
 function curated(sourceCode: string, pipelineName: string, description: string, frequency: Frequency = 'weekly') {
@@ -52,7 +53,8 @@ const COLLECTORS: BaseCollector[] = [
   curated('DATOS_ABIERTOS_COMEX',  'datos-abiertos-comex',  'Datos abiertos PE — comercio exterior (curado interno)'),
   curated('SUNAT_ADUANET',         'sunat-aduanet',         'SUNAT Aduanet — operaciones aduaneras (curado interno)'),
   curated('SUNAT_TRANSPARENCIA',   'sunat-transparencia',   'SUNAT — transparencia aduanera (curado interno)'),
-  curated('SENASA_PLAGUICIDAS',    'senasa-plaguicidas',    'SENASA — registros de plaguicidas (curado interno)'),
+  // SENASA Plaguicidas: collector REAL contra SIGIA (reemplaza al curated)
+  new SenasaSigiaFichasCollector(),
 ];
 
 export function listCollectors(): Array<{

@@ -168,6 +168,12 @@ export const inteligenciaApi = {
   runCollectorsByFrequency: (freq: 'daily' | 'weekly' | 'on_demand') =>
     api.post(`/inteligencia/etl/run-by-frequency/${freq}`),
   getSchedulerStatus: () => api.get('/inteligencia/etl/scheduler'),
+  // Fichas técnicas SENASA
+  getPlaguicidasFilters: () => api.get('/inteligencia/plaguicidas/filters'),
+  getPlaguicidasByEmpresa: () => api.get('/inteligencia/plaguicidas/by-empresa'),
+  getPlaguicidasStats: () => api.get('/inteligencia/plaguicidas/stats'),
+  getPlaguicidas: (params?: any) => api.get('/inteligencia/plaguicidas', { params }),
+  getPlaguicidaDetail: (id: number) => api.get(`/inteligencia/plaguicidas/${id}`),
 };
 
 // COMEX y Competidores

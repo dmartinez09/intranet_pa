@@ -12,6 +12,7 @@ import { gapService } from '../services/gap.service';
 import { comexService } from '../services/comex.service';
 import { listCollectors, runOne, runAll, runByFrequency, etlTablesReady } from '../services/etl';
 import { etlScheduler } from '../services/etl/scheduler';
+import { getDbPool } from '../config/database';
 
 const router = Router();
 
@@ -547,6 +548,230 @@ router.post('/etl/run-by-frequency/:freq', requireAdmin, async (req: Request, re
 // GET /api/inteligencia/etl/scheduler - Estado del scheduler
 router.get('/etl/scheduler', requireAdmin, (_req: Request, res: Response) => {
   res.json({ success: true, data: etlScheduler.status() });
+});
+
+// ============================================================
+// FICHAS TÉCNICAS — Registro SENASA Perú (vista tipo SAG)
+// ============================================================
+
+// GET /api/inteligencia/plaguicidas/filters
+router.get('/plaguicidas/filters', canRead, async (_req: Request, res: Response) => {
+  try {
+    const pool = await getDbPool();
+    const [clases, titulares, ias, toxicidades, cultivos, plagas, categorias, tipos] = await Promise.all([
+      pool.request().query(`SELECT DISTINCT clase FROM dbo.icb_dim_plaguicida_ficha WHERE clase IS NOT NULL ORDER BY clase`),
+      pool.request().query(`SELECT DISTINCT titular_registro FROM dbo.icb_dim_plaguicida_ficha WHERE titular_registro IS NOT NULL ORDER BY titular_registro`),
+      pool.request().query(`SELECT DISTINCT ingrediente_activo FROM dbo.icb_dim_plaguicida_ficha WHERE ingrediente_activo IS NOT NULL ORDER BY ingrediente_activo`),
+      pool.request().query(`SELECT DISTINCT categoria_toxicologica FROM dbo.icb_dim_plaguicida_ficha WHERE categoria_toxicologica IS NOT NULL ORDER BY categoria_toxicologica`),
+      pool.request().query(`SELECT DISTINCT cultivo_nombre_comun FROM dbo.icb_fact_plaguicida_uso WHERE cultivo_nombre_comun IS NOT NULL ORDER BY cultivo_nombre_comun`),
+      pool.request().query(`SELECT DISTINCT plaga_nombre_comun FROM dbo.icb_fact_plaguicida_uso WHERE plaga_nombre_comun IS NOT NULL ORDER BY plaga_nombre_comun`),
+      pool.request().query(`SELECT category_id, category_code, category_name FROM dbo.icb_dim_point_category ORDER BY category_name`),
+      pool.request().query(`SELECT DISTINCT tipo_producto FROM dbo.icb_dim_plaguicida_ficha WHERE tipo_producto IS NOT NULL ORDER BY tipo_producto`),
+    ]);
+    res.json({
+      success: true,
+      data: {
+        clases: clases.recordset.map((r: any) => r.clase),
+        titulares: titulares.recordset.map((r: any) => r.titular_registro),
+        ingredientes_activos: ias.recordset.map((r: any) => r.ingrediente_activo),
+        toxicidades: toxicidades.recordset.map((r: any) => r.categoria_toxicologica),
+        cultivos: cultivos.recordset.map((r: any) => r.cultivo_nombre_comun),
+        plagas: plagas.recordset.map((r: any) => r.plaga_nombre_comun),
+        categorias: categorias.recordset,
+        tipos_producto: tipos.recordset.map((r: any) => r.tipo_producto),
+      },
+    });
+  } catch (err: any) {
+    console.error('[Inteligencia] plaguicidas/filters error:', err);
+    res.status(500).json({ success: false, message: err?.message || 'Error al obtener filtros' });
+  }
+});
+
+// GET /api/inteligencia/plaguicidas/stats — distribución tox + top cultivos + top plagas
+router.get('/plaguicidas/stats', canRead, async (_req: Request, res: Response) => {
+  try {
+    const pool = await getDbPool();
+    const [tox, tipo, topCultivos, topPlagas, topIAs, pa] = await Promise.all([
+      pool.request().query(`
+        SELECT ISNULL(categoria_toxicologica, '(sin clasificar)') AS toxicidad, COUNT(*) AS productos
+        FROM dbo.icb_dim_plaguicida_ficha
+        GROUP BY categoria_toxicologica ORDER BY productos DESC
+      `),
+      pool.request().query(`
+        SELECT ISNULL(tipo_producto, '(sin tipo)') AS tipo, COUNT(*) AS productos
+        FROM dbo.icb_dim_plaguicida_ficha
+        GROUP BY tipo_producto ORDER BY productos DESC
+      `),
+      pool.request().query(`
+        SELECT TOP 10 cultivo_nombre_comun AS cultivo,
+               COUNT(DISTINCT plaguicida_id) AS productos,
+               COUNT(*) AS usos
+        FROM dbo.icb_fact_plaguicida_uso
+        WHERE cultivo_nombre_comun IS NOT NULL
+        GROUP BY cultivo_nombre_comun ORDER BY productos DESC
+      `),
+      pool.request().query(`
+        SELECT TOP 10 plaga_nombre_comun AS plaga,
+               COUNT(DISTINCT plaguicida_id) AS productos,
+               COUNT(DISTINCT cultivo_nombre_comun) AS cultivos
+        FROM dbo.icb_fact_plaguicida_uso
+        WHERE plaga_nombre_comun IS NOT NULL
+        GROUP BY plaga_nombre_comun ORDER BY productos DESC
+      `),
+      pool.request().query(`
+        SELECT TOP 10 ingrediente_activo AS ia, COUNT(*) AS productos
+        FROM dbo.icb_dim_plaguicida_ficha
+        WHERE ingrediente_activo IS NOT NULL
+        GROUP BY ingrediente_activo ORDER BY productos DESC
+      `),
+      pool.request().query(`
+        SELECT COUNT(*) AS productos FROM dbo.icb_dim_plaguicida_ficha
+        WHERE titular_registro LIKE 'POINT ANDINA%'
+      `),
+    ]);
+    res.json({
+      success: true,
+      data: {
+        toxicidad: tox.recordset,
+        tipos: tipo.recordset,
+        top_cultivos: topCultivos.recordset,
+        top_plagas: topPlagas.recordset,
+        top_ingredientes: topIAs.recordset,
+        point_andina_count: pa.recordset[0]?.productos || 0,
+      },
+    });
+  } catch (err: any) {
+    console.error('[Inteligencia] plaguicidas/stats error:', err);
+    res.status(500).json({ success: false, message: err?.message || 'Error' });
+  }
+});
+
+// GET /api/inteligencia/plaguicidas/by-empresa  — agregado por titular (empresa)
+router.get('/plaguicidas/by-empresa', canRead, async (_req: Request, res: Response) => {
+  try {
+    const pool = await getDbPool();
+    const r = await pool.request().query(`
+      SELECT
+        ISNULL(titular_registro, '(Sin titular)') AS empresa,
+        COUNT(*) AS productos,
+        COUNT(DISTINCT clase) AS clases_distintas,
+        COUNT(DISTINCT ingrediente_activo) AS ingredientes_activos,
+        SUM(CASE WHEN clase = 'Fungicida' THEN 1 ELSE 0 END) AS fungicidas,
+        SUM(CASE WHEN clase = 'Insecticida' THEN 1 ELSE 0 END) AS insecticidas,
+        SUM(CASE WHEN clase = 'Herbicida' THEN 1 ELSE 0 END) AS herbicidas
+      FROM dbo.icb_dim_plaguicida_ficha
+      GROUP BY titular_registro
+      ORDER BY productos DESC
+    `);
+    res.json({ success: true, data: r.recordset });
+  } catch (err: any) {
+    console.error('[Inteligencia] by-empresa error:', err);
+    res.status(500).json({ success: false, message: err?.message || 'Error' });
+  }
+});
+
+// GET /api/inteligencia/plaguicidas
+router.get('/plaguicidas', canRead, async (req: Request, res: Response) => {
+  try {
+    const sqlMod = await import('mssql');
+    const sql: any = (sqlMod as any).default || sqlMod;
+    const pool = await getDbPool();
+    const limit = Math.min(Number(req.query.limit) || 500, 2000);
+    const offset = Math.max(0, Number(req.query.offset) || 0);
+
+    const r = pool.request();
+    const where: string[] = [];
+    const addLike = (param: string, col: string, val: any) => {
+      if (val) { r.input(param, sql.NVarChar, `%${String(val).trim()}%`); where.push(`${col} LIKE @${param}`); }
+    };
+    addLike('q_nombre', 'f.nombre_comercial', req.query.nombre_comercial);
+    addLike('q_titular', 'f.titular_registro', req.query.titular);
+    addLike('q_ia', 'f.ingrediente_activo', req.query.ingrediente_activo);
+    if (req.query.clase) { r.input('q_clase', sql.NVarChar, String(req.query.clase)); where.push('f.clase = @q_clase'); }
+    if (req.query.toxicidad) { r.input('q_tox', sql.NVarChar, String(req.query.toxicidad)); where.push('f.categoria_toxicologica = @q_tox'); }
+    if (req.query.tipo_producto) { r.input('q_tipo', sql.NVarChar, String(req.query.tipo_producto)); where.push('f.tipo_producto = @q_tipo'); }
+    if (req.query.categoria_pa_id) { r.input('q_cat', sql.Int, Number(req.query.categoria_pa_id)); where.push('f.categoria_pa_id = @q_cat'); }
+
+    if (req.query.cultivo) {
+      r.input('q_cultivo', sql.NVarChar, `%${String(req.query.cultivo).trim()}%`);
+      where.push(`EXISTS (SELECT 1 FROM dbo.icb_fact_plaguicida_uso u
+        WHERE u.plaguicida_id = f.plaguicida_id AND u.cultivo_nombre_comun LIKE @q_cultivo)`);
+    }
+    if (req.query.plaga) {
+      r.input('q_plaga', sql.NVarChar, `%${String(req.query.plaga).trim()}%`);
+      where.push(`EXISTS (SELECT 1 FROM dbo.icb_fact_plaguicida_uso u2
+        WHERE u2.plaguicida_id = f.plaguicida_id AND
+              (u2.plaga_nombre_comun LIKE @q_plaga OR u2.plaga_nombre_cient LIKE @q_plaga))`);
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    r.input('lim', sql.Int, limit);
+    r.input('off', sql.Int, offset);
+
+    const cnt = await r.query(`
+      SELECT COUNT(*) AS total FROM dbo.icb_dim_plaguicida_ficha f ${whereSql}
+    `);
+    const total = cnt.recordset[0].total;
+
+    const rows = await r.query(`
+      SELECT
+        f.plaguicida_id, f.producto_id, f.numero_registro, f.nombre_comercial,
+        f.titular_registro, f.ingrediente_activo, f.principios_activos,
+        f.clase, f.categoria_toxicologica, f.tipo_producto,
+        c.category_code AS categoria_pa_code, c.category_name AS categoria_pa_name,
+        STUFF((
+          SELECT ', ' + cn FROM (
+            SELECT DISTINCT TOP 5 u.cultivo_nombre_comun AS cn FROM dbo.icb_fact_plaguicida_uso u
+            WHERE u.plaguicida_id = f.plaguicida_id AND u.cultivo_nombre_comun IS NOT NULL
+          ) X FOR XML PATH('')
+        ), 1, 2, '') AS cultivos_resumen,
+        (SELECT COUNT(*) FROM dbo.icb_fact_plaguicida_uso u WHERE u.plaguicida_id = f.plaguicida_id) AS usos_count
+      FROM dbo.icb_dim_plaguicida_ficha f
+      LEFT JOIN dbo.icb_dim_point_category c ON c.category_id = f.categoria_pa_id
+      ${whereSql}
+      ORDER BY f.titular_registro, f.nombre_comercial
+      OFFSET @off ROWS FETCH NEXT @lim ROWS ONLY
+    `);
+
+    res.json({ success: true, data: { rows: rows.recordset, total, limit, offset } });
+  } catch (err: any) {
+    console.error('[Inteligencia] plaguicidas list error:', err);
+    res.status(500).json({ success: false, message: err?.message || 'Error al consultar fichas' });
+  }
+});
+
+// GET /api/inteligencia/plaguicidas/:id
+router.get('/plaguicidas/:id', canRead, async (req: Request, res: Response) => {
+  try {
+    const sqlMod = await import('mssql');
+    const sql: any = (sqlMod as any).default || sqlMod;
+    const pool = await getDbPool();
+    const id = Number(req.params.id);
+    if (!id) { res.status(400).json({ success: false, message: 'ID inválido' }); return; }
+
+    const ficha = await pool.request().input('id', sql.BigInt, id).query(`
+      SELECT f.*, c.category_code AS categoria_pa_code, c.category_name AS categoria_pa_name
+      FROM dbo.icb_dim_plaguicida_ficha f
+      LEFT JOIN dbo.icb_dim_point_category c ON c.category_id = f.categoria_pa_id
+      WHERE f.plaguicida_id = @id
+    `);
+    if (!ficha.recordset.length) { res.status(404).json({ success: false, message: 'Ficha no encontrada' }); return; }
+
+    const usos = await pool.request().input('id', sql.BigInt, id).query(`
+      SELECT cultivo_nombre_comun, cultivo_nombre_cient, plaga_nombre_comun, plaga_nombre_cient,
+             unidad_medida, dosis_hectarea, dosis_porcentaje,
+             capacidad_cilindro, dosis_cilindro,
+             limite_max_residuo, periodo_carencia_dias, observacion
+      FROM dbo.icb_fact_plaguicida_uso
+      WHERE plaguicida_id = @id
+      ORDER BY cultivo_nombre_comun, plaga_nombre_comun
+    `);
+
+    res.json({ success: true, data: { ficha: ficha.recordset[0], usos: usos.recordset } });
+  } catch (err: any) {
+    console.error('[Inteligencia] plaguicida detail error:', err);
+    res.status(500).json({ success: false, message: err?.message || 'Error' });
+  }
 });
 
 export default router;

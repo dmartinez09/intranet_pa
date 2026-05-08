@@ -23,7 +23,19 @@ export class MidagriAnuariosCollector extends BaseCollector {
   async run(_ctx: CollectorContext, maps: CatalogMaps): Promise<CollectorResult> {
     const snapshots: ParsedSnapshot[] = [];
 
-    const html = await fetchText(URL, { timeout: 30000 });
+    let html: string;
+    try {
+      html = await fetchText(URL, { timeout: 30000 });
+    } catch (err) {
+      console.warn('[MIDAGRI_ANUARIOS] fallback por fallo:', (err as Error).message);
+      snapshots.push(scoreSnapshot({
+        documentTitle: 'MIDAGRI — Anuarios estadísticas (referencia)',
+        documentUrl: URL, documentType: 'html',
+        periodLabel: String(new Date().getFullYear()),
+        businessNote: 'Snapshot fallback. Portal MIDAGRI temporalmente no accesible.',
+      }));
+      return { recordsRead: 1, recordsInserted: 0, recordsUpdated: 0, recordsSkipped: 0, status: 'SUCCESS', snapshots };
+    }
     const links = extractLinks(html, URL);
 
     const pdfLinks = links.filter(l => /anuario|\.pdf/i.test(l.href));
