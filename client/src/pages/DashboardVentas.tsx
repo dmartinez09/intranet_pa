@@ -262,7 +262,11 @@ export default function DashboardVentas() {
   if (loading && !kpis) {
     return (
       <div className="min-h-screen">
-        <Header title="Dashboard de Ventas" subtitle={`${periodLabel} - Peru`} />
+        <Header
+        title="Dashboard de Ventas"
+        subtitle={`${periodLabel} - Peru`}
+        disclaimer="los números se obtienen desde SAP al datawarehouse, faltan algunas validaciones"
+      />
         <div className="flex items-center justify-center h-96">
           <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
         </div>
@@ -272,7 +276,11 @@ export default function DashboardVentas() {
 
   return (
     <div className="min-h-screen">
-      <Header title="Dashboard de Ventas" subtitle={`${periodLabel} - Peru`} />
+      <Header
+        title="Dashboard de Ventas"
+        subtitle={`${periodLabel} - Peru`}
+        disclaimer="los números se obtienen desde SAP al datawarehouse, faltan algunas validaciones"
+      />
 
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Filter Toggle Bar */}

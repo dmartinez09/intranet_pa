@@ -4,16 +4,28 @@ import { useAuth } from '../../context/AuthContext';
 interface HeaderProps {
   title: string;
   subtitle?: string;
+  disclaimer?: string;     // texto en rojo al lado del título
 }
 
-export default function Header({ title, subtitle }: HeaderProps) {
+export default function Header({ title, subtitle, disclaimer }: HeaderProps) {
   const { user } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-100">
       <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{title}</h2>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{title}</h2>
+            {disclaimer && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-full px-2.5 py-1 leading-tight"
+                title={disclaimer}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                Disclaimer: {disclaimer}
+              </span>
+            )}
+          </div>
           {subtitle && <p className="text-xs sm:text-sm text-gray-500 mt-0.5 truncate">{subtitle}</p>}
         </div>
 
