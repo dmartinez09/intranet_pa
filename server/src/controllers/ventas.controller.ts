@@ -94,8 +94,8 @@ export const ventasController = {
 
   async getFiltros(req: Request, res: Response) {
     try {
-      const grupo = (req.query.grupo_cliente as string) || undefined;
-      const data = await dbService.getFiltrosOpciones(grupo);
+      // Cascading: pasamos TODOS los filtros activos para restringir cada dropdown
+      const data = await dbService.getFiltrosOpciones(req.query);
       return res.json({ success: true, data });
     } catch (error) {
       console.error('[Ventas] Filtros error:', error);

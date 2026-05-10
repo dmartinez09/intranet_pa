@@ -124,6 +124,16 @@ export default function DashboardVentas() {
     }
   }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // CASCADING: cuando cambia alguna selección de filtro, recarga las opciones
+  // del dropdown restringidas por las demás selecciones (debounce 300ms).
+  useEffect(() => {
+    if (!initialized) return;
+    const t = setTimeout(() => {
+      loadFiltros(buildFilterParams());
+    }, 300);
+    return () => clearTimeout(t);
+  }, [filtros, grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function loadData(params?: any) {
     setLoading(true);
     try {
@@ -261,9 +271,27 @@ export default function DashboardVentas() {
     return rows;
   }
 
-  async function loadFiltros() {
+  // Construye los params actuales (filtros + grupo) para enviar tanto a
+  // /ventas/filtros (cascading) como a las queries de datos.
+  function buildFilterParams(): Record<string, string> {
+    const p: Record<string, string> = {};
+    if (filtros.familias.length) p.familia = filtros.familias.join(',');
+    if (filtros.sub_familias.length) p.sub_familia = filtros.sub_familias.join(',');
+    if (filtros.ingredientes_activos.length) p.ingrediente_activo = filtros.ingredientes_activos.join(',');
+    if (filtros.vendedores.length) p.vendedor = filtros.vendedores.join(',');
+    if (filtros.zonas.length) p.zona = filtros.zonas.join(',');
+    if (filtros.tipos_documento.length) p.tipo_documento = filtros.tipos_documento.join(',');
+    if (filtros.series_documentos.length) p.division = filtros.series_documentos.join(',');
+    if (filtros.maestro_tipos.length) p.maestro_tipo = filtros.maestro_tipos.join(',');
+    if (filtros.productos_formulados.length) p.producto_formulado = filtros.productos_formulados.join(',');
+    if (filtros.nombres_producto.length) p.nombre_producto = filtros.nombres_producto.join(',');
+    if (grupoCliente) p.grupo_cliente = grupoCliente;
+    return p;
+  }
+
+  async function loadFiltros(params?: Record<string, string>) {
     try {
-      const res = await ventasApi.getFiltros();
+      const res = await ventasApi.getFiltros(params || {});
       setOpcionesFiltro(res.data.data);
     } catch (err) {
       console.error('Error loading filtros:', err);
@@ -271,18 +299,7 @@ export default function DashboardVentas() {
   }
 
   function applyFilters() {
-    const params: any = {};
-    // Solo enviar filtros que tengan selección
-    if (filtros.familias.length) params.familia = filtros.familias.join(',');
-    if (filtros.sub_familias.length) params.sub_familia = filtros.sub_familias.join(',');
-    if (filtros.ingredientes_activos.length) params.ingrediente_activo = filtros.ingredientes_activos.join(',');
-    if (filtros.vendedores.length) params.vendedor = filtros.vendedores.join(',');
-    if (filtros.zonas.length) params.zona = filtros.zonas.join(',');
-    if (filtros.tipos_documento.length) params.tipo_documento = filtros.tipos_documento.join(',');
-    if (filtros.series_documentos.length) params.division = filtros.series_documentos.join(',');
-    if (filtros.maestro_tipos.length) params.maestro_tipo = filtros.maestro_tipos.join(',');
-    if (filtros.productos_formulados.length) params.producto_formulado = filtros.productos_formulados.join(',');
-    if (filtros.nombres_producto.length) params.nombre_producto = filtros.nombres_producto.join(',');
+    const params: any = { ...buildFilterParams() };
     params.year = year;
     params.month_start = monthStart;
     params.month_end = monthEnd;

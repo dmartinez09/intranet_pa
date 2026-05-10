@@ -758,7 +758,7 @@ export const dbService = {
     };
   },
 
-  async getFiltrosOpciones(grupoCliente?: string) {
+  async getFiltrosOpciones(filtros: any = {}) {
     if (USE_MOCK_VENTAS) {
       return {
         familias: MOCK_FAMILIAS,
@@ -774,37 +774,88 @@ export const dbService = {
       };
     }
     const pool = await getDbPool();
-    // Cuando se pasa grupo_cliente, vendedores y zonas se filtran a los que pertenecen a ese grupo
-    const grupoFilter = grupoCliente ? `AND Grupo_Cliente = @grupo` : '';
-    const vendReq = pool.request();
-    const zonReq = pool.request();
-    if (grupoCliente) { vendReq.input('grupo', grupoCliente); zonReq.input('grupo', grupoCliente); }
 
-    const [fam, sf, ia, vend, zon, td, div, mt, gc, pf, np] = await Promise.all([
-      pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Familia IS NOT NULL ORDER BY Familia`),
-      pool.request().query(`SELECT DISTINCT Sub_Familia AS sub_familia FROM dbo.stg_rpt_ventas_detallado WHERE Sub_Familia IS NOT NULL ORDER BY Sub_Familia`),
-      pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
-      vendReq.query(`SELECT Vendedor, MIN(Codigo_Vendedor) AS Codigo_Vendedor, MIN(Zona) AS Zona FROM dbo.stg_rpt_ventas_detallado WHERE Vendedor IS NOT NULL AND Vendedor != '' ${grupoFilter} GROUP BY Vendedor ORDER BY Vendedor`),
-      zonReq.query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Zona IS NOT NULL AND Zona != '' ${grupoFilter} ORDER BY Zona`),
-      pool.request().query(`SELECT DISTINCT Tipo_Documento AS tipo_documento FROM dbo.stg_rpt_ventas_detallado WHERE Tipo_Documento IS NOT NULL ORDER BY Tipo_Documento`),
-      pool.request().query(`SELECT DISTINCT Division AS division FROM dbo.stg_rpt_ventas_detallado WHERE Division IS NOT NULL AND Division != '' ORDER BY Division`),
-      pool.request().query(`SELECT DISTINCT Maestro_Tipo FROM dbo.stg_rpt_ventas_detallado WHERE Maestro_Tipo IS NOT NULL ORDER BY Maestro_Tipo`),
-      pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
-      pool.request().query(`SELECT DISTINCT Producto_Formulado FROM dbo.stg_rpt_ventas_detallado WHERE Producto_Formulado IS NOT NULL AND Producto_Formulado != '' ORDER BY Producto_Formulado`),
-      pool.request().query(`SELECT DISTINCT Nombre_Producto FROM dbo.stg_rpt_ventas_detallado WHERE Nombre_Producto IS NOT NULL AND Nombre_Producto != '' ORDER BY Nombre_Producto`),
+    // CASCADING FILTERS — para cada filtro, aplicamos todos los demás filtros
+    // seleccionados pero NO el propio (para no auto-restringirse y poder
+    // ampliar la selección dentro de su dropdown).
+    const FILTER_MAP: { key: string; col: string }[] = [
+      { key: 'familia', col: 'Familia' },
+      { key: 'sub_familia', col: 'Sub_Familia' },
+      { key: 'ingrediente_activo', col: 'Ingrediente_Activo' },
+      { key: 'vendedor', col: 'Vendedor' },
+      { key: 'zona', col: 'Zona' },
+      { key: 'tipo_documento', col: 'Tipo_Documento' },
+      { key: 'division', col: 'Division' },
+      { key: 'maestro_tipo', col: 'Maestro_Tipo' },
+      { key: 'grupo_cliente', col: 'Grupo_Cliente' },
+      { key: 'producto_formulado', col: 'Producto_Formulado' },
+      { key: 'nombre_producto', col: 'Nombre_Producto' },
+    ];
+
+    // Construye un Request con WHERE excluyendo el filtro `excludeKey`
+    function buildReq(excludeKey: string) {
+      const req = pool.request();
+      const where: string[] = ['1=1'];
+      for (const f of FILTER_MAP) {
+        if (f.key === excludeKey) continue;
+        const v = filtros[f.key];
+        if (v == null || v === '') continue;
+        const vals = String(v).split(',').map((x: string) => x.trim()).filter(Boolean);
+        if (!vals.length) continue;
+        const placeholders = vals.map((_, i) => `@${f.key}_${i}`);
+        where.push(`${f.col} IN (${placeholders.join(',')})`);
+        vals.forEach((val, i) => req.input(`${f.key}_${i}`, sql.NVarChar, val));
+      }
+      return { req, whereSql: where.join(' AND ') };
+    }
+
+    async function distinctOf(col: string, excludeKey: string) {
+      const { req, whereSql } = buildReq(excludeKey);
+      const r = await req.query(
+        `SELECT DISTINCT ${col} AS val FROM dbo.stg_rpt_ventas_detallado
+         WHERE ${whereSql} AND ${col} IS NOT NULL AND ${col} <> ''
+         ORDER BY val`
+      );
+      return r.recordset.map((x: any) => x.val);
+    }
+
+    async function vendedoresOpts() {
+      const { req, whereSql } = buildReq('vendedor');
+      const r = await req.query(
+        `SELECT Vendedor, MIN(Codigo_Vendedor) AS Codigo_Vendedor, MIN(Zona) AS Zona
+         FROM dbo.stg_rpt_ventas_detallado
+         WHERE ${whereSql} AND Vendedor IS NOT NULL AND Vendedor <> ''
+         GROUP BY Vendedor ORDER BY Vendedor`
+      );
+      return r.recordset.map((r: any) => ({ codigo: r.Codigo_Vendedor, nombre: r.Vendedor, zona: r.Zona }));
+    }
+
+    const [fam, sf, ia, vendOpts, zon, td, div, mt, gc, pf, np] = await Promise.all([
+      distinctOf('Familia', 'familia'),
+      distinctOf('Sub_Familia', 'sub_familia'),
+      distinctOf('Ingrediente_Activo', 'ingrediente_activo'),
+      vendedoresOpts(),
+      distinctOf('Zona', 'zona'),
+      distinctOf('Tipo_Documento', 'tipo_documento'),
+      distinctOf('Division', 'division'),
+      distinctOf('Maestro_Tipo', 'maestro_tipo'),
+      distinctOf('Grupo_Cliente', 'grupo_cliente'),
+      distinctOf('Producto_Formulado', 'producto_formulado'),
+      distinctOf('Nombre_Producto', 'nombre_producto'),
     ]);
+
     return {
-      familias: fam.recordset.map((r: any) => r.Familia),
-      sub_familias: sf.recordset.map((r: any) => r.sub_familia),
-      ingredientes_activos: ia.recordset.map((r: any) => r.Ingrediente_Activo),
-      vendedores: vend.recordset.map((r: any) => ({ codigo: r.Codigo_Vendedor, nombre: r.Vendedor, zona: r.Zona })),
-      zonas: zon.recordset.map((r: any) => r.Zona),
-      tipos_documento: td.recordset.map((r: any) => r.tipo_documento),
-      divisiones: div.recordset.map((r: any) => r.division),
-      maestro_tipos: mt.recordset.map((r: any) => r.Maestro_Tipo),
-      grupos_cliente: gc.recordset.map((r: any) => r.Grupo_Cliente),
-      productos_formulados: pf.recordset.map((r: any) => r.Producto_Formulado),
-      nombres_producto: np.recordset.map((r: any) => r.Nombre_Producto),
+      familias: fam,
+      sub_familias: sf,
+      ingredientes_activos: ia,
+      vendedores: vendOpts,
+      zonas: zon,
+      tipos_documento: td,
+      divisiones: div,
+      maestro_tipos: mt,
+      grupos_cliente: gc,
+      productos_formulados: pf,
+      nombres_producto: np,
     };
   },
 
