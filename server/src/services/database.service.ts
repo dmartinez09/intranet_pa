@@ -315,6 +315,16 @@ export const dbService = {
       where.push(`Grupo_Cliente IN (${vals.map((_: string, i: number) => `@gc${i}`).join(',')})`);
       vals.forEach((v: string, i: number) => request.input(`gc${i}`, sql.NVarChar, v));
     }
+    if (filtros.producto_formulado) {
+      const vals = (filtros.producto_formulado as string).split(',');
+      where.push(`Producto_Formulado IN (${vals.map((_: string, i: number) => `@pf${i}`).join(',')})`);
+      vals.forEach((v: string, i: number) => request.input(`pf${i}`, sql.NVarChar, v));
+    }
+    if (filtros.nombre_producto) {
+      const vals = (filtros.nombre_producto as string).split(',');
+      where.push(`Nombre_Producto IN (${vals.map((_: string, i: number) => `@np${i}`).join(',')})`);
+      vals.forEach((v: string, i: number) => request.input(`np${i}`, sql.NVarChar, v));
+    }
     if (filtros.year && filtros.month_start && filtros.month_end) {
       request.input('yr', sql.Int, parseInt(filtros.year));
       request.input('ms', sql.Int, parseInt(filtros.month_start));
@@ -578,6 +588,45 @@ export const dbService = {
   // Detalle de transacciones para auditoría / revisión de errores de origen SAP.
   // Aplica 11 reglas de validación y retorna SOLO las filas con inconsistencias.
   // Cada fila lleva `errores: { code, label, severity }[]` explicando el motivo.
+  // Detalle "limpio" de transacciones para TODOS los perfiles con dashboard_ventas.
+  // Distinto al getVentasDetalle (audit) que filtra a sólo filas con errores.
+  // Devuelve únicamente las columnas solicitadas por Gerencia.
+  async getTransacciones(filtros: any) {
+    const ventas = await this.getVentas(filtros);
+    const LIMIT = Math.min(Math.max(Number(filtros?.limit) || 5000, 1), 20000);
+
+    const rows = ventas.slice(0, LIMIT).map((v: any) => ({
+      fecha_emision: v.fecha_emision,
+      numero_sap: v.numero_sap,
+      tipo_venta: v.tipo_venta,
+      razon_social_cliente: v.razon_social_cliente,
+      ruc_cliente: v.ruc_cliente,
+      codigo_producto: v.codigo_producto,
+      division: v.division,
+      familia: v.familia,
+      sub_familia: v.sub_familia,
+      producto_formulado: v.producto_formulado,
+      nombre_producto: v.nombre_producto,
+      cantidad_kg_lt: Number(v.cantidad_kg_lt) || 0,
+      unidades_presentacion: Number(v.unidades_presentacion) || 0,
+      precio_unitario_venta: Number(v.precio_unitario_venta_dolares) || 0,
+      valor_venta_dolares: Number(v.valor_venta_dolares) || 0,
+      condicion_pago: v.condicion_pago,
+      dias_credito: Number(v.dias_credito) || 0,
+      grupo_cliente: v.grupo_cliente,
+      maestro_tipo: v.maestro_tipo,
+      vendedor: v.vendedor,
+      zona: v.zona,
+    }));
+
+    return {
+      total_rows: ventas.length,
+      returned: rows.length,
+      limit: LIMIT,
+      rows,
+    };
+  },
+
   async getVentasDetalle(filtros: any) {
     const ventas = await this.getVentas(filtros);
 
@@ -731,7 +780,7 @@ export const dbService = {
     const zonReq = pool.request();
     if (grupoCliente) { vendReq.input('grupo', grupoCliente); zonReq.input('grupo', grupoCliente); }
 
-    const [fam, sf, ia, vend, zon, td, div, mt, gc] = await Promise.all([
+    const [fam, sf, ia, vend, zon, td, div, mt, gc, pf, np] = await Promise.all([
       pool.request().query(`SELECT DISTINCT Familia FROM dbo.stg_rpt_ventas_detallado WHERE Familia IS NOT NULL ORDER BY Familia`),
       pool.request().query(`SELECT DISTINCT Sub_Familia AS sub_familia FROM dbo.stg_rpt_ventas_detallado WHERE Sub_Familia IS NOT NULL ORDER BY Sub_Familia`),
       pool.request().query(`SELECT DISTINCT Ingrediente_Activo FROM dbo.stg_rpt_ventas_detallado WHERE Ingrediente_Activo IS NOT NULL AND Ingrediente_Activo != '' ORDER BY Ingrediente_Activo`),
@@ -741,6 +790,8 @@ export const dbService = {
       pool.request().query(`SELECT DISTINCT Division AS division FROM dbo.stg_rpt_ventas_detallado WHERE Division IS NOT NULL AND Division != '' ORDER BY Division`),
       pool.request().query(`SELECT DISTINCT Maestro_Tipo FROM dbo.stg_rpt_ventas_detallado WHERE Maestro_Tipo IS NOT NULL ORDER BY Maestro_Tipo`),
       pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
+      pool.request().query(`SELECT DISTINCT Producto_Formulado FROM dbo.stg_rpt_ventas_detallado WHERE Producto_Formulado IS NOT NULL AND Producto_Formulado != '' ORDER BY Producto_Formulado`),
+      pool.request().query(`SELECT DISTINCT Nombre_Producto FROM dbo.stg_rpt_ventas_detallado WHERE Nombre_Producto IS NOT NULL AND Nombre_Producto != '' ORDER BY Nombre_Producto`),
     ]);
     return {
       familias: fam.recordset.map((r: any) => r.Familia),
@@ -752,6 +803,8 @@ export const dbService = {
       divisiones: div.recordset.map((r: any) => r.division),
       maestro_tipos: mt.recordset.map((r: any) => r.Maestro_Tipo),
       grupos_cliente: gc.recordset.map((r: any) => r.Grupo_Cliente),
+      productos_formulados: pf.recordset.map((r: any) => r.Producto_Formulado),
+      nombres_producto: np.recordset.map((r: any) => r.Nombre_Producto),
     };
   },
 

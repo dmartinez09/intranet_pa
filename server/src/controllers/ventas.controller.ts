@@ -82,6 +82,16 @@ export const ventasController = {
     }
   },
 
+  async getTransacciones(req: Request, res: Response) {
+    try {
+      const data = await dbService.getTransacciones(req.query);
+      res.json({ success: true, data });
+    } catch (err: any) {
+      console.error('[ventas] getTransacciones error:', err);
+      res.status(500).json({ success: false, message: 'Error al obtener transacciones' });
+    }
+  },
+
   async getFiltros(req: Request, res: Response) {
     try {
       const grupo = (req.query.grupo_cliente as string) || undefined;

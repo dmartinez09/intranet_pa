@@ -18,5 +18,6 @@ router.get('/por-producto-zona', ventasController.getPorProductoZona);
 router.get('/filtros', ventasController.getFiltros);
 router.get('/por-departamento', ventasController.getPorDepartamento);
 router.get('/detalle', ventasController.getDetalle);
+router.get('/transacciones', ventasController.getTransacciones);
 
 export default router;

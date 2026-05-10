@@ -20,6 +20,7 @@ import {
   Percent,
   Wallet,
   Receipt,
+  Loader2,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -55,6 +56,8 @@ interface Filtros {
   tipos_documento: string[];
   series_documentos: string[];
   maestro_tipos: string[];
+  productos_formulados: string[];
+  nombres_producto: string[];
 }
 
 
@@ -71,6 +74,11 @@ export default function DashboardVentas() {
   const [detalleData, setDetalleData] = useState<any | null>(null);
   const [detalleLoading, setDetalleLoading] = useState(false);
   const [detalleSearch, setDetalleSearch] = useState('');
+  // Detalle de transacciones (visible a todos los perfiles dashboard_ventas)
+  const [transData, setTransData] = useState<any | null>(null);
+  const [transLoading, setTransLoading] = useState(false);
+  const [transSearch, setTransSearch] = useState('');
+  const [transPage, setTransPage] = useState(1);
   const [filtroSeveridad, setFiltroSeveridad] = useState<'todas' | 'alta' | 'media' | 'baja'>('todas');
   const [filtroCodigo, setFiltroCodigo] = useState<string>('');
   const [detallePage, setDetallePage] = useState(1);
@@ -97,6 +105,8 @@ export default function DashboardVentas() {
     tipos_documento: [],
     series_documentos: [],
     maestro_tipos: [],
+    productos_formulados: [],
+    nombres_producto: [],
   });
 
   const [initialized, setInitialized] = useState(false);
@@ -134,8 +144,9 @@ export default function DashboardVentas() {
       setVentasDiarias(diariaRes.data.data);
       setVentasVendedor(vendedorRes.data.data);
       setLastParams(p);
-      // Lanza detalle en paralelo (no bloquea el render del dashboard)
+      // Lanza detalle (audit) y transacciones en paralelo
       loadDetalle(p);
+      loadTransacciones(p);
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
@@ -154,6 +165,49 @@ export default function DashboardVentas() {
     } finally {
       setDetalleLoading(false);
     }
+  }
+
+  async function loadTransacciones(p: any) {
+    setTransLoading(true);
+    try {
+      const res = await ventasApi.getTransacciones({ ...p, limit: 5000 });
+      setTransData(res.data.data);
+      setTransPage(1);
+    } catch (err) {
+      console.error('Error loading transacciones:', err);
+    } finally {
+      setTransLoading(false);
+    }
+  }
+
+  function filteredTrans() {
+    if (!transData?.rows) return [];
+    const q = transSearch.trim().toLowerCase();
+    if (!q) return transData.rows;
+    return transData.rows.filter((r: any) =>
+      [r.razon_social_cliente, r.numero_sap, r.codigo_producto, r.producto_formulado, r.nombre_producto, r.familia, r.sub_familia, r.grupo_cliente, r.tipo_venta, r.maestro_tipo]
+        .some(v => String(v || '').toLowerCase().includes(q))
+    );
+  }
+
+  function exportTransCSV() {
+    const rows = filteredTrans();
+    if (!rows.length) return;
+    const cols = ['fecha_emision','numero_sap','tipo_venta','razon_social_cliente','codigo_producto','division','familia','sub_familia','producto_formulado','nombre_producto','cantidad_kg_lt','unidades_presentacion','precio_unitario_venta','valor_venta_dolares','condicion_pago','dias_credito','grupo_cliente','maestro_tipo'];
+    const headers = ['Fecha Emision','N° SAP','Tipo Venta','Razón Social','Código Producto','División','Familia','Sub-Familia','Producto Formulado','Nombre Producto','Cantidad (KG/LT)','Unidades Presentación','Precio Venta USD','Valor Venta USD','Condición Pago','Días Crédito','Grupo Cliente','Maestro Tipo'];
+    const csv = [headers.join(','), ...rows.map((r: any) => cols.map(c => {
+      const v = r[c];
+      if (v == null) return '';
+      const s = String(v).replace(/"/g, '""');
+      return /[",\n]/.test(s) ? `"${s}"` : s;
+    }).join(','))].join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transacciones_${year}_${monthStart}-${monthEnd}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function exportDetalleExcel() {
@@ -227,6 +281,8 @@ export default function DashboardVentas() {
     if (filtros.tipos_documento.length) params.tipo_documento = filtros.tipos_documento.join(',');
     if (filtros.series_documentos.length) params.division = filtros.series_documentos.join(',');
     if (filtros.maestro_tipos.length) params.maestro_tipo = filtros.maestro_tipos.join(',');
+    if (filtros.productos_formulados.length) params.producto_formulado = filtros.productos_formulados.join(',');
+    if (filtros.nombres_producto.length) params.nombre_producto = filtros.nombres_producto.join(',');
     params.year = year;
     params.month_start = monthStart;
     params.month_end = monthEnd;
@@ -238,6 +294,7 @@ export default function DashboardVentas() {
       familias: [], sub_familias: [], ingredientes_activos: [],
       vendedores: [], zonas: [], tipos_documento: [],
       series_documentos: [], maestro_tipos: [],
+      productos_formulados: [], nombres_producto: [],
     });
     setYear(currentYear);
     setMonthStart(currentMonth);
@@ -384,6 +441,18 @@ export default function DashboardVentas() {
                   options={(opcionesFiltro.maestro_tipos || []).map((f: string) => ({ value: f, label: f }))}
                   selected={filtros.maestro_tipos}
                   onChange={(v) => setFiltros({ ...filtros, maestro_tipos: v })}
+                />
+                <MultiSelect
+                  label="Producto Formulado"
+                  options={(opcionesFiltro.productos_formulados || []).map((f: string) => ({ value: f, label: f }))}
+                  selected={filtros.productos_formulados}
+                  onChange={(v) => setFiltros({ ...filtros, productos_formulados: v })}
+                />
+                <MultiSelect
+                  label="Nombre Producto"
+                  options={(opcionesFiltro.nombres_producto || []).map((f: string) => ({ value: f, label: f }))}
+                  selected={filtros.nombres_producto}
+                  onChange={(v) => setFiltros({ ...filtros, nombres_producto: v })}
                 />
               </div>
             </div>
@@ -554,6 +623,116 @@ export default function DashboardVentas() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Detalle de Transacciones — visible a TODOS los perfiles dashboard_ventas */}
+        <div className="chart-container">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-base font-bold text-gray-900 mb-1">Detalle de Transacciones</h3>
+              <p className="text-xs text-gray-500">
+                {transData
+                  ? `${transData.returned?.toLocaleString('es-PE') ?? 0} de ${transData.total_rows?.toLocaleString('es-PE') ?? 0} filas · mostrando ${filteredTrans().length} tras búsqueda`
+                  : 'Cargando…'}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={transSearch}
+                onChange={(e) => { setTransSearch(e.target.value); setTransPage(1); }}
+                placeholder="Buscar (cliente, producto, n° SAP…)"
+                className="input-field text-sm py-1.5 px-3 w-64"
+              />
+              <button
+                onClick={() => lastParams && loadTransacciones(lastParams)}
+                className="btn-secondary py-1.5 px-3 text-sm"
+                disabled={transLoading}
+              >
+                {transLoading ? 'Cargando…' : 'Recargar'}
+              </button>
+              <button
+                onClick={exportTransCSV}
+                className="btn-primary py-1.5 px-3 text-sm"
+                disabled={!transData?.rows?.length}
+              >
+                Exportar CSV
+              </button>
+            </div>
+          </div>
+
+          {transLoading && !transData && (
+            <div className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin text-brand-600 inline" /></div>
+          )}
+
+          {transData && (() => {
+            const rows = filteredTrans();
+            const PAGE_SIZE = 100;
+            const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+            const page = Math.min(transPage, totalPages);
+            const paged = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+            return (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-xs">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Fecha</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">N° SAP</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Tipo Venta</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Razón Social</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Cód. Producto</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">División</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Familia</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Sub-Familia</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Producto Formulado</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Nombre Producto</th>
+                        <th className="px-2 py-2 text-right font-semibold text-gray-600 whitespace-nowrap">Cantidad KG/LT</th>
+                        <th className="px-2 py-2 text-right font-semibold text-gray-600 whitespace-nowrap">Unid. Presentación</th>
+                        <th className="px-2 py-2 text-right font-semibold text-gray-600 whitespace-nowrap">Precio Venta USD</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Cond. Pago</th>
+                        <th className="px-2 py-2 text-right font-semibold text-gray-600 whitespace-nowrap">Días Crédito</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Grupo Cliente</th>
+                        <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Maestro Tipo (Foco)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {paged.map((r: any, i: number) => (
+                        <tr key={i} className="hover:bg-gray-50">
+                          <td className="px-2 py-1.5 whitespace-nowrap text-gray-600">{r.fecha_emision ? new Date(r.fecha_emision).toLocaleDateString('es-PE') : ''}</td>
+                          <td className="px-2 py-1.5 font-mono text-gray-700 whitespace-nowrap">{r.numero_sap}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">{r.tipo_venta}</td>
+                          <td className="px-2 py-1.5 max-w-[220px] truncate" title={r.razon_social_cliente}>{r.razon_social_cliente}</td>
+                          <td className="px-2 py-1.5 font-mono whitespace-nowrap">{r.codigo_producto}</td>
+                          <td className="px-2 py-1.5">{r.division}</td>
+                          <td className="px-2 py-1.5">{r.familia}</td>
+                          <td className="px-2 py-1.5">{r.sub_familia}</td>
+                          <td className="px-2 py-1.5 max-w-[200px] truncate" title={r.producto_formulado}>{r.producto_formulado}</td>
+                          <td className="px-2 py-1.5 max-w-[200px] truncate" title={r.nombre_producto}>{r.nombre_producto}</td>
+                          <td className="px-2 py-1.5 text-right font-mono">{Number(r.cantidad_kg_lt).toLocaleString('es-PE', { maximumFractionDigits: 2 })}</td>
+                          <td className="px-2 py-1.5 text-right font-mono">{Number(r.unidades_presentacion).toLocaleString('es-PE', { maximumFractionDigits: 2 })}</td>
+                          <td className="px-2 py-1.5 text-right font-mono">{Number(r.precio_unitario_venta).toLocaleString('es-PE', { maximumFractionDigits: 2 })}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">{r.condicion_pago}</td>
+                          <td className="px-2 py-1.5 text-right">{r.dias_credito}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">{r.grupo_cliente}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">{r.maestro_tipo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                    <span>Página {page} de {totalPages} · {rows.length.toLocaleString('es-PE')} filas</span>
+                    <div className="flex gap-1">
+                      <button onClick={() => setTransPage(Math.max(1, page - 1))} disabled={page === 1} className="px-3 py-1 border border-gray-200 rounded disabled:opacity-50">‹ Anterior</button>
+                      <button onClick={() => setTransPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="px-3 py-1 border border-gray-200 rounded disabled:opacity-50">Siguiente ›</button>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         {/* Detalle de transacciones para auditoría / revisión de errores de origen — solo admin */}
