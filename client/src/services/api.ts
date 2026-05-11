@@ -171,8 +171,8 @@ export const inteligenciaApi = {
   getSchedulerStatus: () => api.get('/inteligencia/etl/scheduler'),
   // Fichas técnicas SENASA
   getPlaguicidasFilters: () => api.get('/inteligencia/plaguicidas/filters'),
-  getPlaguicidasByEmpresa: () => api.get('/inteligencia/plaguicidas/by-empresa'),
-  getPlaguicidasStats: () => api.get('/inteligencia/plaguicidas/stats'),
+  getPlaguicidasByEmpresa: (params?: any) => api.get('/inteligencia/plaguicidas/by-empresa', { params }),
+  getPlaguicidasStats: (params?: any) => api.get('/inteligencia/plaguicidas/stats', { params }),
   getPlaguicidas: (params?: any) => api.get('/inteligencia/plaguicidas', { params }),
   getPlaguicidaDetail: (id: number) => api.get(`/inteligencia/plaguicidas/${id}`),
 };

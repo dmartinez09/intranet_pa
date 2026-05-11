@@ -590,50 +590,104 @@ router.get('/plaguicidas/filters', canRead, async (_req: Request, res: Response)
 });
 
 // GET /api/inteligencia/plaguicidas/stats — distribución tox + top cultivos + top plagas
-router.get('/plaguicidas/stats', canRead, async (_req: Request, res: Response) => {
+router.get('/plaguicidas/stats', canRead, async (req: Request, res: Response) => {
   try {
+    const sqlMod = await import('mssql');
+    const sql: any = (sqlMod as any).default || sqlMod;
     const pool = await getDbPool();
-    const [tox, tipo, topCultivos, topPlagas, topIAs, pa, estados] = await Promise.all([
-      pool.request().query(`
-        SELECT ISNULL(categoria_toxicologica, '(sin clasificar)') AS toxicidad, COUNT(*) AS productos
-        FROM dbo.icb_dim_plaguicida_ficha
-        GROUP BY categoria_toxicologica ORDER BY productos DESC
+    // Construye WHERE compartido para todas las queries (mismos filtros que /plaguicidas)
+    const reqs: any[] = [];
+    function buildReq() {
+      const r = pool.request();
+      reqs.push(r);
+      const w: string[] = ['1=1'];
+      const addLike = (param: string, col: string, val: any) => { if (val) { r.input(param, sql.NVarChar, `%${String(val).trim()}%`); w.push(`${col} LIKE @${param}`); } };
+      addLike('q_nombre', 'f.nombre_comercial', req.query.nombre_comercial);
+      addLike('q_titular', 'f.titular_registro', req.query.titular);
+      addLike('q_ia', 'f.ingrediente_activo', req.query.ingrediente_activo);
+      if (req.query.clase) { r.input('q_clase', sql.NVarChar, String(req.query.clase)); w.push('f.clase = @q_clase'); }
+      if (req.query.toxicidad) { r.input('q_tox', sql.NVarChar, String(req.query.toxicidad)); w.push('f.categoria_toxicologica = @q_tox'); }
+      if (req.query.tipo_producto) { r.input('q_tipo', sql.NVarChar, String(req.query.tipo_producto)); w.push('f.tipo_producto = @q_tipo'); }
+      if (req.query.estado_registro) { r.input('q_est', sql.NVarChar, String(req.query.estado_registro)); w.push('f.estado_registro = @q_est'); }
+      if (req.query.anio_primer_desde) { r.input('q_ap_d', sql.Int, Number(req.query.anio_primer_desde)); w.push('f.anio_primer_registro >= @q_ap_d'); }
+      if (req.query.anio_primer_hasta) { r.input('q_ap_h', sql.Int, Number(req.query.anio_primer_hasta)); w.push('f.anio_primer_registro <= @q_ap_h'); }
+      if (req.query.anio_ultima_desde) { r.input('q_au_d', sql.Int, Number(req.query.anio_ultima_desde)); w.push('f.anio_ultima_actividad >= @q_au_d'); }
+      if (req.query.anio_ultima_hasta) { r.input('q_au_h', sql.Int, Number(req.query.anio_ultima_hasta)); w.push('f.anio_ultima_actividad <= @q_au_h'); }
+      if (req.query.tipo_registro) { r.input('q_tr', sql.NVarChar, String(req.query.tipo_registro)); w.push('f.tipo_registro_inferido = @q_tr'); }
+      if (req.query.cultivo) {
+        r.input('q_cultivo', sql.NVarChar, `%${String(req.query.cultivo).trim()}%`);
+        w.push(`EXISTS (SELECT 1 FROM dbo.icb_fact_plaguicida_uso u WHERE u.plaguicida_id = f.plaguicida_id AND u.cultivo_nombre_comun LIKE @q_cultivo)`);
+      }
+      if (req.query.plaga) {
+        r.input('q_plaga', sql.NVarChar, `%${String(req.query.plaga).trim()}%`);
+        w.push(`EXISTS (SELECT 1 FROM dbo.icb_fact_plaguicida_uso u2 WHERE u2.plaguicida_id = f.plaguicida_id AND (u2.plaga_nombre_comun LIKE @q_plaga OR u2.plaga_nombre_cient LIKE @q_plaga))`);
+      }
+      return { r, whereSql: w.join(' AND ') };
+    }
+    const ctx1 = buildReq();
+    const ctx2 = buildReq();
+    const ctx3 = buildReq();
+    const ctx4 = buildReq();
+    const ctx5 = buildReq();
+    const ctx6 = buildReq();
+    const ctx7 = buildReq();
+    const ctx8 = buildReq();
+    const ctx9 = buildReq();
+    const [tox, tipo, topCultivos, topPlagas, topIAs, pa, estados, aniosPrimer, aniosUltima] = await Promise.all([
+      ctx1.r.query(`
+        SELECT ISNULL(f.categoria_toxicologica, '(sin clasificar)') AS toxicidad, COUNT(*) AS productos
+        FROM dbo.icb_dim_plaguicida_ficha f WHERE ${ctx1.whereSql}
+        GROUP BY f.categoria_toxicologica ORDER BY productos DESC
       `),
-      pool.request().query(`
-        SELECT ISNULL(tipo_producto, '(sin tipo)') AS tipo, COUNT(*) AS productos
-        FROM dbo.icb_dim_plaguicida_ficha
-        GROUP BY tipo_producto ORDER BY productos DESC
+      ctx2.r.query(`
+        SELECT ISNULL(f.tipo_producto, '(sin tipo)') AS tipo, COUNT(*) AS productos
+        FROM dbo.icb_dim_plaguicida_ficha f WHERE ${ctx2.whereSql}
+        GROUP BY f.tipo_producto ORDER BY productos DESC
       `),
-      pool.request().query(`
-        SELECT TOP 10 cultivo_nombre_comun AS cultivo,
-               COUNT(DISTINCT plaguicida_id) AS productos,
+      ctx3.r.query(`
+        SELECT TOP 10 u.cultivo_nombre_comun AS cultivo,
+               COUNT(DISTINCT u.plaguicida_id) AS productos,
                COUNT(*) AS usos
-        FROM dbo.icb_fact_plaguicida_uso
-        WHERE cultivo_nombre_comun IS NOT NULL
-        GROUP BY cultivo_nombre_comun ORDER BY productos DESC
+        FROM dbo.icb_fact_plaguicida_uso u
+        JOIN dbo.icb_dim_plaguicida_ficha f ON f.plaguicida_id = u.plaguicida_id
+        WHERE u.cultivo_nombre_comun IS NOT NULL AND ${ctx3.whereSql}
+        GROUP BY u.cultivo_nombre_comun ORDER BY productos DESC
       `),
-      pool.request().query(`
-        SELECT TOP 10 plaga_nombre_comun AS plaga,
-               COUNT(DISTINCT plaguicida_id) AS productos,
-               COUNT(DISTINCT cultivo_nombre_comun) AS cultivos
-        FROM dbo.icb_fact_plaguicida_uso
-        WHERE plaga_nombre_comun IS NOT NULL
-        GROUP BY plaga_nombre_comun ORDER BY productos DESC
+      ctx4.r.query(`
+        SELECT TOP 10 u.plaga_nombre_comun AS plaga,
+               COUNT(DISTINCT u.plaguicida_id) AS productos,
+               COUNT(DISTINCT u.cultivo_nombre_comun) AS cultivos
+        FROM dbo.icb_fact_plaguicida_uso u
+        JOIN dbo.icb_dim_plaguicida_ficha f ON f.plaguicida_id = u.plaguicida_id
+        WHERE u.plaga_nombre_comun IS NOT NULL AND ${ctx4.whereSql}
+        GROUP BY u.plaga_nombre_comun ORDER BY productos DESC
       `),
-      pool.request().query(`
-        SELECT TOP 10 ingrediente_activo AS ia, COUNT(*) AS productos
-        FROM dbo.icb_dim_plaguicida_ficha
-        WHERE ingrediente_activo IS NOT NULL
-        GROUP BY ingrediente_activo ORDER BY productos DESC
+      ctx5.r.query(`
+        SELECT TOP 10 f.ingrediente_activo AS ia, COUNT(*) AS productos
+        FROM dbo.icb_dim_plaguicida_ficha f
+        WHERE f.ingrediente_activo IS NOT NULL AND ${ctx5.whereSql}
+        GROUP BY f.ingrediente_activo ORDER BY productos DESC
       `),
-      pool.request().query(`
-        SELECT COUNT(*) AS productos FROM dbo.icb_dim_plaguicida_ficha
-        WHERE titular_registro LIKE 'POINT ANDINA%'
+      ctx6.r.query(`
+        SELECT COUNT(*) AS productos FROM dbo.icb_dim_plaguicida_ficha f
+        WHERE f.titular_registro LIKE 'POINT ANDINA%' AND ${ctx6.whereSql}
       `),
-      pool.request().query(`
-        SELECT ISNULL(estado_registro, '(sin estado)') AS estado, COUNT(*) AS productos
-        FROM dbo.icb_dim_plaguicida_ficha
-        GROUP BY estado_registro ORDER BY productos DESC
+      ctx7.r.query(`
+        SELECT ISNULL(f.estado_registro, '(sin estado)') AS estado, COUNT(*) AS productos
+        FROM dbo.icb_dim_plaguicida_ficha f WHERE ${ctx7.whereSql}
+        GROUP BY f.estado_registro ORDER BY productos DESC
+      `),
+      ctx8.r.query(`
+        SELECT f.anio_primer_registro AS anio, COUNT(*) AS productos
+        FROM dbo.icb_dim_plaguicida_ficha f
+        WHERE f.anio_primer_registro IS NOT NULL AND ${ctx8.whereSql}
+        GROUP BY f.anio_primer_registro ORDER BY f.anio_primer_registro
+      `),
+      ctx9.r.query(`
+        SELECT f.anio_ultima_actividad AS anio, COUNT(*) AS productos
+        FROM dbo.icb_dim_plaguicida_ficha f
+        WHERE f.anio_ultima_actividad IS NOT NULL AND ${ctx9.whereSql}
+        GROUP BY f.anio_ultima_actividad ORDER BY f.anio_ultima_actividad DESC
       `),
     ]);
     res.json({
@@ -646,6 +700,8 @@ router.get('/plaguicidas/stats', canRead, async (_req: Request, res: Response) =
         top_ingredientes: topIAs.recordset,
         point_andina_count: pa.recordset[0]?.productos || 0,
         estados: estados.recordset,
+        por_anio_primer: aniosPrimer.recordset,
+        por_anio_ultima: aniosUltima.recordset,
       },
     });
   } catch (err: any) {
@@ -655,23 +711,45 @@ router.get('/plaguicidas/stats', canRead, async (_req: Request, res: Response) =
 });
 
 // GET /api/inteligencia/plaguicidas/by-empresa  — agregado por titular (empresa)
-router.get('/plaguicidas/by-empresa', canRead, async (_req: Request, res: Response) => {
+router.get('/plaguicidas/by-empresa', canRead, async (req: Request, res: Response) => {
   try {
+    const sqlMod = await import('mssql');
+    const sql: any = (sqlMod as any).default || sqlMod;
     const pool = await getDbPool();
-    const r = await pool.request().query(`
+    const r = pool.request();
+    const w: string[] = ['1=1'];
+    if (req.query.clase) { r.input('q_clase', sql.NVarChar, String(req.query.clase)); w.push('f.clase = @q_clase'); }
+    if (req.query.toxicidad) { r.input('q_tox', sql.NVarChar, String(req.query.toxicidad)); w.push('f.categoria_toxicologica = @q_tox'); }
+    if (req.query.tipo_producto) { r.input('q_tipo', sql.NVarChar, String(req.query.tipo_producto)); w.push('f.tipo_producto = @q_tipo'); }
+    if (req.query.estado_registro) { r.input('q_est', sql.NVarChar, String(req.query.estado_registro)); w.push('f.estado_registro = @q_est'); }
+    if (req.query.anio_primer_desde) { r.input('q_ap_d', sql.Int, Number(req.query.anio_primer_desde)); w.push('f.anio_primer_registro >= @q_ap_d'); }
+    if (req.query.anio_primer_hasta) { r.input('q_ap_h', sql.Int, Number(req.query.anio_primer_hasta)); w.push('f.anio_primer_registro <= @q_ap_h'); }
+    if (req.query.anio_ultima_desde) { r.input('q_au_d', sql.Int, Number(req.query.anio_ultima_desde)); w.push('f.anio_ultima_actividad >= @q_au_d'); }
+    if (req.query.anio_ultima_hasta) { r.input('q_au_h', sql.Int, Number(req.query.anio_ultima_hasta)); w.push('f.anio_ultima_actividad <= @q_au_h'); }
+    if (req.query.tipo_registro) { r.input('q_tr', sql.NVarChar, String(req.query.tipo_registro)); w.push('f.tipo_registro_inferido = @q_tr'); }
+    if (req.query.cultivo) {
+      r.input('q_cultivo', sql.NVarChar, `%${String(req.query.cultivo).trim()}%`);
+      w.push(`EXISTS (SELECT 1 FROM dbo.icb_fact_plaguicida_uso u WHERE u.plaguicida_id = f.plaguicida_id AND u.cultivo_nombre_comun LIKE @q_cultivo)`);
+    }
+    if (req.query.plaga) {
+      r.input('q_plaga', sql.NVarChar, `%${String(req.query.plaga).trim()}%`);
+      w.push(`EXISTS (SELECT 1 FROM dbo.icb_fact_plaguicida_uso u2 WHERE u2.plaguicida_id = f.plaguicida_id AND (u2.plaga_nombre_comun LIKE @q_plaga OR u2.plaga_nombre_cient LIKE @q_plaga))`);
+    }
+    const result = await r.query(`
       SELECT
-        ISNULL(titular_registro, '(Sin titular)') AS empresa,
+        ISNULL(f.titular_registro, '(Sin titular)') AS empresa,
         COUNT(*) AS productos,
-        COUNT(DISTINCT clase) AS clases_distintas,
-        COUNT(DISTINCT ingrediente_activo) AS ingredientes_activos,
-        SUM(CASE WHEN clase = 'Fungicida' THEN 1 ELSE 0 END) AS fungicidas,
-        SUM(CASE WHEN clase = 'Insecticida' THEN 1 ELSE 0 END) AS insecticidas,
-        SUM(CASE WHEN clase = 'Herbicida' THEN 1 ELSE 0 END) AS herbicidas
-      FROM dbo.icb_dim_plaguicida_ficha
-      GROUP BY titular_registro
+        COUNT(DISTINCT f.clase) AS clases_distintas,
+        COUNT(DISTINCT f.ingrediente_activo) AS ingredientes_activos,
+        SUM(CASE WHEN f.clase = 'Fungicida' THEN 1 ELSE 0 END) AS fungicidas,
+        SUM(CASE WHEN f.clase = 'Insecticida' THEN 1 ELSE 0 END) AS insecticidas,
+        SUM(CASE WHEN f.clase = 'Herbicida' THEN 1 ELSE 0 END) AS herbicidas
+      FROM dbo.icb_dim_plaguicida_ficha f
+      WHERE ${w.join(' AND ')}
+      GROUP BY f.titular_registro
       ORDER BY productos DESC
     `);
-    res.json({ success: true, data: r.recordset });
+    res.json({ success: true, data: result.recordset });
   } catch (err: any) {
     console.error('[Inteligencia] by-empresa error:', err);
     res.status(500).json({ success: false, message: err?.message || 'Error' });
@@ -700,6 +778,12 @@ router.get('/plaguicidas', canRead, async (req: Request, res: Response) => {
     if (req.query.tipo_producto) { r.input('q_tipo', sql.NVarChar, String(req.query.tipo_producto)); where.push('f.tipo_producto = @q_tipo'); }
     if (req.query.estado_registro) { r.input('q_est', sql.NVarChar, String(req.query.estado_registro)); where.push('f.estado_registro = @q_est'); }
     if (req.query.categoria_pa_id) { r.input('q_cat', sql.Int, Number(req.query.categoria_pa_id)); where.push('f.categoria_pa_id = @q_cat'); }
+    // Filtros por año (de primera etiqueta = registro original, o de última = actividad reciente)
+    if (req.query.anio_primer_desde) { r.input('q_ap_d', sql.Int, Number(req.query.anio_primer_desde)); where.push('f.anio_primer_registro >= @q_ap_d'); }
+    if (req.query.anio_primer_hasta) { r.input('q_ap_h', sql.Int, Number(req.query.anio_primer_hasta)); where.push('f.anio_primer_registro <= @q_ap_h'); }
+    if (req.query.anio_ultima_desde) { r.input('q_au_d', sql.Int, Number(req.query.anio_ultima_desde)); where.push('f.anio_ultima_actividad >= @q_au_d'); }
+    if (req.query.anio_ultima_hasta) { r.input('q_au_h', sql.Int, Number(req.query.anio_ultima_hasta)); where.push('f.anio_ultima_actividad <= @q_au_h'); }
+    if (req.query.tipo_registro) { r.input('q_tr', sql.NVarChar, String(req.query.tipo_registro)); where.push('f.tipo_registro_inferido = @q_tr'); }
 
     if (req.query.cultivo) {
       r.input('q_cultivo', sql.NVarChar, `%${String(req.query.cultivo).trim()}%`);
@@ -735,6 +819,9 @@ router.get('/plaguicidas', canRead, async (req: Request, res: Response) => {
         f.clase, f.categoria_toxicologica, f.tipo_producto,
         f.estado_registro, f.etiquetas_ids, f.secuencia_registro,
         f.estado_fisico, f.tipo_formulacion,
+        f.fecha_primera_etiqueta, f.fecha_ultima_etiqueta,
+        f.anio_primer_registro, f.anio_ultima_actividad,
+        f.cantidad_etiquetas, f.tipo_registro_inferido,
         c.category_code AS categoria_pa_code, c.category_name AS categoria_pa_name,
         STUFF((
           SELECT ', ' + cn FROM (

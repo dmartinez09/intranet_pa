@@ -25,6 +25,12 @@ interface FichaRow {
   estado_registro: string | null;
   etiquetas_ids: string | null;
   secuencia_registro: number | null;
+  fecha_primera_etiqueta: string | null;
+  fecha_ultima_etiqueta: string | null;
+  anio_primer_registro: number | null;
+  anio_ultima_actividad: number | null;
+  cantidad_etiquetas: number | null;
+  tipo_registro_inferido: string | null;
 }
 
 interface UsoRow {
@@ -72,6 +78,8 @@ interface Stats {
   top_ingredientes: { ia: string; productos: number }[];
   point_andina_count: number;
   estados?: { estado: string; productos: number }[];
+  por_anio_primer?: { anio: number; productos: number }[];
+  por_anio_ultima?: { anio: number; productos: number }[];
 }
 
 const PA_HIGHLIGHT = 'POINT ANDINA';
@@ -103,6 +111,9 @@ export default function FichasTecnicas() {
     nombre_comercial: '', titular: '', ingrediente_activo: '',
     clase: '', toxicidad: '', cultivo: '', plaga: '', tipo_producto: '',
     estado_registro: '',
+    anio_primer_desde: '', anio_primer_hasta: '',
+    anio_ultima_desde: '', anio_ultima_hasta: '',
+    tipo_registro: '',
   });
   const [sortMode, setSortMode] = useState<'alfabetico' | 'recientes' | 'antiguos'>('alfabetico');
   const [detail, setDetail] = useState<{ ficha: any; usos: UsoRow[]; etiquetas?: EtiquetaRow[] } | null>(null);
@@ -136,14 +147,23 @@ export default function FichasTecnicas() {
   }, [sortMode]);
 
   function applyFilters() {
-    const params: any = { ...q };
+    applyFiltersWith(q);
+  }
+
+  // Aplica filtros con un snapshot específico de q (útil para auto-apply en onChange)
+  function applyFiltersWith(qSnap: typeof q) {
+    const params: any = { ...qSnap };
     if (activeEmpresa) params.titular = activeEmpresa;
     Object.keys(params).forEach(k => { if (!params[k]) delete params[k]; });
     refresh(params);
+    // Stats y empresas también respetan los filtros para que los gráficos cascadeen
+    inteligenciaApi.getPlaguicidasStats(params).then(r => setStats(r.data.data)).catch(() => {});
+    inteligenciaApi.getPlaguicidasByEmpresa(params).then(r => setEmpresas(r.data.data || [])).catch(() => {});
   }
 
   function clearFilters() {
-    setQ({ nombre_comercial: '', titular: '', ingrediente_activo: '', clase: '', toxicidad: '', cultivo: '', plaga: '', tipo_producto: '', estado_registro: '' });
+    setQ({ nombre_comercial: '', titular: '', ingrediente_activo: '', clase: '', toxicidad: '', cultivo: '', plaga: '', tipo_producto: '', estado_registro: '',
+      anio_primer_desde: '', anio_primer_hasta: '', anio_ultima_desde: '', anio_ultima_hasta: '', tipo_registro: '' });
     setActiveEmpresa('');
     refresh({});
   }
@@ -286,6 +306,7 @@ export default function FichasTecnicas() {
                 <Select label="Toxicidad OMS" value={q.toxicidad} onChange={v => setQ({ ...q, toxicidad: v })} options={filters?.toxicidades || []} />
                 <Select label="Tipo producto" value={q.tipo_producto} onChange={v => setQ({ ...q, tipo_producto: v })} options={filters?.tipos_producto || []} />
                 <Select label="Estado registro" value={q.estado_registro} onChange={v => setQ({ ...q, estado_registro: v })} options={filters?.estados_registro || []} />
+                <Select label="Tipo registro" value={q.tipo_registro} onChange={v => setQ({ ...q, tipo_registro: v })} options={['NUEVO', 'CON EXTENSIONES']} />
                 <Select label="Titular" value={q.titular} onChange={v => setQ({ ...q, titular: v })} options={filters?.titulares || []} />
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Ordenar por</label>
@@ -304,6 +325,40 @@ export default function FichasTecnicas() {
                   <button onClick={clearFilters} className="btn-secondary py-1.5 text-sm">Limpiar</button>
                 </div>
               </div>
+
+              {/* Filtros temporales — usando fechas reales de etiquetas SENASA */}
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">📅 Filtros temporales (basado en etiquetas oficiales SENASA)</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <SelectAnio
+                    label="Año primer registro desde"
+                    value={q.anio_primer_desde}
+                    onChange={v => { const next = { ...q, anio_primer_desde: v }; setQ(next); applyFiltersWith(next); }}
+                    options={(stats?.por_anio_primer || []).map(x => x.anio).filter(Boolean) as number[]}
+                  />
+                  <SelectAnio
+                    label="Año primer registro hasta"
+                    value={q.anio_primer_hasta}
+                    onChange={v => { const next = { ...q, anio_primer_hasta: v }; setQ(next); applyFiltersWith(next); }}
+                    options={(stats?.por_anio_primer || []).map(x => x.anio).filter(Boolean) as number[]}
+                  />
+                  <SelectAnio
+                    label="Año última actividad desde"
+                    value={q.anio_ultima_desde}
+                    onChange={v => { const next = { ...q, anio_ultima_desde: v }; setQ(next); applyFiltersWith(next); }}
+                    options={(stats?.por_anio_ultima || []).map(x => x.anio).filter(Boolean) as number[]}
+                  />
+                  <SelectAnio
+                    label="Año última actividad hasta"
+                    value={q.anio_ultima_hasta}
+                    onChange={v => { const next = { ...q, anio_ultima_hasta: v }; setQ(next); applyFiltersWith(next); }}
+                    options={(stats?.por_anio_ultima || []).map(x => x.anio).filter(Boolean) as number[]}
+                  />
+                </div>
+              </div>
+
               <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
                 <span>
                   Plaguicidas encontrados: <span className="font-bold text-gray-800">{total.toLocaleString('es-PE')}</span>
@@ -321,6 +376,7 @@ export default function FichasTecnicas() {
                     <tr>
                       <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">N° Registro</th>
                       <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tipo Registro</th>
                       <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nombre Comercial</th>
                       <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ingrediente Activo</th>
                       <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Clase</th>
@@ -354,6 +410,20 @@ export default function FichasTecnicas() {
                               'bg-gray-100 text-gray-700'
                             }`}>
                               {r.estado_registro}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {r.tipo_registro_inferido && (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${
+                              r.tipo_registro_inferido === 'NUEVO' ? 'bg-cyan-100 text-cyan-700' :
+                              r.tipo_registro_inferido === 'CON EXTENSIONES' ? 'bg-violet-100 text-violet-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`} title={r.cantidad_etiquetas ? `${r.cantidad_etiquetas} etiquetas / resoluciones SENASA` : undefined}>
+                              {r.tipo_registro_inferido}
+                              {r.cantidad_etiquetas && r.cantidad_etiquetas > 1 && (
+                                <span className="text-[10px] opacity-75">({r.cantidad_etiquetas - 1} ext.)</span>
+                              )}
                             </span>
                           )}
                         </td>
@@ -451,6 +521,12 @@ export default function FichasTecnicas() {
                     <Field label="Toxicidad OMS" value={detail.ficha.categoria_toxicologica} highlight={!!detail.ficha.categoria_toxicologica} />
                     <Field label="Categoría PA" value={detail.ficha.categoria_pa_name} />
                     <Field label="Estado del registro" value={detail.ficha.estado_registro} highlight={detail.ficha.estado_registro === 'Vigente'} />
+                    <Field label="Tipo de registro" value={detail.ficha.tipo_registro_inferido ? `${detail.ficha.tipo_registro_inferido}${detail.ficha.cantidad_etiquetas > 1 ? ` (${detail.ficha.cantidad_etiquetas - 1} extensiones)` : ''}` : null} highlight={detail.ficha.tipo_registro_inferido === 'NUEVO'} />
+                    <Field label="Cantidad de etiquetas/resoluciones" value={detail.ficha.cantidad_etiquetas} mono />
+                    <Field label="Año primer registro" value={detail.ficha.anio_primer_registro} mono />
+                    <Field label="Año última actividad" value={detail.ficha.anio_ultima_actividad} mono />
+                    <Field label="Fecha primera etiqueta" value={detail.ficha.fecha_primera_etiqueta ? new Date(detail.ficha.fecha_primera_etiqueta).toLocaleDateString('es-PE') : null} />
+                    <Field label="Fecha última etiqueta" value={detail.ficha.fecha_ultima_etiqueta ? new Date(detail.ficha.fecha_ultima_etiqueta).toLocaleDateString('es-PE') : null} />
                     <Field label="Secuencia (antigüedad)" value={detail.ficha.secuencia_registro} mono />
                     <Field label="Estado físico" value={detail.ficha.estado_fisico} />
                     <Field label="Tipo formulación" value={detail.ficha.tipo_formulacion} />
@@ -612,6 +688,19 @@ function Select({ label, value, onChange, options }: { label: string; value: str
       <select value={value} onChange={e => onChange(e.target.value)} className="input-field text-sm py-1.5 w-full">
         <option value="">Todos</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function SelectAnio({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: number[] }) {
+  const ordered = [...new Set(options)].sort((a, b) => b - a); // años descendentes
+  return (
+    <div>
+      <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">{label}</label>
+      <select value={value} onChange={e => onChange(e.target.value)} className="input-field text-sm py-1.5 w-full">
+        <option value="">Todos los años</option>
+        {ordered.map(a => <option key={a} value={String(a)}>{a}</option>)}
       </select>
     </div>
   );
