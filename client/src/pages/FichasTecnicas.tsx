@@ -22,6 +22,9 @@ interface FichaRow {
   categoria_pa_name: string | null;
   cultivos_resumen: string | null;
   usos_count: number;
+  estado_registro: string | null;
+  etiquetas_ids: string | null;
+  secuencia_registro: number | null;
 }
 
 interface UsoRow {
@@ -37,6 +40,18 @@ interface UsoRow {
   limite_max_residuo: number | null;
   periodo_carencia_dias: number | null;
   observacion: string | null;
+}
+
+interface EtiquetaRow {
+  etiqueta_id: number;
+  numeregiarc: string;
+  filename: string | null;
+  descripcion: string | null;
+  fecha_registro: string | null;
+  tamano_bytes: number | null;
+  extension: string | null;
+  presentacion: string | null;
+  download_url: string | null;
 }
 
 interface EmpresaRow {
@@ -56,6 +71,7 @@ interface Stats {
   top_plagas: { plaga: string; productos: number; cultivos: number }[];
   top_ingredientes: { ia: string; productos: number }[];
   point_andina_count: number;
+  estados?: { estado: string; productos: number }[];
 }
 
 const PA_HIGHLIGHT = 'POINT ANDINA';
@@ -86,8 +102,10 @@ export default function FichasTecnicas() {
   const [q, setQ] = useState({
     nombre_comercial: '', titular: '', ingrediente_activo: '',
     clase: '', toxicidad: '', cultivo: '', plaga: '', tipo_producto: '',
+    estado_registro: '',
   });
-  const [detail, setDetail] = useState<{ ficha: any; usos: UsoRow[] } | null>(null);
+  const [sortMode, setSortMode] = useState<'alfabetico' | 'recientes' | 'antiguos'>('alfabetico');
+  const [detail, setDetail] = useState<{ ficha: any; usos: UsoRow[]; etiquetas?: EtiquetaRow[] } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
   // Carga inicial
@@ -100,11 +118,22 @@ export default function FichasTecnicas() {
 
   function refresh(params: any) {
     setLoading(true);
-    inteligenciaApi.getPlaguicidas({ limit: 1000, ...params })
+    inteligenciaApi.getPlaguicidas({ limit: 1000, sort: sortMode, ...params })
       .then(r => { setRows(r.data.data.rows || []); setTotal(r.data.data.total || 0); })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }
+
+  // Re-fetch al cambiar sortMode
+  useEffect(() => {
+    if (rows.length > 0 || activeEmpresa) {
+      const params: any = { ...q };
+      if (activeEmpresa) params.titular = activeEmpresa;
+      Object.keys(params).forEach(k => { if (!params[k]) delete params[k]; });
+      refresh(params);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortMode]);
 
   function applyFilters() {
     const params: any = { ...q };
@@ -114,7 +143,7 @@ export default function FichasTecnicas() {
   }
 
   function clearFilters() {
-    setQ({ nombre_comercial: '', titular: '', ingrediente_activo: '', clase: '', toxicidad: '', cultivo: '', plaga: '', tipo_producto: '' });
+    setQ({ nombre_comercial: '', titular: '', ingrediente_activo: '', clase: '', toxicidad: '', cultivo: '', plaga: '', tipo_producto: '', estado_registro: '' });
     setActiveEmpresa('');
     refresh({});
   }
@@ -129,7 +158,7 @@ export default function FichasTecnicas() {
 
   async function openDetail(plaguicidaId: number) {
     setDetailLoading(true);
-    setDetail({ ficha: null, usos: [] });
+    setDetail({ ficha: null, usos: [], etiquetas: [] });
     try {
       const r = await inteligenciaApi.getPlaguicidaDetail(plaguicidaId);
       setDetail(r.data.data);
@@ -256,7 +285,20 @@ export default function FichasTecnicas() {
                 <Select label="Clase" value={q.clase} onChange={v => setQ({ ...q, clase: v })} options={filters?.clases || []} />
                 <Select label="Toxicidad OMS" value={q.toxicidad} onChange={v => setQ({ ...q, toxicidad: v })} options={filters?.toxicidades || []} />
                 <Select label="Tipo producto" value={q.tipo_producto} onChange={v => setQ({ ...q, tipo_producto: v })} options={filters?.tipos_producto || []} />
+                <Select label="Estado registro" value={q.estado_registro} onChange={v => setQ({ ...q, estado_registro: v })} options={filters?.estados_registro || []} />
                 <Select label="Titular" value={q.titular} onChange={v => setQ({ ...q, titular: v })} options={filters?.titulares || []} />
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Ordenar por</label>
+                  <select
+                    value={sortMode}
+                    onChange={e => setSortMode(e.target.value as any)}
+                    className="input-field text-sm py-1.5 w-full"
+                  >
+                    <option value="alfabetico">Alfabético (titular + nombre)</option>
+                    <option value="recientes">Más recientes primero</option>
+                    <option value="antiguos">Más antiguos primero</option>
+                  </select>
+                </div>
                 <div className="flex items-end gap-2">
                   <button onClick={applyFilters} className="btn-primary flex-1 py-1.5 text-sm">Aplicar</button>
                   <button onClick={clearFilters} className="btn-secondary py-1.5 text-sm">Limpiar</button>
@@ -278,6 +320,7 @@ export default function FichasTecnicas() {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">N° Registro</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
                       <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nombre Comercial</th>
                       <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ingrediente Activo</th>
                       <th className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Clase</th>
@@ -301,6 +344,18 @@ export default function FichasTecnicas() {
                         <td className="px-3 py-2.5 font-mono text-xs text-gray-600 whitespace-nowrap">
                           {isPA && <Award className="w-3 h-3 text-amber-500 inline mr-1" />}
                           {r.numero_registro}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {r.estado_registro && (
+                            <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
+                              r.estado_registro === 'Vigente' ? 'bg-emerald-100 text-emerald-700' :
+                              r.estado_registro === 'Prohibido' ? 'bg-red-100 text-red-700' :
+                              r.estado_registro === 'Cancelado' ? 'bg-orange-100 text-orange-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {r.estado_registro}
+                            </span>
+                          )}
                         </td>
                         <td className={`px-3 py-2.5 font-semibold ${isPA ? 'text-amber-800' : 'text-gray-800'}`}>{r.nombre_comercial}</td>
                         <td className="px-3 py-2.5 text-xs text-gray-600 max-w-[200px] truncate" title={r.ingrediente_activo || ''}>
@@ -395,8 +450,11 @@ export default function FichasTecnicas() {
                     <Field label="Principios Activos" value={detail.ficha.principios_activos} />
                     <Field label="Toxicidad OMS" value={detail.ficha.categoria_toxicologica} highlight={!!detail.ficha.categoria_toxicologica} />
                     <Field label="Categoría PA" value={detail.ficha.categoria_pa_name} />
+                    <Field label="Estado del registro" value={detail.ficha.estado_registro} highlight={detail.ficha.estado_registro === 'Vigente'} />
+                    <Field label="Secuencia (antigüedad)" value={detail.ficha.secuencia_registro} mono />
                     <Field label="Estado físico" value={detail.ficha.estado_fisico} />
                     <Field label="Tipo formulación" value={detail.ficha.tipo_formulacion} />
+                    <Field label="IDs de etiquetas (PDFs SENASA)" value={detail.ficha.etiquetas_ids} mono />
                     <Field label="Resolución directoral" value={detail.ficha.resolucion_directoral} mono />
                     <Field label="Empresa ID SAP/SENASA" value={detail.ficha.empresa_id} mono />
                     <Field label="Producto ID SIGIA" value={detail.ficha.producto_id} mono />
@@ -447,6 +505,50 @@ export default function FichasTecnicas() {
                       </table>
                     </div>
                   </div>
+                  {/* Etiquetas oficiales SENASA */}
+                  {detail.etiquetas && detail.etiquetas.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2 mt-4">
+                        <FileText className="w-4 h-4 text-amber-500" /> Etiquetas oficiales SENASA ({detail.etiquetas.length})
+                      </h3>
+                      <div className="overflow-x-auto rounded-xl border border-gray-100">
+                        <table className="min-w-full text-xs">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-3 py-2 text-left font-semibold text-gray-600">Presentación / Envase</th>
+                              <th className="px-3 py-2 text-left font-semibold text-gray-600">Fecha registro</th>
+                              <th className="px-3 py-2 text-right font-semibold text-gray-600">Tamaño</th>
+                              <th className="px-3 py-2 text-center font-semibold text-gray-600">Archivo</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {detail.etiquetas.map(e => (
+                              <tr key={e.etiqueta_id} className="hover:bg-gray-50">
+                                <td className="px-3 py-2">
+                                  <div className="font-semibold text-gray-800">{e.presentacion || e.filename || '—'}</div>
+                                  {e.descripcion && e.descripcion !== e.filename && <div className="text-gray-400 italic">{e.descripcion}</div>}
+                                </td>
+                                <td className="px-3 py-2 text-gray-700">
+                                  {e.fecha_registro ? new Date(e.fecha_registro).toLocaleDateString('es-PE') : '—'}
+                                </td>
+                                <td className="px-3 py-2 text-right text-gray-600 font-mono">
+                                  {e.tamano_bytes ? `${(e.tamano_bytes / 1024).toFixed(0)} KB` : '—'}
+                                </td>
+                                <td className="px-3 py-2 text-center">
+                                  {e.download_url ? (
+                                    <a href={e.download_url} target="_blank" rel="noreferrer" className="text-brand-600 hover:text-brand-800 inline-flex items-center gap-1 font-semibold">
+                                      <ExternalLink className="w-3 h-3" /> Abrir PDF
+                                    </a>
+                                  ) : '—'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="text-xs text-gray-400 pt-2 border-t">
                     <a href="https://servicios.senasa.gob.pe/SIGIAWeb/sigia_consulta_cultivo.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-brand-600 hover:underline">
                       Ver en SENASA SIGIA <ExternalLink className="w-3 h-3" />
