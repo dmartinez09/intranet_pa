@@ -129,8 +129,11 @@ async function buildAndSendForLetra(
 
     // 2. Collect recipients from the comprobantes
     const toSet = new Set<string>();
+    const ccFromComprobantes = new Set<string>();
     for (const e of matching) {
       for (const addr of (e.to || [])) toSet.add(addr);
+      // Capturamos también el CC del comprobante original para preservarlo
+      for (const addr of (e.cc || [])) ccFromComprobantes.add(addr);
     }
     const to = [...toSet].filter(Boolean);
     if (!to.length) {
@@ -147,6 +150,18 @@ async function buildAndSendForLetra(
     const FIXED_CC = 'cobranzas@pointamericas.com';
     const ccList = (defaultCc || '').split(/[;,]/).map(s => s.trim()).filter(Boolean);
     if (!ccList.some(e => e.toLowerCase() === FIXED_CC.toLowerCase())) ccList.unshift(FIXED_CC);
+    // Sumamos los CC originales del comprobante (deduplicados, evitando
+    // duplicar destinatarios que ya están en To)
+    const toLower = new Set(to.map(a => a.toLowerCase()));
+    const ccLower = new Set(ccList.map(a => a.toLowerCase()));
+    for (const addr of ccFromComprobantes) {
+      const k = (addr || '').toLowerCase();
+      if (!k) continue;
+      if (toLower.has(k)) continue; // ya está en To
+      if (ccLower.has(k)) continue; // ya está en CC
+      ccList.push(addr);
+      ccLower.add(k);
+    }
     const cc = ccList;
 
     // 3. Download letra + attachments
