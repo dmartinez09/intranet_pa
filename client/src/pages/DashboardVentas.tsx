@@ -89,8 +89,10 @@ export default function DashboardVentas() {
 
   // Date filters — default to current month
   const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1; // 1-12
+  const currentYear = (new Date(now.getFullYear(), now.getMonth() - 1, 1)).getFullYear();
+  // Default = mes anterior cerrado (CEO/Finanzas revisa mes completo)
+  const _prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const currentMonth = _prev.getMonth() + 1; // 1-12
   const [year, setYear] = useState(currentYear);
   const [monthStart, setMonthStart] = useState(currentMonth);
   const [monthEnd, setMonthEnd] = useState(currentMonth);
@@ -707,6 +709,7 @@ export default function DashboardVentas() {
                         <th className="px-2 py-2 text-right font-semibold text-gray-600 whitespace-nowrap">Cantidad KG/LT</th>
                         <th className="px-2 py-2 text-right font-semibold text-gray-600 whitespace-nowrap">Unid. Presentación</th>
                         <th className="px-2 py-2 text-right font-semibold text-gray-600 whitespace-nowrap">Precio Venta USD</th>
+                        <th className="px-2 py-2 text-right font-semibold text-gray-600 whitespace-nowrap">Valor Venta USD</th>
                         <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Cond. Pago</th>
                         <th className="px-2 py-2 text-right font-semibold text-gray-600 whitespace-nowrap">Días Crédito</th>
                         <th className="px-2 py-2 text-left font-semibold text-gray-600 whitespace-nowrap">Grupo Cliente</th>
@@ -729,6 +732,7 @@ export default function DashboardVentas() {
                           <td className="px-2 py-1.5 text-right font-mono">{Number(r.cantidad_kg_lt).toLocaleString('es-PE', { maximumFractionDigits: 2 })}</td>
                           <td className="px-2 py-1.5 text-right font-mono">{Number(r.unidades_presentacion).toLocaleString('es-PE', { maximumFractionDigits: 2 })}</td>
                           <td className="px-2 py-1.5 text-right font-mono">{Number(r.precio_unitario_venta).toLocaleString('es-PE', { maximumFractionDigits: 2 })}</td>
+                          <td className="px-2 py-1.5 text-right font-mono font-semibold">{Number(r.valor_venta_dolares).toLocaleString('es-PE', { maximumFractionDigits: 2 })}</td>
                           <td className="px-2 py-1.5 whitespace-nowrap">{r.condicion_pago}</td>
                           <td className="px-2 py-1.5 text-right">{r.dias_credito}</td>
                           <td className="px-2 py-1.5 whitespace-nowrap">{r.grupo_cliente}</td>
