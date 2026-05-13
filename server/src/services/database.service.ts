@@ -312,7 +312,8 @@ export const dbService = {
     }
     if (filtros.grupo_cliente) {
       const vals = (filtros.grupo_cliente as string).split(',').map((v: string) => v.trim());
-      where.push(`Grupo_Cliente IN (${vals.map((_: string, i: number) => `@gc${i}`).join(',')})`);
+      // Usa el grupo del Maestro de Vendedores si existe, sino cae al Grupo_Cliente original (SAP)
+      where.push(`COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = Codigo_Vendedor AND mv.activo=1), Grupo_Cliente) IN (${vals.map((_: string, i: number) => `@gc${i}`).join(',')})`);
       vals.forEach((v: string, i: number) => request.input(`gc${i}`, sql.NVarChar, v));
     }
     if (filtros.producto_formulado) {
@@ -368,7 +369,7 @@ export const dbService = {
         Condicion_Pago                   AS condicion_pago,
         Dias_Credito                     AS dias_credito,
         Usuario_Creador                  AS usuario_creador,
-        Grupo_Cliente                    AS grupo_cliente,
+        COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = Codigo_Vendedor AND mv.activo=1), Grupo_Cliente) AS grupo_cliente,
         Maestro_Tipo                     AS maestro_tipo,
         Tipo_de_Cliente                AS tipo_de_cliente,
         Clasificacion_BCG                AS clasificacion_bcg,
@@ -787,7 +788,7 @@ export const dbService = {
       { key: 'tipo_documento', col: 'Tipo_Documento' },
       { key: 'division', col: 'Division' },
       { key: 'maestro_tipo', col: 'Maestro_Tipo' },
-      { key: 'grupo_cliente', col: 'Grupo_Cliente' },
+      { key: 'grupo_cliente', col: 'COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = Codigo_Vendedor AND mv.activo=1), Grupo_Cliente)' },
       { key: 'producto_formulado', col: 'Producto_Formulado' },
       { key: 'nombre_producto', col: 'Nombre_Producto' },
     ];
@@ -839,7 +840,7 @@ export const dbService = {
       distinctOf('Tipo_Documento', 'tipo_documento'),
       distinctOf('Division', 'division'),
       distinctOf('Maestro_Tipo', 'maestro_tipo'),
-      distinctOf('Grupo_Cliente', 'grupo_cliente'),
+      distinctOf('COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = Codigo_Vendedor AND mv.activo=1), Grupo_Cliente)', 'grupo_cliente'),
       distinctOf('Producto_Formulado', 'producto_formulado'),
       distinctOf('Nombre_Producto', 'nombre_producto'),
     ]);
@@ -1319,7 +1320,15 @@ export const dbService = {
       pool.request().query(`SELECT Vendedor, MIN(Codigo_Vendedor) AS Codigo_Vendedor, MIN(Zona) AS Zona FROM dbo.stg_rpt_ventas_detallado WHERE Vendedor IS NOT NULL AND Vendedor != '' GROUP BY Vendedor ORDER BY Vendedor`),
       pool.request().query(`SELECT DISTINCT Zona FROM dbo.stg_rpt_ventas_detallado WHERE Zona IS NOT NULL AND Zona != '' ORDER BY Zona`),
       pool.request().query(`SELECT DISTINCT Division AS div FROM dbo.stg_rpt_ventas_detallado WHERE Division IS NOT NULL AND Division != '' ORDER BY Division`),
-      pool.request().query(`SELECT DISTINCT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Grupo_Cliente IS NOT NULL AND Grupo_Cliente != '' ORDER BY Grupo_Cliente`),
+      // Grupos: union de maestro_vendedores (autoritario) + Grupo_Cliente SAP (fallback para vendedores sin maestro)
+      pool.request().query(`
+        SELECT grupo FROM (
+          SELECT grupo FROM dbo.intranet_maestro_vendedores WHERE activo=1
+          UNION
+          SELECT Grupo_Cliente FROM dbo.stg_rpt_ventas_detallado WHERE Grupo_Cliente IS NOT NULL AND Grupo_Cliente != ''
+        ) U
+        GROUP BY grupo ORDER BY grupo
+      `),
     ]);
     return {
       familias: familias.recordset.map((r: any) => r.Familia),
@@ -1329,7 +1338,7 @@ export const dbService = {
       zonas: zonas.recordset.map((r: any) => r.Zona),
       lineas_negocio: divisiones.recordset.map((r: any) => r.div),
       centros_costo: [],
-      grupos_cliente: gc.recordset.map((r: any) => r.Grupo_Cliente),
+      grupos_cliente: gc.recordset.map((r: any) => r.grupo),
     };
   },
 

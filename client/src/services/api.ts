@@ -208,6 +208,16 @@ export const configApi = {
 };
 
 // Uruguay Daily Sales Bot
+export const maestroVendedoresApi = {
+  list: () => api.get('/maestro-vendedores'),
+  grupos: () => api.get('/maestro-vendedores/grupos'),
+  create: (data: { codigo_vendedor: number; vendedor: string; serie_documento?: string; grupo: string; activo?: boolean }) =>
+    api.post('/maestro-vendedores', data),
+  update: (id: number, data: Partial<{ codigo_vendedor: number; vendedor: string; serie_documento: string; grupo: string; activo: boolean }>) =>
+    api.put(`/maestro-vendedores/${id}`, data),
+  remove: (id: number) => api.delete(`/maestro-vendedores/${id}`),
+};
+
 export const uruguayBotApi = {
   getConfig: () => api.get('/uruguay-bot/config'),
   saveConfig: (cfg: { enabled?: boolean; scheduleHour?: number; scheduleMinute?: number; sharepointUrl?: string }) =>

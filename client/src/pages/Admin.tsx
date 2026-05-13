@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import Header from '../components/layout/Header';
 import { usersApi, configApi } from '../services/api';
 import UruguayBotPanel from '../components/admin/UruguayBotPanel';
+import MaestroVendedoresPanel from '../components/admin/MaestroVendedoresPanel';
 import {
   Users,
   Plus,
@@ -26,6 +27,7 @@ import {
   MapPin,
   UserCheck,
   Sprout,
+  Users as UsersIcon,
 } from 'lucide-react';
 
 interface UserRow {
@@ -83,7 +85,7 @@ interface BudgetYear {
 
 export default function Admin() {
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [activeTab, setActiveTab] = useState<'users' | 'logo' | 'presupuestos' | 'uruguay'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'logo' | 'presupuestos' | 'uruguay' | 'maestro_vendedores'>('users');
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserRow | null>(null);
   const [form, setForm] = useState({ username: '', password: '', full_name: '', email: '', modules: [] as string[] });
@@ -374,11 +376,24 @@ export default function Admin() {
           >
             <FileSpreadsheet className="w-4 h-4" /> Venta Diaria Uruguay
           </button>
+          <button
+            onClick={() => setActiveTab('maestro_vendedores')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all
+              ${activeTab === 'maestro_vendedores' ? 'bg-white text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <UsersIcon className="w-4 h-4" /> Maestro Vendedores
+          </button>
         </div>
 
         {activeTab === 'uruguay' && (
           <div className="animate-fade-in">
             <UruguayBotPanel />
+          </div>
+        )}
+
+        {activeTab === 'maestro_vendedores' && (
+          <div className="animate-fade-in">
+            <MaestroVendedoresPanel />
           </div>
         )}
 

@@ -12,6 +12,7 @@ import budgetRoutes from './budget.routes';
 import inteligenciaRoutes from './inteligencia.routes';
 import uruguayBotRoutes from './uruguay-bot.routes';
 import letrasTrackingRoutes from './letras-tracking.routes';
+import maestroVendedoresRoutes from './maestro-vendedores.routes';
 
 const router = Router();
 
@@ -30,6 +31,7 @@ router.use('/facturacion', facturacionRoutes);
 router.use('/budget', budgetRoutes);
 router.use('/inteligencia', inteligenciaRoutes);
 router.use('/uruguay-bot', uruguayBotRoutes);
+router.use('/maestro-vendedores', maestroVendedoresRoutes);
 
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
