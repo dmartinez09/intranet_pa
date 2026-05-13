@@ -213,7 +213,11 @@ async function buildAndSendForLetra(
     const historyId: number | null = ins.recordset[0]?.id ?? null;
 
     // 6. Tracking pixels por destinatario
-    const baseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
+    // Azure App Service expone WEBSITE_HOSTNAME automáticamente (ej. app-pointandina-intranet.azurewebsites.net)
+    // así que el pixel funciona sin necesidad de configurar PUBLIC_BASE_URL manualmente.
+    const baseUrl = process.env.PUBLIC_BASE_URL
+      || (process.env.WEBSITE_HOSTNAME ? `https://${process.env.WEBSITE_HOSTNAME}` : null)
+      || `http://localhost:${process.env.PORT || 3001}`;
     const buildPixel = (recipient: string, role: 'to' | 'cc'): string => {
       if (!historyId) return '';
       const token = Buffer.from(JSON.stringify({ h: historyId, r: recipient, role })).toString('base64url');
