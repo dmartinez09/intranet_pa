@@ -121,10 +121,10 @@ export default function DashboardVentas() {
 
   useEffect(() => {
     if (initialized) {
-      // Only reload when grupo changes after initial load
-      loadData({ year, month_start: monthStart, month_end: monthEnd });
+      // Recarga cuando cambia grupo, año o rango de meses (manteniendo filtros activos)
+      loadData({ ...buildFilterParams(), year, month_start: monthStart, month_end: monthEnd });
     }
-  }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [grupoCliente, year, monthStart, monthEnd]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // CASCADING: cuando cambia alguna selección de filtro, recarga las opciones
   // del dropdown restringidas por las demás selecciones (debounce 300ms).
