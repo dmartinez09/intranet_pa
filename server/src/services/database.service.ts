@@ -313,7 +313,7 @@ export const dbService = {
     if (filtros.grupo_cliente) {
       const vals = (filtros.grupo_cliente as string).split(',').map((v: string) => v.trim());
       // Usa el grupo del Maestro de Vendedores si existe, sino cae al Grupo_Cliente original (SAP)
-      where.push(`COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = Codigo_Vendedor AND mv.activo=1), Grupo_Cliente) IN (${vals.map((_: string, i: number) => `@gc${i}`).join(',')})`);
+      where.push(`COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = dbo.stg_rpt_ventas_detallado.Codigo_Vendedor AND mv.activo=1), Grupo_Cliente) IN (${vals.map((_: string, i: number) => `@gc${i}`).join(',')})`);
       vals.forEach((v: string, i: number) => request.input(`gc${i}`, sql.NVarChar, v));
     }
     if (filtros.producto_formulado) {
@@ -369,7 +369,7 @@ export const dbService = {
         Condicion_Pago                   AS condicion_pago,
         Dias_Credito                     AS dias_credito,
         Usuario_Creador                  AS usuario_creador,
-        COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = Codigo_Vendedor AND mv.activo=1), Grupo_Cliente) AS grupo_cliente,
+        COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = dbo.stg_rpt_ventas_detallado.Codigo_Vendedor AND mv.activo=1), Grupo_Cliente) AS grupo_cliente,
         Maestro_Tipo                     AS maestro_tipo,
         Tipo_de_Cliente                AS tipo_de_cliente,
         Clasificacion_BCG                AS clasificacion_bcg,
@@ -788,7 +788,7 @@ export const dbService = {
       { key: 'tipo_documento', col: 'Tipo_Documento' },
       { key: 'division', col: 'Division' },
       { key: 'maestro_tipo', col: 'Maestro_Tipo' },
-      { key: 'grupo_cliente', col: 'COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = Codigo_Vendedor AND mv.activo=1), Grupo_Cliente)' },
+      { key: 'grupo_cliente', col: 'COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = dbo.stg_rpt_ventas_detallado.Codigo_Vendedor AND mv.activo=1), Grupo_Cliente)' },
       { key: 'producto_formulado', col: 'Producto_Formulado' },
       { key: 'nombre_producto', col: 'Nombre_Producto' },
     ];
@@ -840,7 +840,7 @@ export const dbService = {
       distinctOf('Tipo_Documento', 'tipo_documento'),
       distinctOf('Division', 'division'),
       distinctOf('Maestro_Tipo', 'maestro_tipo'),
-      distinctOf('COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = Codigo_Vendedor AND mv.activo=1), Grupo_Cliente)', 'grupo_cliente'),
+      distinctOf('COALESCE((SELECT TOP 1 mv.grupo FROM dbo.intranet_maestro_vendedores mv WHERE mv.codigo_vendedor = dbo.stg_rpt_ventas_detallado.Codigo_Vendedor AND mv.activo=1), Grupo_Cliente)', 'grupo_cliente'),
       distinctOf('Producto_Formulado', 'producto_formulado'),
       distinctOf('Nombre_Producto', 'nombre_producto'),
     ]);
