@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { carteraApi, ventasApi } from '../services/api';
+import { carteraApi, ventasApi, maestroVendedoresApi } from '../services/api';
 import MultiSelect from '../components/filters/MultiSelect';
 import DateRangeFilter from '../components/filters/DateRangeFilter';
 import {
@@ -38,6 +38,7 @@ interface BudgetEntry {
 export default function Presupuesto() {
   const [budget, setBudget] = useState<BudgetEntry[]>([]);
   const [ventasData, setVentasData] = useState<any[]>([]);
+  const [maestro, setMaestro] = useState<Array<{ codigo_vendedor: number; vendedor: string; grupo: string; activo: boolean }>>([]);
   const [loading, setLoading] = useState(true);
   const [opcionesFiltro, setOpcionesFiltro] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(true);
@@ -73,6 +74,14 @@ export default function Presupuesto() {
       ...(grupoCliente ? { grupo_cliente: grupoCliente } : {}),
     });
   }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-recargar al cambiar año o rango de meses
+  useEffect(() => {
+    loadData({
+      year, month_start: monthStart, month_end: monthEnd,
+      ...(grupoCliente ? { grupo_cliente: grupoCliente } : {}),
+    });
+  }, [year, monthStart, monthEnd]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   async function loadFiltros(grupo?: string) {
@@ -121,13 +130,15 @@ export default function Presupuesto() {
   async function loadData(params: any) {
     setLoading(true);
     try {
-      const [budgetRes, ventasRes, diariasRes] = await Promise.all([
+      const [budgetRes, ventasRes, diariasRes, maestroRes] = await Promise.all([
         fetch(`/api/budget/${params.year}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()),
         ventasApi.getPorVendedor(params),
         ventasApi.getDiarias(params),
+        maestroVendedoresApi.list().catch(() => ({ data: { data: [] } })),
       ]);
       setBudget(budgetRes.data?.entries || budgetRes.data || []);
       setVentasData(ventasRes.data.data || []);
+      setMaestro(maestroRes.data?.data || []);
       const diarias = diariasRes.data.data || [];
       const monthly: Record<number, number> = {};
       for (const d of diarias) {
@@ -143,19 +154,30 @@ export default function Presupuesto() {
     }
   }
 
-  // Aggregate budget by month
-  const budgetByMonth = useMemo(() => {
-    const map: Record<number, number> = {};
-    for (const e of budget) {
-      map[e.month] = (map[e.month] || 0) + e.monto_usd;
-    }
-    return map;
-  }, [budget]);
-
   // Monthly ventas — populated dentro de loadData()
   const [ventasMensuales, setVentasMensuales] = useState<Record<number, number>>({});
 
-  // Monthly comparison chart data
+  // Budget restricted to selected month range
+  const budgetInRange = useMemo(
+    () => budget.filter(e => e.month >= monthStart && e.month <= monthEnd),
+    [budget, monthStart, monthEnd]
+  );
+
+  // Map vendor name (UPPER) -> grupo from Maestro
+  const vendorToGrupo = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const v of maestro) if (v.activo) m[(v.vendedor || '').trim().toUpperCase()] = v.grupo;
+    return m;
+  }, [maestro]);
+
+  // Aggregate budget by month (always 12 for chart)
+  const budgetByMonth = useMemo(() => {
+    const map: Record<number, number> = {};
+    for (const e of budget) map[e.month] = (map[e.month] || 0) + e.monto_usd;
+    return map;
+  }, [budget]);
+
+  // Monthly comparison chart data (12 meses siempre)
   const monthlyComparison = useMemo(() => {
     const currentMonth = new Date().getMonth() + 1;
     return MONTHS_SHORT.map((name, i) => {
@@ -170,39 +192,61 @@ export default function Presupuesto() {
         venta: Math.round(venta),
         logro: Math.round(logro * 10) / 10,
         isFuture: m > currentMonth,
+        inRange: m >= monthStart && m <= monthEnd,
       };
     });
-  }, [budgetByMonth, ventasMensuales]);
+  }, [budgetByMonth, ventasMensuales, monthStart, monthEnd]);
 
-  // Budget by RC
-  const budgetByRC = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const e of budget) map[e.rc] = (map[e.rc] || 0) + e.monto_usd;
+  // Ranking POR GRUPO (no por RC individual) — respeta rango de meses
+  const budgetByGrupo = useMemo(() => {
+    const map: Record<string, { presupuesto: number; venta: number }> = {};
+    for (const e of budgetInRange) {
+      const name = (e.rc || '').trim().toUpperCase();
+      const g = vendorToGrupo[name] || 'SIN GRUPO';
+      if (!map[g]) map[g] = { presupuesto: 0, venta: 0 };
+      map[g].presupuesto += e.monto_usd;
+    }
+    // Venta agregada por grupo desde ventasData (ya filtrado por mes via buildParams)
+    for (const v of ventasData) {
+      const name = (v.vendedor || '').trim().toUpperCase();
+      const g = vendorToGrupo[name] || 'SIN GRUPO';
+      if (!map[g]) map[g] = { presupuesto: 0, venta: 0 };
+      map[g].venta += Number(v.total_venta_usd) || 0;
+    }
     return Object.entries(map)
-      .map(([rc, ppto]) => {
-        const ventaMatch = ventasData.find((v: any) =>
-          v.vendedor?.toUpperCase().includes(rc.split(' ')[0].toUpperCase())
-        );
-        const venta = ventaMatch?.total_venta_usd || 0;
-        return { rc, presupuesto: Math.round(ppto), venta: Math.round(venta), logro: ppto > 0 ? Math.round((venta / ppto) * 1000) / 10 : 0 };
-      })
+      .map(([grupo, d]) => ({
+        grupo,
+        presupuesto: Math.round(d.presupuesto),
+        venta: Math.round(d.venta),
+        logro: d.presupuesto > 0 ? Math.round((d.venta / d.presupuesto) * 1000) / 10 : 0,
+      }))
       .sort((a, b) => b.presupuesto - a.presupuesto);
-  }, [budget, ventasData]);
+  }, [budgetInRange, ventasData, vendorToGrupo]);
 
-  // Budget by zona
+  // Budget by zona (respeta rango)
   const budgetByZona = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const e of budget) map[e.zona] = (map[e.zona] || 0) + e.monto_usd;
+    for (const e of budgetInRange) map[e.zona] = (map[e.zona] || 0) + e.monto_usd;
     return Object.entries(map).map(([zona, total]) => ({ zona, total })).sort((a, b) => b.total - a.total);
-  }, [budget]);
+  }, [budgetInRange]);
 
-  // KPIs
-  const totalPpto = Object.values(budgetByMonth).reduce((s, v) => s + v, 0);
-  const totalVenta = Object.values(ventasMensuales).reduce((s, v) => s + v, 0);
+  // KPIs: respetan rango monthStart..monthEnd
+  const totalPpto = budgetInRange.reduce((s, e) => s + e.monto_usd, 0);
+  const totalVenta = (() => {
+    let sum = 0;
+    for (let m = monthStart; m <= monthEnd; m++) sum += ventasMensuales[m] || 0;
+    return sum;
+  })();
   const logroGeneral = totalPpto > 0 ? (totalVenta / totalPpto) * 100 : 0;
   const currentMonthPpto = budgetByMonth[new Date().getMonth() + 1] || 0;
   const currentMonthVenta = ventasMensuales[new Date().getMonth() + 1] || 0;
   const currentMonthLogro = currentMonthPpto > 0 ? (currentMonthVenta / currentMonthPpto) * 100 : 0;
+  const isFullYear = monthStart === 1 && monthEnd === 12;
+  const periodoLabel = isFullYear
+    ? `${year}`
+    : monthStart === monthEnd
+      ? `${MONTHS_SHORT[monthStart - 1]} ${year}`
+      : `${MONTHS_SHORT[monthStart - 1]} — ${MONTHS_SHORT[monthEnd - 1]} ${year}`;
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
@@ -360,7 +404,7 @@ export default function Presupuesto() {
             <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
               <Target className="w-5 h-5 text-brand-600" />
             </div>
-            <span className="text-xs text-gray-500 uppercase tracking-wide">Ppto Anual</span>
+            <span className="text-xs text-gray-500 uppercase tracking-wide">Ppto {isFullYear ? 'Anual' : 'del Período'}</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{formatUSD(totalPpto)}</p>
         </div>
@@ -369,7 +413,7 @@ export default function Presupuesto() {
             <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-emerald-600" />
             </div>
-            <span className="text-xs text-gray-500 uppercase tracking-wide">Venta Acumulada</span>
+            <span className="text-xs text-gray-500 uppercase tracking-wide">Venta {isFullYear ? 'Acumulada' : periodoLabel}</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{formatUSD(totalVenta)}</p>
         </div>
@@ -427,16 +471,16 @@ export default function Presupuesto() {
         </div>
       </div>
 
-      {/* RC Ranking table */}
+      {/* Ranking por Grupo */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-1">Ranking RC vs Presupuesto</h3>
-        <p className="text-xs text-gray-400 mb-4">Avance acumulado por representante comercial</p>
+        <h3 className="text-lg font-semibold text-gray-800 mb-1">Ranking por Grupo vs Presupuesto</h3>
+        <p className="text-xs text-gray-400 mb-4">Avance por equipo comercial — {periodoLabel} (según Maestro de Vendedores)</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 px-3 text-xs font-semibold text-gray-500 uppercase">#</th>
-                <th className="text-left py-3 px-3 text-xs font-semibold text-gray-500 uppercase">RC</th>
+                <th className="text-left py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Grupo</th>
                 <th className="text-right py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Presupuesto</th>
                 <th className="text-right py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Venta</th>
                 <th className="text-right py-3 px-3 text-xs font-semibold text-gray-500 uppercase">% Logro</th>
@@ -444,10 +488,10 @@ export default function Presupuesto() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {budgetByRC.map((row, i) => (
-                <tr key={row.rc} className="hover:bg-gray-50/50">
+              {budgetByGrupo.map((row, i) => (
+                <tr key={row.grupo} className="hover:bg-gray-50/50">
                   <td className="py-3 px-3 text-xs text-gray-400">{i + 1}</td>
-                  <td className="py-3 px-3 font-medium text-gray-800">{row.rc}</td>
+                  <td className="py-3 px-3 font-medium text-gray-800">{row.grupo}</td>
                   <td className="py-3 px-3 text-right font-mono text-xs">{formatUSD(row.presupuesto)}</td>
                   <td className="py-3 px-3 text-right font-mono text-xs">{formatUSD(row.venta)}</td>
                   <td className={`py-3 px-3 text-right font-semibold ${row.logro >= 80 ? 'text-green-600' : row.logro >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
@@ -463,6 +507,9 @@ export default function Presupuesto() {
                   </td>
                 </tr>
               ))}
+              {budgetByGrupo.length === 0 && (
+                <tr><td colSpan={6} className="text-center py-6 text-gray-400">Sin datos para el período seleccionado.</td></tr>
+              )}
             </tbody>
           </table>
         </div>

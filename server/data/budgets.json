@@ -2,3308 +2,2408 @@
   "budgets": {
     "2026": [
       {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
+        "zona": "AI Piura",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 1,
-        "monto_usd": 50000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 50000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 50000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 55000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 55000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 6,
         "monto_usd": 65000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 75000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 80000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 80000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 74946,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 55000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica II",
-        "rc": "JOOL ROGGER BARRÓN TINCO",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 55000,
-        "codigo_vendedor": 25,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 80000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 80000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 70000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 80000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 70000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 90000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 130000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 125000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 125000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 100000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 75000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Ica I",
-        "rc": "JUAN CARLOS TINCO ROCA",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 75000,
-        "codigo_vendedor": 26,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 100000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 50000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 70000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 60000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 90000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 65000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 80000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 70000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 70000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 85000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 55000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 2",
-        "rc": "JOSÉ CARLOS HEREDIA PEDEMONTE",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 55000,
-        "codigo_vendedor": 27,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 120000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 85000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 85000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 85000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 75000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 75000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 140000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 140000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 120000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 75000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 50000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI La Libertad 1",
-        "rc": "KAREN JANETH ROJAS RAMÍREZ",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 50000,
-        "codigo_vendedor": 28,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 55000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 40000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 90000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 85000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 85000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 95000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 180000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 150000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 170000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 80000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 50000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Lambayeque",
-        "rc": "CLAUDIA VANESSA REYES MANAYAY",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 50000,
-        "codigo_vendedor": 29,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 25000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 50000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 50000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 45000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 60000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 55000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 45000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 55000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 60000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 45000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 45000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "WILLIAM MARTÍNEZ MEDINA",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 25000,
-        "codigo_vendedor": 30,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 97462.4,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 63701.6,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 92412.4,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 76105.5,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 93602.8,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 102566.6,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 83315.6,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 79161,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 88358,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 80888,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 80614,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Norte Chico",
-        "rc": "PEDRO LEONARDO BUSTAMANTE NOLASCO",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 64490,
-        "codigo_vendedor": 31,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 50688,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 60504,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 56468,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 40716,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 79916,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 94364,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 81436,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 81382,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 66458,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 46036,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 40772,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huaral",
-        "rc": "JOSÉ ANTONIO TEJADA TAFUR",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 57098,
-        "codigo_vendedor": 32,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 76229.6,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 103682,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 89004,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 58304,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 60229,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 83797,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 47834,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 42412.8,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 105451,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 60675,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 12150,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Piura",
-        "rc": "JOSÉ LUIS MARTINEZ VILLEGAS",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 22246,
-        "codigo_vendedor": 33,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 73924,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 71712,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 69740,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 50720,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 51032,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 36882,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 60560,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 52356,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 55818,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 58302,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 60038,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Lambayeque",
-        "rc": "JUAN JOSÉ BRIONES FALLA",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 60484,
-        "codigo_vendedor": 34,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 92304,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 114073.5,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 95213.5,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 103779.5,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 109163,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 99341.5,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 85068.5,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 109521,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 96006,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 131015.1,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 92811.5,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Grande",
-        "rc": "BERLLY ENRIQUE DELGADO ROSAS",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 110599.5,
-        "codigo_vendedor": 35,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 68188.6,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 76361,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 61297,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 73200,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 67540,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 60822,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 62756,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 72782,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 75620,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 59178,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 28776,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "La Libertad",
-        "rc": "CESAR FERNANDO GONZÁLEZ LEÓN",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 49314,
-        "codigo_vendedor": 36,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 83278,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 89536,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 76170,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 84992,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 54620,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 94046,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 65218,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 64363,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 50155,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 45540,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 85786,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Sur Chico",
-        "rc": "EDMUNDO VICTOR SAUÑE CHUQUI",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 55600,
-        "codigo_vendedor": 37,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 61069,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 74725,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 69198,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 66797,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 62319,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 51927,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 45104,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 37492,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 44076,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 35534,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 38093,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Amazonas",
-        "rc": "JHON FRANKLIN ORTIZ CUBAS",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 40111,
-        "codigo_vendedor": 38,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 85481,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 58552,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 61250.4,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 42381,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 44634,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 43241.4,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 34504,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 38464,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 34636,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 60686,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 73056,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ayacucho",
-        "rc": "JOSÉ LUIS RIVAS HUARACA",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 80987.4,
-        "codigo_vendedor": 39,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 31500,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 35902,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 48328,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 39336,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 33886,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 41118,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 22352,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 30976,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 30804,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 36590,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 33798,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Altomayo",
-        "rc": "WILLIAM MILIAN VILLALOBOS",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 30716,
-        "codigo_vendedor": 40,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 55893,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 64328.4,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 65079.4,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 63921,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 59316.2,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 44341.2,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 42298,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 49011.2,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 51081.8,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 44576,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 41060,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Tarapoto",
-        "rc": "LUIS ALBERTO CENTURIÓN ALTAMIRANO",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 23562,
-        "codigo_vendedor": 41,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 84945,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 82680,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 81916,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 81270,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 79588,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 73230,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 51828,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 69300,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 69310,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 89544,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 75690,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ucayali",
-        "rc": "FÉLIX FREIDEL ESPÍRITU EUGENIO",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 40640,
-        "codigo_vendedor": 42,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 41896,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 35358,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 33043,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 42934,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 29036,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 42936,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 35970,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 48962,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 40654,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 28427,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 41317,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Sierra",
-        "rc": "KENYI JOSE CUNYAS RODRÍGUEZ",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 14045,
-        "codigo_vendedor": 43,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 26238.4,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 24148,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 28177.2,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 27611.6,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 21815.2,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 23634.4,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 25934.4,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 27300.8,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 18737.2,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 24356,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 28455.6,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Junin Selva",
-        "rc": "ROGER BERROCAL QUINCHO",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 23190.8,
-        "codigo_vendedor": 44,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 47971.4,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 48994,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 41368,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 38232,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 36608,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 30339,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 31272,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 25405.2,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 21878,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 42731,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 45402,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Huanuco",
-        "rc": "JHON ALEXANDER RAMOS VEGA",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 20249,
-        "codigo_vendedor": 45,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "SISE",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 8700,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 24086,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 10600,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 8190,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 7740,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 19600,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 17400,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 23200,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 36156,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 59800,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 57720,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Sur",
-        "rc": "KARIN YANIRA SANTANA GONZALES",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 37300,
-        "codigo_vendedor": 46,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 31618,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 6600,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 7600,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 12600,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 9600,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 54200,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 33530,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 106510,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 23000,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 42600,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 15500,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Agroindustrias Norte",
-        "rc": "FLAVIO YOUSSEF FIESTAS ESTRADA",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 72500,
-        "codigo_vendedor": 47,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "BIOS",
-        "division": "BIOSCIENCE"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 42024,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 2,
-        "monto_usd": 75754,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 3,
-        "monto_usd": 25788.6,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 4,
-        "monto_usd": 77795.6,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 5,
-        "monto_usd": 79028,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 6,
-        "monto_usd": 71686.5,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 7,
-        "monto_usd": 111713.2,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 8,
-        "monto_usd": 85154,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 9,
-        "monto_usd": 74462,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 10,
-        "monto_usd": 39798,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 11,
-        "monto_usd": 28742,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "Ancash",
-        "rc": "GERALD WILLIAMS BARRANTES PARE",
-        "year": 2026,
-        "month": 12,
-        "monto_usd": 14747,
-        "codigo_vendedor": 48,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "COST",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
-        "year": 2026,
-        "month": 1,
-        "monto_usd": 65000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
-      },
-      {
-        "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 2,
         "monto_usd": 65000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 3,
         "monto_usd": 105000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 4,
         "monto_usd": 95000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 5,
         "monto_usd": 95000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 6,
         "monto_usd": 90000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 7,
         "monto_usd": 125000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 8,
         "monto_usd": 130000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 9,
         "monto_usd": 140000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 10,
         "monto_usd": 120000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 11,
         "monto_usd": 85000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
       },
       {
         "zona": "AI Piura",
-        "rc": "SEGUNDO ANDRÉS SOSA CRUZ",
+        "rc": "ANDRES SOSA",
         "year": 2026,
         "month": 12,
         "monto_usd": 85000,
-        "codigo_vendedor": 51,
-        "tipo_meta": "FORECAST GENERAL",
-        "serie_documento": "AGRO",
-        "division": "AGROCHEM"
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 55000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 40000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 90000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 85000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 85000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 95000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 180000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 150000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 170000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 80000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Lambayeque",
+        "rc": "CLAUDIA REYES",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 120000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 85000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 85000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 85000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 75000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 75000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 140000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 140000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 120000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 75000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 1",
+        "rc": "KAREN ROJAS",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 100000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 70000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 60000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 90000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 65000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 80000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 70000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 70000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 85000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 55000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI La Libertad 2",
+        "rc": "JOSE HEREDIA",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 55000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 80000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 80000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 70000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 80000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 70000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 90000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 130000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 125000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 125000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 100000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 75000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica I",
+        "rc": "JUAN CARLOS TINCO",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 75000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 55000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 55000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 65000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 75000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 80000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 80000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 74946,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 55000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "AI Ica II",
+        "rc": "JOOL BARRON",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 55000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 25000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 50000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 45000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 60000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 55000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 45000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 55000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 60000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 45000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 45000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "WILLIAM MARTINEZ",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 25000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 61069,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 74725,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 69198,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 66797,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 62319,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 51927,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 45104,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 37492,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 44076,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 35534,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 38093,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Amazonas",
+        "rc": "JHON ORTIZ",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 40111,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 31500,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 35902,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 48328,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 39336,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 33886,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 41118,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 22352,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 30976,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 30804,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 36590,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 33798,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Altomayo",
+        "rc": "WILLIAM MILIAN",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 30716,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 55893,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 64328.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 65079.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 63921,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 59316.2,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 44341.2,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 42298,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 49011.2,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 51081.8,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 44576,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 41060,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Tarapoto",
+        "rc": "LUIS CENTURION",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 23562,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 84945,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 82680,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 81916,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 81270,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 79588,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 73230,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 51828,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 69300,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 69310,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 89544,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 75690,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ucayali",
+        "rc": "FELIX ESPIRITU",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 40640,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 47971.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 48994,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 41368,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 38232,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 36608,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 30339,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 31272,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 25405.2,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 21878,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 42731,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 45402,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huanuco",
+        "rc": "JHON RAMOS",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 20249,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 26238.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 24148,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 28177.2,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 27611.6,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 21815.2,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 23634.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 25934.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 27300.8,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 18737.2,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 24356,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 28455.6,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Selva",
+        "rc": "ROGER BERROCAL",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 23190.8,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 41896,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 35358,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 33043,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 42934,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 29036,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 42936,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 35970,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 48962,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 40654,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 28427,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 41317,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Junin Sierra",
+        "rc": "KENYI CUNYAS",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 14045,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 85481,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 58552,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 61250.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 42381,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 44634,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 43241.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 34504,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 38464,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 34636,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 60686,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 73056,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ayacucho",
+        "rc": "JOSE RIVAS",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 80987.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 76229.6,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 103682,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 89004,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 58304,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 60229,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 83797,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 47834,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 42412.8,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 105451,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 60675,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 12150,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Piura",
+        "rc": "JOSE MARTINEZ",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 22246,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 73924,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 71712,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 69740,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 50720,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 51032,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 36882,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 60560,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 52356,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 55818,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 58302,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 60038,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Lambayeque",
+        "rc": "JUAN BRIONES",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 60484,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 68188.6,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 76361,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 61297,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 73200,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 67540,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 60822,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 62756,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 72782,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 75620,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 59178,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 28776,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "La Libertad",
+        "rc": "CESAR GONZALES",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 49314,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 42024,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 75754,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 25788.6,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 77795.6,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 79028,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 71686.5,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 111713.2,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 85154,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 74462,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 39798,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 28742,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Ancash",
+        "rc": "GERALD BARRANTES",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 14747,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 97462.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 63701.6,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 92412.4,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 76105.5,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 93602.8,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 102566.6,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 83315.6,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 79161,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 88358,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 80888,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 80614,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Norte Chico",
+        "rc": "PEDRO BUSTAMANTE",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 64490,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 50688,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 60504,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 56468,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 40716,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 79916,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 94364,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 81436,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 81382,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 66458,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 46036,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 40772,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Huaral",
+        "rc": "JOSE TEJADA",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 57098,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 83278,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 89536,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 76170,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 84992,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 54620,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 94046,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 65218,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 64363,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 50155,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 45540,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 85786,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Chico",
+        "rc": "EDMUNDO SAUÑE",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 55600,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 92304,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 114073.5,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 95213.5,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 103779.5,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 109163,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 99341.5,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 85068.5,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 109521,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 96006,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 131015.1,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 92811.5,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Sur Grande",
+        "rc": "BERLLY DELGADO",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 110599.5,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 31618,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 6600,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 7600,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 12600,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 9600,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 54200,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 33530,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 106510,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 23000,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 42600,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 15500,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Norte",
+        "rc": "FLAVIO FIESTAS",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 72500,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 1,
+        "monto_usd": 8700,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 2,
+        "monto_usd": 24086,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 3,
+        "monto_usd": 10600,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 4,
+        "monto_usd": 8190,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 5,
+        "monto_usd": 7740,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 6,
+        "monto_usd": 19600,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 7,
+        "monto_usd": 17400,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 8,
+        "monto_usd": 23200,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 9,
+        "monto_usd": 36156,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 10,
+        "monto_usd": 59800,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 11,
+        "monto_usd": 57720,
+        "tipo_meta": "FORECAST GENERAL"
+      },
+      {
+        "zona": "Agroindustrias Sur",
+        "rc": "KARIN SANTANA",
+        "year": 2026,
+        "month": 12,
+        "monto_usd": 37300,
+        "tipo_meta": "FORECAST GENERAL"
       }
     ]
   },
   "uploaded_at": {
-    "2026": "2026-05-06T20:28:28.189Z"
+    "2026": "2026-05-13T23:21:43.559Z"
   }
 }
