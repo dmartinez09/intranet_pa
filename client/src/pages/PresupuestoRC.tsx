@@ -19,6 +19,8 @@ interface Filtros {
   tipos_documento: string[];
   series_documentos: string[];
   maestro_tipos: string[];
+  productos_formulados: string[];
+  nombres_producto: string[];
 }
 
 const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -58,6 +60,7 @@ export default function PresupuestoRC() {
   const [filtros, setFiltros] = useState<Filtros>({
     familias: [], sub_familias: [], ingredientes_activos: [], vendedores: [],
     zonas: [], tipos_documento: [], series_documentos: [], maestro_tipos: [],
+    productos_formulados: [], nombres_producto: [],
   });
 
   useEffect(() => {
@@ -89,6 +92,8 @@ export default function PresupuestoRC() {
     if (filtros.tipos_documento.length) params.tipo_documento = filtros.tipos_documento.join(',');
     if (filtros.series_documentos.length) params.division = filtros.series_documentos.join(',');
     if (filtros.maestro_tipos.length) params.maestro_tipo = filtros.maestro_tipos.join(',');
+    if (filtros.productos_formulados.length) params.producto_formulado = filtros.productos_formulados.join(',');
+    if (filtros.nombres_producto.length) params.nombre_producto = filtros.nombres_producto.join(',');
     return params;
   }
 
@@ -97,6 +102,7 @@ export default function PresupuestoRC() {
     setFiltros({
       familias: [], sub_familias: [], ingredientes_activos: [], vendedores: [],
       zonas: [], tipos_documento: [], series_documentos: [], maestro_tipos: [],
+      productos_formulados: [], nombres_producto: [],
     });
     setMonthStart(1); setMonthEnd(12); setYear(currentYear);
     loadAll({ year: currentYear, month_start: 1, month_end: 12, grupo_cliente: grupoCliente });
@@ -302,6 +308,12 @@ export default function PresupuestoRC() {
               <MultiSelect label="Maestro Tipo"
                 options={(opcionesFiltro.maestro_tipos || []).map((f: string) => ({ value: f, label: f }))}
                 selected={filtros.maestro_tipos} onChange={(v) => setFiltros({ ...filtros, maestro_tipos: v })} />
+              <MultiSelect label="Producto Formulado"
+                options={(opcionesFiltro.productos_formulados || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.productos_formulados} onChange={(v) => setFiltros({ ...filtros, productos_formulados: v })} />
+              <MultiSelect label="Nombre Producto"
+                options={(opcionesFiltro.nombres_producto || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.nombres_producto} onChange={(v) => setFiltros({ ...filtros, nombres_producto: v })} />
             </div>
           </div>
           <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
