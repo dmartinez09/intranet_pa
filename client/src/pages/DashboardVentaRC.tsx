@@ -60,6 +60,8 @@ export default function DashboardVentaRC() {
   const [ventasCliente, setVentasCliente] = useState<any[]>([]);
   const [ventasIA, setVentasIA] = useState<any[]>([]);
   const [ventasFamilia, setVentasFamilia] = useState<any[]>([]);
+  const [ventasProdFormulado, setVentasProdFormulado] = useState<any[]>([]);
+  const [ventasNombreProd, setVentasNombreProd] = useState<any[]>([]);
   const [ventasDiarias, setVentasDiarias] = useState<any[]>([]);
   const [ventasVendedor, setVentasVendedor] = useState<any[]>([]);
   const [opcionesFiltro, setOpcionesFiltro] = useState<any>(null);
@@ -92,13 +94,15 @@ export default function DashboardVentaRC() {
     setLoading(true);
     try {
       const p = { ...params, grupo_cliente: grupoCliente };
-      const [kpiRes, clienteRes, iaRes, familiaRes, diariaRes, vendedorRes] = await Promise.all([
+      const [kpiRes, clienteRes, iaRes, familiaRes, diariaRes, vendedorRes, pfRes, npRes] = await Promise.all([
         ventaRCApi.getKPIs(p),
         ventaRCApi.getPorCliente(p),
         ventaRCApi.getPorIA(p),
         ventaRCApi.getPorFamilia(p),
         ventaRCApi.getDiarias(p),
         ventaRCApi.getPorVendedor(p),
+        ventaRCApi.getPorProductoFormulado(p),
+        ventaRCApi.getPorNombreProducto(p),
       ]);
       setKpis(kpiRes.data.data);
       setVentasCliente(clienteRes.data.data);
@@ -106,6 +110,8 @@ export default function DashboardVentaRC() {
       setVentasFamilia(familiaRes.data.data);
       setVentasDiarias(diariaRes.data.data);
       setVentasVendedor(vendedorRes.data.data);
+      setVentasProdFormulado(pfRes.data.data || []);
+      setVentasNombreProd(npRes.data.data || []);
     } catch (err) {
       console.error('Error loading Venta RC dashboard:', err);
     } finally {
@@ -322,6 +328,41 @@ export default function DashboardVentaRC() {
                 <Tooltip formatter={(value: any) => [formatUSD(value), 'Venta USD']} />
                 <Bar dataKey="total_venta_usd" radius={[0, 6, 6, 0]}>
                   {ventasIA.slice(0, 8).map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Charts Row 3: Producto Formulado + Nombre Producto */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="chart-container">
+            <h3 className="text-base font-bold text-gray-900 mb-1">Ventas por Producto Formulado</h3>
+            <p className="text-xs text-gray-400 mb-4">Top 10 productos formulados — {grupoLabel}</p>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={ventasProdFormulado.slice(0, 10)} layout="vertical" margin={{ left: 110 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="producto_formulado" tick={{ fontSize: 10 }} width={110} interval={0} />
+                <Tooltip formatter={(value: any) => [formatUSD(value), 'Venta USD']} />
+                <Bar dataKey="total_venta_usd" radius={[0, 6, 6, 0]}>
+                  {ventasProdFormulado.slice(0, 10).map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="chart-container">
+            <h3 className="text-base font-bold text-gray-900 mb-1">Ventas por Nombre de Producto</h3>
+            <p className="text-xs text-gray-400 mb-4">Top 10 SKUs — {grupoLabel}</p>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={ventasNombreProd.slice(0, 10)} layout="vertical" margin={{ left: 130 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="nombre_producto" tick={{ fontSize: 10 }} width={130} interval={0} />
+                <Tooltip formatter={(value: any) => [formatUSD(value), 'Venta USD']} />
+                <Bar dataKey="total_venta_usd" radius={[0, 6, 6, 0]}>
+                  {ventasNombreProd.slice(0, 10).map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

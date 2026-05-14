@@ -5,13 +5,15 @@ import { requireModule } from '../middleware/rbac';
 
 const router = Router();
 
-router.use(authenticateToken, requireModule('venta_rc', 'venta_rc_agro', 'venta_rc_sierra_selva', 'venta_rc_costa', 'venta_rc_online'));
+router.use(authenticateToken, requireModule('venta_rc', 'venta_rc_agro', 'venta_rc_sierra_selva', 'venta_rc_costa', 'venta_rc_online', 'venta_rc_bioscience'));
 
 router.get('/kpis', ventaRCController.getKPIs);
 router.get('/por-cliente', ventaRCController.getPorCliente);
 router.get('/por-ingrediente-activo', ventaRCController.getPorIA);
 router.get('/por-vendedor', ventaRCController.getPorVendedor);
 router.get('/por-familia', ventaRCController.getPorFamilia);
+router.get('/por-producto-formulado', ventaRCController.getPorProductoFormulado);
+router.get('/por-nombre-producto', ventaRCController.getPorNombreProducto);
 router.get('/diarias', ventaRCController.getDiarias);
 router.get('/por-grupo-cliente', ventaRCController.getPorGrupoCliente);
 router.get('/clientes', ventaRCController.getClientes);

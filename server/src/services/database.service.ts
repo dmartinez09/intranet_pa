@@ -540,6 +540,44 @@ export const dbService = {
     })).sort((a, b) => b.total_venta_usd - a.total_venta_usd);
   },
 
+  async getVentasPorProductoFormulado(filtros: any) {
+    const ventas = await this.getVentas(filtros);
+    const agrupado: Record<string, { producto_formulado: string; total_venta_usd: number; total_unidades: number; total_kg_lt: number }> = {};
+    for (const v of ventas) {
+      const pf = v.producto_formulado || 'SIN PRODUCTO FORMULADO';
+      if (!agrupado[pf]) agrupado[pf] = { producto_formulado: pf, total_venta_usd: 0, total_unidades: 0, total_kg_lt: 0 };
+      agrupado[pf].total_venta_usd += Number(v.valor_venta_dolares) || 0;
+      agrupado[pf].total_unidades += Number(v.unidades_presentacion) || 0;
+      agrupado[pf].total_kg_lt += Number(v.cantidad_kg_lt) || 0;
+    }
+    const total = Object.values(agrupado).reduce((s, f) => s + f.total_venta_usd, 0);
+    return Object.values(agrupado).map(f => ({
+      ...f,
+      total_venta_usd: Math.round(f.total_venta_usd * 100) / 100,
+      total_kg_lt: Math.round(f.total_kg_lt * 100) / 100,
+      porcentaje: total ? Math.round((f.total_venta_usd / total) * 10000) / 100 : 0,
+    })).sort((a, b) => b.total_venta_usd - a.total_venta_usd);
+  },
+
+  async getVentasPorNombreProducto(filtros: any) {
+    const ventas = await this.getVentas(filtros);
+    const agrupado: Record<string, { nombre_producto: string; total_venta_usd: number; total_unidades: number; total_kg_lt: number }> = {};
+    for (const v of ventas) {
+      const np = v.nombre_producto || 'SIN NOMBRE';
+      if (!agrupado[np]) agrupado[np] = { nombre_producto: np, total_venta_usd: 0, total_unidades: 0, total_kg_lt: 0 };
+      agrupado[np].total_venta_usd += Number(v.valor_venta_dolares) || 0;
+      agrupado[np].total_unidades += Number(v.unidades_presentacion) || 0;
+      agrupado[np].total_kg_lt += Number(v.cantidad_kg_lt) || 0;
+    }
+    const total = Object.values(agrupado).reduce((s, f) => s + f.total_venta_usd, 0);
+    return Object.values(agrupado).map(f => ({
+      ...f,
+      total_venta_usd: Math.round(f.total_venta_usd * 100) / 100,
+      total_kg_lt: Math.round(f.total_kg_lt * 100) / 100,
+      porcentaje: total ? Math.round((f.total_venta_usd / total) * 10000) / 100 : 0,
+    })).sort((a, b) => b.total_venta_usd - a.total_venta_usd);
+  },
+
   async getVentasDiarias(filtros: any) {
     const ventas = await this.getVentas(filtros);
     const agrupado: Record<string, { fecha: string; total_venta_usd: number; cantidad_documentos: number }> = {};

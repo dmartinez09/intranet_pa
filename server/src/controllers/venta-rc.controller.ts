@@ -52,6 +52,26 @@ export const ventaRCController = {
     }
   },
 
+  async getPorProductoFormulado(req: Request, res: Response) {
+    try {
+      const data = await dbService.getVentasPorProductoFormulado(req.query);
+      return res.json({ success: true, data });
+    } catch (error) {
+      console.error('[VentaRC] PorProductoFormulado error:', error);
+      return res.status(500).json({ success: false, message: 'Error al obtener ventas por producto formulado' });
+    }
+  },
+
+  async getPorNombreProducto(req: Request, res: Response) {
+    try {
+      const data = await dbService.getVentasPorNombreProducto(req.query);
+      return res.json({ success: true, data });
+    } catch (error) {
+      console.error('[VentaRC] PorNombreProducto error:', error);
+      return res.status(500).json({ success: false, message: 'Error al obtener ventas por nombre producto' });
+    }
+  },
+
   async getDiarias(req: Request, res: Response) {
     try {
       const data = await dbService.getVentasDiarias(req.query);
