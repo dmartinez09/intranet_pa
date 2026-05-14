@@ -604,13 +604,14 @@ export const dbService = {
 
   async getVentasPorDepartamento(filtros: any) {
     const ventas = await this.getVentas(filtros);
-    const agrupado: Record<string, { departamento: string; total_venta_usd: number; total_costo: number; total_ganancia: number; transacciones: number; vendedores: Set<string>; grupos: Set<string> }> = {};
+    const agrupado: Record<string, { departamento: string; total_venta_usd: number; total_costo: number; transacciones: number; vendedores: Set<string>; grupos: Set<string> }> = {};
     for (const v of ventas) {
       const dep = (v.departamento_despacho || 'SIN DEPARTAMENTO').toUpperCase().trim();
-      if (!agrupado[dep]) agrupado[dep] = { departamento: dep, total_venta_usd: 0, total_costo: 0, total_ganancia: 0, transacciones: 0, vendedores: new Set(), grupos: new Set() };
+      if (!agrupado[dep]) agrupado[dep] = { departamento: dep, total_venta_usd: 0, total_costo: 0, transacciones: 0, vendedores: new Set(), grupos: new Set() };
       agrupado[dep].total_venta_usd += Number(v.valor_venta_dolares) || 0;
       agrupado[dep].total_costo += Number(v.costo_total) || 0;
-      agrupado[dep].total_ganancia += Number(v.ganancia) || 0;
+      // Ganancia: NO sumar v.ganancia (columna SAP desactualizada respecto a correcciones de costo).
+      // Se calcula como venta - costo al final del agregado.
       agrupado[dep].transacciones++;
       if (v.vendedor) agrupado[dep].vendedores.add(v.vendedor);
       if (v.grupo_cliente) agrupado[dep].grupos.add(v.grupo_cliente);
@@ -618,7 +619,7 @@ export const dbService = {
     return Object.values(agrupado).map((d) => {
       const venta = Math.round(d.total_venta_usd * 100) / 100;
       const costo = Math.round(d.total_costo * 100) / 100;
-      const ganancia = Math.round(d.total_ganancia * 100) / 100;
+      const ganancia = Math.round((venta - costo) * 100) / 100;
       return {
         departamento: d.departamento,
         total_venta_usd: venta,
@@ -678,9 +679,11 @@ export const dbService = {
     const ventas = await this.getVentas(filtros);
 
     // Totales globales (sobre TODAS las filas) para reconciliación con Finanzas
+    // IMPORTANTE: ganancia = venta - costo (no usar columna SAP `Ganancia` que queda
+    // desactualizada respecto a correcciones de costo aplicadas a nivel de BD).
     const totVenta = ventas.reduce((s: number, v: any) => s + (Number(v.valor_venta_dolares) || 0), 0);
     const totCosto = ventas.reduce((s: number, v: any) => s + (Number(v.costo_total) || 0), 0);
-    const totGanancia = ventas.reduce((s: number, v: any) => s + (Number(v.ganancia) || 0), 0);
+    const totGanancia = totVenta - totCosto;
 
     type ErrorCode =
       | 'SIGNO_COSTO' | 'COSTO_CERO' | 'VENTA_CERO' | 'MARGEN_NEGATIVO'
@@ -711,7 +714,10 @@ export const dbService = {
     for (const v of ventas) {
       const venta = Number(v.valor_venta_dolares) || 0;
       const costo = Number(v.costo_total) || 0;
-      const ganancia = Number(v.ganancia) || 0;
+      // Ganancia: calc local (venta-costo). La columna SAP `Ganancia` esta desactualizada
+      // tras correcciones de costo a nivel BD. Para flag MARGEN_NEGATIVO/EXCESIVO usamos
+      // el calculo correcto.
+      const ganancia = venta - costo;
       const cantKL = Number(v.cantidad_kg_lt) || 0;
       const cantUN = Number(v.unidades_presentacion) || 0;
       const tc = Number(v.tipo_de_cambio) || 0;
