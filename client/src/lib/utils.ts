@@ -30,12 +30,15 @@ export function formatDate(date: string): string {
   });
 }
 
-/** Maps URL slug → BD grupo_cliente value */
+/** Maps URL slug → BD grupo_cliente value (Maestro de Vendedores).
+ *  CLIENTES EXTRANJEROS NO se incluye (no aparece en el menu Venta RC). */
 export const GRUPO_SLUG_MAP: Record<string, { db: string; label: string }> = {
   agroindustrias: { db: 'AGROINDUSTRIAS', label: 'Agroindustrias' },
   'sierra-selva': { db: 'DIST. SIERRA / SELVA', label: 'Dist. Sierra / Selva' },
   costa: { db: 'DIST. COSTA', label: 'Dist. Costa' },
   online: { db: 'ONLINE', label: 'Online' },
+  bioscience: { db: 'BIOSCIENCE', label: 'Bioscience' },
+  desarrollo: { db: 'DESARROLLO', label: 'Desarrollo' },
 };
 
 export function getGrupoFromSlug(slug?: string) {

@@ -68,7 +68,8 @@ export default function PresupuestoRC() {
 
   async function loadFiltros() {
     try {
-      const res = await ventasApi.getFiltros();
+      // Pasar grupo_cliente para que el dropdown de Vendedor se restrinja al grupo actual via maestro
+      const res = await ventasApi.getFiltros({ grupo_cliente: grupoCliente });
       setOpcionesFiltro(res.data.data);
     } catch (err) {
       console.error('Error loading filtros:', err);

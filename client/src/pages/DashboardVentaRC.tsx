@@ -112,7 +112,8 @@ export default function DashboardVentaRC() {
 
   async function loadFiltros() {
     try {
-      const res = await ventaRCApi.getFiltros();
+      // Pasar grupo_cliente para que el backend filtre los vendedores al grupo actual via maestro
+      const res = await ventaRCApi.getFiltros({ grupo_cliente: grupoCliente });
       setOpcionesFiltro(res.data.data);
     } catch (err) {
       console.error('Error loading filtros RC:', err);

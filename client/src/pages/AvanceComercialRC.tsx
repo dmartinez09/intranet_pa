@@ -1,12 +1,27 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { ventaRCApi } from '../services/api';
+import MultiSelect from '../components/filters/MultiSelect';
+import DateRangeFilter from '../components/filters/DateRangeFilter';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from 'recharts';
-import { Users, TrendingUp, Droplets, Filter, ChevronDown, Search, Loader2 } from 'lucide-react';
+import { Users, TrendingUp, Droplets, Filter, ChevronDown, Search, Loader2, X } from 'lucide-react';
 import { getGrupoFromSlug } from '../lib/utils';
+
+interface FiltrosRC {
+  familias: string[];
+  sub_familias: string[];
+  ingredientes_activos: string[];
+  vendedores: string[];
+  zonas: string[];
+  tipos_documento: string[];
+  series_documentos: string[];
+  maestro_tipos: string[];
+  productos_formulados: string[];
+  nombres_producto: string[];
+}
 
 const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const COLORS = ['#00A651', '#34D67B', '#0EA5E9', '#6366F1', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4', '#A855F7'];
@@ -33,11 +48,14 @@ export default function AvanceComercialRC() {
   const [clientSearch, setClientSearch] = useState('');
 
   const now = new Date();
-  const [year] = useState(now.getFullYear());
+  const [year, setYear] = useState(now.getFullYear());
   const [monthStart, setMonthStart] = useState(1);
   const [monthEnd, setMonthEnd] = useState(now.getMonth() + 1);
-  const [selectedDivision, setSelectedDivision] = useState('');
-  const [selectedMaestroTipo, setSelectedMaestroTipo] = useState('');
+  const [filtros, setFiltros] = useState<FiltrosRC>({
+    familias: [], sub_familias: [], ingredientes_activos: [], vendedores: [],
+    zonas: [], tipos_documento: [], series_documentos: [], maestro_tipos: [],
+    productos_formulados: [], nombres_producto: [],
+  });
 
   useEffect(() => {
     loadFiltros();
@@ -50,8 +68,16 @@ export default function AvanceComercialRC() {
   async function loadData(grupo: string) {
     setLoading(true);
     const params: any = { year, month_start: monthStart, month_end: monthEnd, grupo_cliente: grupo };
-    if (selectedDivision) params.division = selectedDivision;
-    if (selectedMaestroTipo) params.maestro_tipo = selectedMaestroTipo;
+    if (filtros.familias.length) params.familia = filtros.familias.join(',');
+    if (filtros.sub_familias.length) params.sub_familia = filtros.sub_familias.join(',');
+    if (filtros.ingredientes_activos.length) params.ingrediente_activo = filtros.ingredientes_activos.join(',');
+    if (filtros.vendedores.length) params.vendedor = filtros.vendedores.join(',');
+    if (filtros.zonas.length) params.zona = filtros.zonas.join(',');
+    if (filtros.tipos_documento.length) params.tipo_documento = filtros.tipos_documento.join(',');
+    if (filtros.series_documentos.length) params.division = filtros.series_documentos.join(',');
+    if (filtros.maestro_tipos.length) params.maestro_tipo = filtros.maestro_tipos.join(',');
+    if (filtros.productos_formulados.length) params.producto_formulado = filtros.productos_formulados.join(',');
+    if (filtros.nombres_producto.length) params.nombre_producto = filtros.nombres_producto.join(',');
     try {
       const [vendRes, famRes, cliRes] = await Promise.all([
         ventaRCApi.getPorVendedor(params),
@@ -70,7 +96,8 @@ export default function AvanceComercialRC() {
 
   async function loadFiltros() {
     try {
-      const res = await ventaRCApi.getFiltros();
+      // Pasar grupo_cliente para que el dropdown de Vendedor se restrinja al grupo actual via maestro
+      const res = await ventaRCApi.getFiltros({ grupo_cliente: grupoCliente });
       setOpcionesFiltro(res.data.data);
     } catch (err) {
       console.error(err);
@@ -78,6 +105,16 @@ export default function AvanceComercialRC() {
   }
 
   function applyFilters() { loadData(grupoCliente); }
+  function clearFilters() {
+    setFiltros({
+      familias: [], sub_familias: [], ingredientes_activos: [], vendedores: [],
+      zonas: [], tipos_documento: [], series_documentos: [], maestro_tipos: [],
+      productos_formulados: [], nombres_producto: [],
+    });
+    setMonthStart(1); setMonthEnd(now.getMonth() + 1); setYear(now.getFullYear());
+    setTimeout(() => loadData(grupoCliente), 0);
+  }
+  const activeFilterCount = Object.values(filtros).filter(v => v.length > 0).length;
 
   // KPIs
   const totalVenta = useMemo(() => vendedores.reduce((s: number, v: any) => s + (v.total_venta_usd || 0), 0), [vendedores]);
@@ -124,49 +161,75 @@ export default function AvanceComercialRC() {
         <p className="text-gray-500 text-sm mt-1">Seguimiento de metas por grupo de clientes — {periodLabel}</p>
       </div>
 
-      {/* Filter bar */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 flex flex-wrap gap-4 items-center">
-        <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-brand-600">
-          <Filter className="w-4 h-4" />
-          Filtros
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-        </button>
-        {showFilters && opcionesFiltro && (
-          <>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500">Mes inicio:</label>
-              <select className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-300"
-                value={monthStart} onChange={e => setMonthStart(Number(e.target.value))}>
-                {MONTHS_SHORT.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500">Mes fin:</label>
-              <select className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-300"
-                value={monthEnd} onChange={e => setMonthEnd(Number(e.target.value))}>
-                {MONTHS_SHORT.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500">División:</label>
-              <select className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-300"
-                value={selectedDivision} onChange={e => setSelectedDivision(e.target.value)}>
-                <option value="">Todas</option>
-                {(opcionesFiltro.divisiones || []).map((d: string) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500">Maestro Tipo:</label>
-              <select className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-300"
-                value={selectedMaestroTipo} onChange={e => setSelectedMaestroTipo(e.target.value)}>
-                <option value="">Todos</option>
-                {(opcionesFiltro.maestro_tipos || []).map((m: string) => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-            <button onClick={applyFilters} className="btn-primary text-xs py-1.5 px-4">Aplicar</button>
-          </>
-        )}
+      {/* Filter toggle bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowFilters(!showFilters)} className="btn-secondary">
+            <Filter className="w-4 h-4" />
+            <span>Filtros</span>
+            {activeFilterCount > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-brand-500 text-white text-xs font-semibold">
+                {activeFilterCount}
+              </span>
+            )}
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          </button>
+          {activeFilterCount > 0 && (
+            <button onClick={clearFilters} className="text-sm text-gray-500 hover:text-danger-500 flex items-center gap-1">
+              <X className="w-3.5 h-3.5" /> Limpiar filtros
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Filter Panel — alineado con Venta Gerencia */}
+      {showFilters && opcionesFiltro && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 animate-fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
+            <div className="lg:col-span-1 lg:border-r border-gray-100 lg:pr-6 pb-4 lg:pb-0 border-b lg:border-b-0">
+              <DateRangeFilter
+                year={year} monthStart={monthStart} monthEnd={monthEnd}
+                onYearChange={setYear} onMonthStartChange={setMonthStart} onMonthEndChange={setMonthEnd}
+              />
+            </div>
+            <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              <MultiSelect label="Familia"
+                options={(opcionesFiltro.familias || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.familias} onChange={(v) => setFiltros({ ...filtros, familias: v })} />
+              <MultiSelect label="Sub-familia"
+                options={(opcionesFiltro.sub_familias || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.sub_familias} onChange={(v) => setFiltros({ ...filtros, sub_familias: v })} />
+              <MultiSelect label="Ingrediente Activo"
+                options={(opcionesFiltro.ingredientes_activos || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.ingredientes_activos} onChange={(v) => setFiltros({ ...filtros, ingredientes_activos: v })} />
+              <MultiSelect label="Vendedor"
+                options={(opcionesFiltro.vendedores || []).map((v: any) => ({ value: v.nombre, label: v.nombre }))}
+                selected={filtros.vendedores} onChange={(v) => setFiltros({ ...filtros, vendedores: v })} />
+              <MultiSelect label="Zona"
+                options={(opcionesFiltro.zonas || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.zonas} onChange={(v) => setFiltros({ ...filtros, zonas: v })} />
+              <MultiSelect label="Tipo Documento"
+                options={(opcionesFiltro.tipos_documento || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.tipos_documento} onChange={(v) => setFiltros({ ...filtros, tipos_documento: v })} />
+              <MultiSelect label="División"
+                options={(opcionesFiltro.divisiones || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.series_documentos} onChange={(v) => setFiltros({ ...filtros, series_documentos: v })} />
+              <MultiSelect label="Maestro Tipo"
+                options={(opcionesFiltro.maestro_tipos || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.maestro_tipos} onChange={(v) => setFiltros({ ...filtros, maestro_tipos: v })} />
+              <MultiSelect label="Producto Formulado"
+                options={(opcionesFiltro.productos_formulados || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.productos_formulados} onChange={(v) => setFiltros({ ...filtros, productos_formulados: v })} />
+              <MultiSelect label="Nombre Producto"
+                options={(opcionesFiltro.nombres_producto || []).map((f: string) => ({ value: f, label: f }))}
+                selected={filtros.nombres_producto} onChange={(v) => setFiltros({ ...filtros, nombres_producto: v })} />
+            </div>
+          </div>
+          <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
+            <button onClick={applyFilters} className="btn-primary">Aplicar Filtros</button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center h-64">

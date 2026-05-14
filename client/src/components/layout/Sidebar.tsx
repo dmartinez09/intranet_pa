@@ -32,6 +32,8 @@ import {
   Trophy,
   Landmark,
   Share2,
+  FlaskConical,
+  Rocket,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { configApi } from '../../services/api';
@@ -107,6 +109,26 @@ const grupoChildren = (base: string): SubGroup[] => [
       { to: `/${base}/online/dashboard`, icon: TrendingUp, label: 'Dashboard', module: 'venta_rc_online' },
       { to: `/${base}/online/presupuesto`, icon: Target, label: 'Presupuesto', module: 'venta_rc_online' },
       { to: `/${base}/online/avance-comercial`, icon: Users, label: 'Avance Comercial', module: 'venta_rc_online' },
+    ],
+  },
+  {
+    id: `${base}_bioscience`,
+    label: 'Bioscience',
+    icon: FlaskConical,
+    children: [
+      { to: `/${base}/bioscience/dashboard`, icon: TrendingUp, label: 'Dashboard', module: 'venta_rc_bioscience' },
+      { to: `/${base}/bioscience/presupuesto`, icon: Target, label: 'Presupuesto', module: 'venta_rc_bioscience' },
+      { to: `/${base}/bioscience/avance-comercial`, icon: Users, label: 'Avance Comercial', module: 'venta_rc_bioscience' },
+    ],
+  },
+  {
+    id: `${base}_desarrollo`,
+    label: 'Desarrollo',
+    icon: Rocket,
+    children: [
+      { to: `/${base}/desarrollo/dashboard`, icon: TrendingUp, label: 'Dashboard', module: 'venta_rc_desarrollo' },
+      { to: `/${base}/desarrollo/presupuesto`, icon: Target, label: 'Presupuesto', module: 'venta_rc_desarrollo' },
+      { to: `/${base}/desarrollo/avance-comercial`, icon: Users, label: 'Avance Comercial', module: 'venta_rc_desarrollo' },
     ],
   },
 ];

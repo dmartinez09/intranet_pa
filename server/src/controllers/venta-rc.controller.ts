@@ -83,9 +83,11 @@ export const ventaRCController = {
     }
   },
 
-  async getFiltros(_req: Request, res: Response) {
+  async getFiltros(req: Request, res: Response) {
     try {
-      const data = await dbService.getFiltrosOpciones();
+      // Pasamos todos los filtros activos (incluyendo grupo_cliente) para que el cascading
+      // restrinja cada dropdown — en particular Vendedor cae solo al grupo actual via maestro.
+      const data = await dbService.getFiltrosOpciones(req.query);
       return res.json({ success: true, data });
     } catch (error) {
       console.error('[VentaRC] Filtros error:', error);

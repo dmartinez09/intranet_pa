@@ -71,7 +71,7 @@ export const ventaRCApi = {
   getDiarias: (params?: any) => api.get('/venta-rc/diarias', { params }),
   getPorGrupoCliente: (params?: any) => api.get('/venta-rc/por-grupo-cliente', { params }),
   getClientes: (params?: any) => api.get('/venta-rc/clientes', { params }),
-  getFiltros: () => api.get('/venta-rc/filtros'),
+  getFiltros: (params?: Record<string, any>) => api.get('/venta-rc/filtros', { params }),
 };
 
 // Cartera
