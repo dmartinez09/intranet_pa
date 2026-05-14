@@ -33,7 +33,6 @@ import {
   Landmark,
   Share2,
   FlaskConical,
-  Rocket,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { configApi } from '../../services/api';
@@ -119,16 +118,6 @@ const grupoChildren = (base: string): SubGroup[] => [
       { to: `/${base}/bioscience/dashboard`, icon: TrendingUp, label: 'Dashboard', module: 'venta_rc_bioscience' },
       { to: `/${base}/bioscience/presupuesto`, icon: Target, label: 'Presupuesto', module: 'venta_rc_bioscience' },
       { to: `/${base}/bioscience/avance-comercial`, icon: Users, label: 'Avance Comercial', module: 'venta_rc_bioscience' },
-    ],
-  },
-  {
-    id: `${base}_desarrollo`,
-    label: 'Desarrollo',
-    icon: Rocket,
-    children: [
-      { to: `/${base}/desarrollo/dashboard`, icon: TrendingUp, label: 'Dashboard', module: 'venta_rc_desarrollo' },
-      { to: `/${base}/desarrollo/presupuesto`, icon: Target, label: 'Presupuesto', module: 'venta_rc_desarrollo' },
-      { to: `/${base}/desarrollo/avance-comercial`, icon: Users, label: 'Avance Comercial', module: 'venta_rc_desarrollo' },
     ],
   },
 ];
