@@ -270,6 +270,14 @@ export const dbService = {
     // Finanzas reporta consolidado (Peru + ventas inter-filial Ecuador)
     const where: string[] = ['1=1'];
 
+    // EXCLUSION PERMANENTE: comisiones bancarias / cargos administrativos por retiro de
+    // letras y conceptos similares (Nota de Debito FD01 sin codigo producto, concepto admin).
+    // El CEO no las cuenta como venta. Aplica a TODOS los KPIs, charts y rankings.
+    where.push(`(
+      ISNULL(Nombre_Producto,'') NOT LIKE '%COMISION%'
+      AND ISNULL(Nombre_Producto,'') NOT LIKE '%COMISIÓN%'
+    )`);
+
     if (filtros.familia) {
       const vals = (filtros.familia as string).split(',');
       where.push(`Familia IN (${vals.map((_: string, i: number) => `@fam${i}`).join(',')})`);
