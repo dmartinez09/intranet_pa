@@ -139,17 +139,29 @@ export default function PresupuestoRC() {
     }
   }
 
+  // Mapa vendedor (nombre upper) -> grupo desde el Maestro de Vendedores
+  const vendorToGrupo = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const v of maestro) if (v.activo) m[(v.vendedor || '').trim().toUpperCase()] = v.grupo;
+    return m;
+  }, [maestro]);
+
   // Filtro de meses: budget solo de los meses dentro del rango monthStart..monthEnd
   const budgetInRange = useMemo(
     () => budget.filter(e => e.month >= monthStart && e.month <= monthEnd),
     [budget, monthStart, monthEnd]
   );
 
+  // budgetByMonth: solo del grupo de la URL (para que el chart mensual cuadre)
   const budgetByMonth = useMemo(() => {
     const map: Record<number, number> = {};
-    for (const e of budget) map[e.month] = (map[e.month] || 0) + e.monto_usd;
+    for (const e of budget) {
+      const g = vendorToGrupo[(e.rc || '').trim().toUpperCase()];
+      if (g !== grupoCliente) continue;
+      map[e.month] = (map[e.month] || 0) + e.monto_usd;
+    }
     return map;
-  }, [budget]);
+  }, [budget, vendorToGrupo, grupoCliente]);
 
   const monthlyComparison = useMemo(() => {
     const currentMonth = new Date().getMonth() + 1;
@@ -163,48 +175,50 @@ export default function PresupuestoRC() {
     });
   }, [budgetByMonth, ventasMensuales, monthStart, monthEnd]);
 
-  // Mapa vendedor (nombre upper) -> grupo desde el Maestro de Vendedores
-  const vendorToGrupo = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const v of maestro) if (v.activo) m[(v.vendedor || '').trim().toUpperCase()] = v.grupo;
-    return m;
-  }, [maestro]);
+  // CRITICO: filtrar el presupuesto al grupo de esta pagina (URL slug)
+  // antes el presupuesto mostraba TODA la compañia y solo la venta era del grupo
+  const budgetFiltered = useMemo(() => {
+    return budgetInRange.filter(e => {
+      const g = vendorToGrupo[(e.rc || '').trim().toUpperCase()];
+      return g === grupoCliente;
+    });
+  }, [budgetInRange, vendorToGrupo, grupoCliente]);
 
-  // Ranking POR GRUPO (no por vendedor individual) — respeta el rango de meses
-  const budgetByGrupo = useMemo(() => {
-    const map: Record<string, { presupuesto: number; venta: number }> = {};
-    // Presupuesto: agrupar por grupo via maestro (fallback "SIN GRUPO" si vendedor no está en el maestro)
-    for (const e of budgetInRange) {
+  // Ranking POR VENDEDOR del grupo actual — usa budgetFiltered (ya restringido al grupo)
+  const budgetByVendedor = useMemo(() => {
+    const map: Record<string, { rc: string; grupo: string; presupuesto: number; venta: number }> = {};
+    for (const e of budgetFiltered) {
       const name = (e.rc || '').trim().toUpperCase();
-      const g = vendorToGrupo[name] || 'SIN GRUPO';
-      if (!map[g]) map[g] = { presupuesto: 0, venta: 0 };
-      map[g].presupuesto += e.monto_usd;
+      const g = vendorToGrupo[name] || grupoCliente;
+      if (!map[name]) map[name] = { rc: e.rc, grupo: g, presupuesto: 0, venta: 0 };
+      map[name].presupuesto += e.monto_usd;
     }
-    // Venta: agrupar por grupo desde ventasData (ya filtrado por rango de meses via buildParams)
     for (const v of ventasData) {
       const name = (v.vendedor || '').trim().toUpperCase();
-      const g = vendorToGrupo[name] || 'SIN GRUPO';
-      if (!map[g]) map[g] = { presupuesto: 0, venta: 0 };
-      map[g].venta += Number(v.total_venta_usd) || 0;
+      if (!name) continue;
+      const g = vendorToGrupo[name];
+      if (g !== grupoCliente) continue;
+      if (!map[name]) map[name] = { rc: v.vendedor, grupo: g || grupoCliente, presupuesto: 0, venta: 0 };
+      map[name].venta += Number(v.total_venta_usd) || 0;
     }
-    return Object.entries(map)
-      .map(([grupo, d]) => ({
-        grupo,
-        presupuesto: Math.round(d.presupuesto),
-        venta: Math.round(d.venta),
-        logro: d.presupuesto > 0 ? Math.round((d.venta / d.presupuesto) * 1000) / 10 : 0,
+    return Object.values(map)
+      .map(r => ({
+        ...r,
+        presupuesto: Math.round(r.presupuesto),
+        venta: Math.round(r.venta),
+        logro: r.presupuesto > 0 ? Math.round((r.venta / r.presupuesto) * 1000) / 10 : 0,
       }))
       .sort((a, b) => b.presupuesto - a.presupuesto);
-  }, [budgetInRange, ventasData, vendorToGrupo]);
+  }, [budgetFiltered, ventasData, vendorToGrupo, grupoCliente]);
 
   const budgetByZona = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const e of budgetInRange) map[e.zona] = (map[e.zona] || 0) + e.monto_usd;
+    for (const e of budgetFiltered) map[e.zona] = (map[e.zona] || 0) + e.monto_usd;
     return Object.entries(map).map(([zona, total]) => ({ zona, total })).sort((a, b) => b.total - a.total);
-  }, [budgetInRange]);
+  }, [budgetFiltered]);
 
-  // Totales: respetan rango monthStart..monthEnd
-  const totalPpto = budgetInRange.reduce((s, e) => s + e.monto_usd, 0);
+  // Totales: respetan rango monthStart..monthEnd Y grupo de la URL
+  const totalPpto = budgetFiltered.reduce((s, e) => s + e.monto_usd, 0);
   const totalVenta = (() => {
     let sum = 0;
     for (let m = monthStart; m <= monthEnd; m++) sum += ventasMensuales[m] || 0;
@@ -405,16 +419,16 @@ export default function PresupuestoRC() {
             </div>
           </div>
 
-          {/* Ranking por Grupo */}
+          {/* Ranking por Vendedor del grupo */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">Ranking por Grupo vs Presupuesto</h3>
-            <p className="text-xs text-gray-400 mb-4">Avance por equipo comercial — {periodoLabel} (según Maestro de Vendedores)</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-1">Ranking de Vendedores vs Presupuesto</h3>
+            <p className="text-xs text-gray-400 mb-4">{grupoLabel} — {periodoLabel} · solo vendedores del grupo (Maestro)</p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-3 px-3 text-xs font-semibold text-gray-500 uppercase">#</th>
-                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Grupo</th>
+                    <th className="text-left py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Vendedor</th>
                     <th className="text-right py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Presupuesto</th>
                     <th className="text-right py-3 px-3 text-xs font-semibold text-gray-500 uppercase">Venta</th>
                     <th className="text-right py-3 px-3 text-xs font-semibold text-gray-500 uppercase">% Logro</th>
@@ -422,10 +436,10 @@ export default function PresupuestoRC() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {budgetByGrupo.map((row, i) => (
-                    <tr key={row.grupo} className="hover:bg-gray-50/50">
+                  {budgetByVendedor.map((row, i) => (
+                    <tr key={row.rc} className="hover:bg-gray-50/50">
                       <td className="py-3 px-3 text-xs text-gray-400">{i + 1}</td>
-                      <td className="py-3 px-3 font-medium text-gray-800">{row.grupo}</td>
+                      <td className="py-3 px-3 font-medium text-gray-800">{row.rc}</td>
                       <td className="py-3 px-3 text-right font-mono text-xs">{formatUSD(row.presupuesto)}</td>
                       <td className="py-3 px-3 text-right font-mono text-xs">{formatUSD(row.venta)}</td>
                       <td className={`py-3 px-3 text-right font-semibold ${row.logro >= 80 ? 'text-green-600' : row.logro >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
@@ -441,8 +455,8 @@ export default function PresupuestoRC() {
                       </td>
                     </tr>
                   ))}
-                  {budgetByGrupo.length === 0 && (
-                    <tr><td colSpan={6} className="text-center py-6 text-gray-400">Sin datos para el período seleccionado.</td></tr>
+                  {budgetByVendedor.length === 0 && (
+                    <tr><td colSpan={6} className="text-center py-6 text-gray-400">Sin vendedores en {grupoLabel} para el período seleccionado.</td></tr>
                   )}
                 </tbody>
               </table>
