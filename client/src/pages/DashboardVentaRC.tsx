@@ -339,12 +339,19 @@ export default function DashboardVentaRC() {
           <div className="chart-container">
             <h3 className="text-base font-bold text-gray-900 mb-1">Ventas por Producto Formulado</h3>
             <p className="text-xs text-gray-400 mb-4">Top 10 productos formulados — {grupoLabel}</p>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={ventasProdFormulado.slice(0, 10)} layout="vertical" margin={{ left: 110 }}>
+            <ResponsiveContainer width="100%" height={380}>
+              <BarChart
+                data={ventasProdFormulado.slice(0, 10).map(p => ({ ...p, label: (p.producto_formulado || '').length > 28 ? (p.producto_formulado || '').slice(0, 27) + '…' : (p.producto_formulado || '') }))}
+                layout="vertical"
+                margin={{ left: 10, right: 20, top: 5, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="producto_formulado" tick={{ fontSize: 10 }} width={110} interval={0} />
-                <Tooltip formatter={(value: any) => [formatUSD(value), 'Venta USD']} />
+                <YAxis type="category" dataKey="label" tick={{ fontSize: 11 }} width={210} interval={0} />
+                <Tooltip
+                  formatter={(value: any) => [formatUSD(value), 'Venta USD']}
+                  labelFormatter={(_l, payload: any) => payload?.[0]?.payload?.producto_formulado || ''}
+                />
                 <Bar dataKey="total_venta_usd" radius={[0, 6, 6, 0]}>
                   {ventasProdFormulado.slice(0, 10).map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                 </Bar>
@@ -355,12 +362,19 @@ export default function DashboardVentaRC() {
           <div className="chart-container">
             <h3 className="text-base font-bold text-gray-900 mb-1">Ventas por Nombre de Producto</h3>
             <p className="text-xs text-gray-400 mb-4">Top 10 SKUs — {grupoLabel}</p>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={ventasNombreProd.slice(0, 10)} layout="vertical" margin={{ left: 130 }}>
+            <ResponsiveContainer width="100%" height={380}>
+              <BarChart
+                data={ventasNombreProd.slice(0, 10).map(p => ({ ...p, label: (p.nombre_producto || '').length > 28 ? (p.nombre_producto || '').slice(0, 27) + '…' : (p.nombre_producto || '') }))}
+                layout="vertical"
+                margin={{ left: 10, right: 20, top: 5, bottom: 5 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="nombre_producto" tick={{ fontSize: 10 }} width={130} interval={0} />
-                <Tooltip formatter={(value: any) => [formatUSD(value), 'Venta USD']} />
+                <YAxis type="category" dataKey="label" tick={{ fontSize: 11 }} width={210} interval={0} />
+                <Tooltip
+                  formatter={(value: any) => [formatUSD(value), 'Venta USD']}
+                  labelFormatter={(_l, payload: any) => payload?.[0]?.payload?.nombre_producto || ''}
+                />
                 <Bar dataKey="total_venta_usd" radius={[0, 6, 6, 0]}>
                   {ventasNombreProd.slice(0, 10).map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                 </Bar>
