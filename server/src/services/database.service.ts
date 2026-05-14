@@ -270,12 +270,17 @@ export const dbService = {
     // Finanzas reporta consolidado (Peru + ventas inter-filial Ecuador)
     const where: string[] = ['1=1'];
 
-    // EXCLUSION 1: SALDOS INICIALES contables.
-    // 487 filas en feb 2026 por $718k son saldos iniciales (apertura contable),
-    // no son venta de producto real. Concepto identificable por Nombre_Producto.
-    // Las comisiones bancarias y anticipos NO se excluyen — son transacciones
-    // reales (montos chicos) y CEO los incluye en el cierre Finanzas.
-    where.push(`(Nombre_Producto IS NULL OR Nombre_Producto NOT LIKE '%SALDOS INICIALES%')`);
+    // EXCLUSION 1: SALDOS INICIALES contables + COMISIONES BANCARIAS.
+    // - 487 filas en feb 2026 por $718k son saldos iniciales (apertura contable).
+    // - 1 comisión marzo ($16.20) + 3 comisiones abril ($46.61) son cargos
+    //   administrativos por retiro de letras, no venta de producto.
+    // Ambos confirmados como NO venta por reporte SAP oficial del CEO (abril cuadra
+    // al peso post-exclusion: venta $1,080,473.09, costo $858,847, gan $221,626).
+    where.push(`(Nombre_Producto IS NULL OR (
+      Nombre_Producto NOT LIKE '%SALDOS INICIALES%'
+      AND Nombre_Producto NOT LIKE '%COMISION%'
+      AND Nombre_Producto NOT LIKE '%COMISIÓN%'
+    ))`);
 
     // EXCLUSION 2: deduplicacion Peru/Ecuador inter-filial.
     // Bug del ETL: las facturas a POINT DEL ECUADOR AGROPOINT S.A. (cliente
