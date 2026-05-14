@@ -270,12 +270,26 @@ export const dbService = {
     // Finanzas reporta consolidado (Peru + ventas inter-filial Ecuador)
     const where: string[] = ['1=1'];
 
-    // EXCLUSION PERMANENTE: documentos NO asociados a venta de producto.
+    // EXCLUSION 1: documentos NO asociados a venta de producto.
     // Captura: saldos iniciales contables (487 filas/$718k en feb 2026), comisiones
     // bancarias por retiro de letras, anticipos en Documento Interno, y cualquier
-    // futuro doc sin producto. Criterio unico y robusto: Codigo_Producto IS NOT NULL.
-    // El CEO no cuenta estos como venta. Aplica a TODOS los KPIs, charts y rankings.
+    // futuro doc sin producto. El CEO no cuenta estos como venta.
     where.push(`Codigo_Producto IS NOT NULL`);
+
+    // EXCLUSION 2: deduplicacion Peru/Ecuador inter-filial.
+    // Bug del ETL: las facturas a POINT DEL ECUADOR AGROPOINT S.A. (cliente
+    // inter-filial) cargan 2 veces — una con Pais='Peru', otra con Pais='Ecuador',
+    // mismo Numero_SAP y Codigo_Producto. Inflo marzo 2026 en +$600. Excluimos
+    // la copia con Pais='Ecuador' si existe gemela Peru con misma factura+producto.
+    where.push(`NOT (
+      Pais = 'Ecuador'
+      AND EXISTS (
+        SELECT 1 FROM dbo.stg_rpt_ventas_detallado dup
+        WHERE dup.Numero_SAP = dbo.stg_rpt_ventas_detallado.Numero_SAP
+          AND ISNULL(dup.Codigo_Producto,'') = ISNULL(dbo.stg_rpt_ventas_detallado.Codigo_Producto,'')
+          AND dup.Pais = 'Peru'
+      )
+    )`);
 
     if (filtros.familia) {
       const vals = (filtros.familia as string).split(',');
