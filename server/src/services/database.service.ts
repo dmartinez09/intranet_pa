@@ -270,13 +270,12 @@ export const dbService = {
     // Finanzas reporta consolidado (Peru + ventas inter-filial Ecuador)
     const where: string[] = ['1=1'];
 
-    // EXCLUSION PERMANENTE: comisiones bancarias / cargos administrativos por retiro de
-    // letras y conceptos similares (Nota de Debito FD01 sin codigo producto, concepto admin).
-    // El CEO no las cuenta como venta. Aplica a TODOS los KPIs, charts y rankings.
-    where.push(`(
-      ISNULL(Nombre_Producto,'') NOT LIKE '%COMISION%'
-      AND ISNULL(Nombre_Producto,'') NOT LIKE '%COMISIÓN%'
-    )`);
+    // EXCLUSION PERMANENTE: documentos NO asociados a venta de producto.
+    // Captura: saldos iniciales contables (487 filas/$718k en feb 2026), comisiones
+    // bancarias por retiro de letras, anticipos en Documento Interno, y cualquier
+    // futuro doc sin producto. Criterio unico y robusto: Codigo_Producto IS NOT NULL.
+    // El CEO no cuenta estos como venta. Aplica a TODOS los KPIs, charts y rankings.
+    where.push(`Codigo_Producto IS NOT NULL`);
 
     if (filtros.familia) {
       const vals = (filtros.familia as string).split(',');
