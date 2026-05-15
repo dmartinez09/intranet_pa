@@ -24,6 +24,8 @@ server/uploads/*
 
 # Local data (persisted on server)
 # server/data/budgets.json — tracked: necesario en deploy de Azure (filesystem ephemeral)
+# server/data/uruguay-bot-config.json — NO tracked (persiste en DB: dbo.intranet_uruguay_bot_config)
+server/data/uruguay-bot-config.json
 
 # Claude Code (local context, settings, worktrees)
 .claude/

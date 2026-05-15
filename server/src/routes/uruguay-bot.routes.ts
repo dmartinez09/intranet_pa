@@ -15,7 +15,7 @@ router.use(requireAdmin);
 
 router.get('/config', async (_req: Request, res: Response) => {
   try {
-    const cfg = readConfig();
+    const cfg = await readConfig();
     const sched = uruguayBotScheduler.status();
     res.json({ success: true, data: { ...cfg, scheduler: sched } });
   } catch (err: any) {
@@ -25,7 +25,7 @@ router.get('/config', async (_req: Request, res: Response) => {
 
 router.put('/config', async (req: Request, res: Response) => {
   try {
-    const cur = readConfig();
+    const cur = await readConfig();
     const body = req.body || {};
     const next = {
       ...cur,
@@ -35,9 +35,10 @@ router.put('/config', async (req: Request, res: Response) => {
       sharepointUrl: body.sharepointUrl !== undefined ? String(body.sharepointUrl) : cur.sharepointUrl,
       timezone: cur.timezone,
     };
-    writeConfig(next, req.user?.username || 'admin');
+    await writeConfig(next, req.user?.username || 'admin');
     uruguayBotScheduler.reschedule();
-    res.json({ success: true, data: readConfig() });
+    const updated = await readConfig();
+    res.json({ success: true, data: updated });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -58,7 +59,7 @@ router.get('/data-info', async (_req: Request, res: Response) => {
 
 router.get('/sharepoint/resolve', async (req: Request, res: Response) => {
   try {
-    const url = String(req.query.url || readConfig().sharepointUrl);
+    const url = String(req.query.url || (await readConfig()).sharepointUrl);
     if (!url) return res.status(400).json({ success: false, message: 'Falta URL' });
     if (!sharepointService.isConfigured()) {
       return res.status(400).json({ success: false, message: 'Microsoft Graph no está configurado en el server.' });
@@ -73,7 +74,7 @@ router.get('/sharepoint/resolve', async (req: Request, res: Response) => {
 
 router.get('/sharepoint/list', async (req: Request, res: Response) => {
   try {
-    const url = String(req.query.url || readConfig().sharepointUrl);
+    const url = String(req.query.url || (await readConfig()).sharepointUrl);
     const subPath = String(req.query.path || '');  // e.g. '/Uruguay/Carpetas Individuales'
     if (!url) return res.status(400).json({ success: false, message: 'Falta URL base' });
     const loc = await sharepointService.resolveLocation(url);

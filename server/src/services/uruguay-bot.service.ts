@@ -1,5 +1,3 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import ExcelJS from 'exceljs';
 import { getDbPool, sql } from '../config/database';
 import { ventasUruguayService, VentaUruguayRow } from './ventas-uruguay.service';
@@ -19,22 +17,78 @@ export interface UruguayBotConfig {
   lastUpdatedBy: string | null;
 }
 
-const CONFIG_PATH = path.join(__dirname, '../../data/uruguay-bot-config.json');
+// [FIX 2026-05-15] Persistencia movida de JSON file a DB.
+// El JSON file estaba tracked en git → cada deploy a Azure App Service sobrescribía
+// el enabled=true del usuario con enabled=false del repo, desactivando el bot.
+// Ahora persistimos en dbo.intranet_uruguay_bot_config (migración 005).
 
-export function readConfig(): UruguayBotConfig {
-  if (!fs.existsSync(CONFIG_PATH)) {
-    return {
-      enabled: false, scheduleHour: 7, scheduleMinute: 0, timezone: 'America/Lima',
-      sharepointUrl: '', lastUpdate: null, lastUpdatedBy: null,
+const DEFAULT_CONFIG: UruguayBotConfig = {
+  enabled: false, scheduleHour: 7, scheduleMinute: 0, timezone: 'America/Lima',
+  sharepointUrl: '', lastUpdate: null, lastUpdatedBy: null,
+};
+
+// Cache in-memory para evitar query DB en cada tick del scheduler
+let configCache: UruguayBotConfig | null = null;
+
+export async function readConfig(): Promise<UruguayBotConfig> {
+  try {
+    const pool = await getDbPool();
+    const r = await pool.request().query(`
+      SELECT TOP 1 enabled, schedule_hour, schedule_minute, timezone, sharepoint_url,
+             updated_by, updated_at
+      FROM dbo.intranet_uruguay_bot_config
+      ORDER BY id ASC
+    `);
+    if (!r.recordset.length) {
+      configCache = DEFAULT_CONFIG;
+      return DEFAULT_CONFIG;
+    }
+    const row = r.recordset[0];
+    const cfg: UruguayBotConfig = {
+      enabled: !!row.enabled,
+      scheduleHour: row.schedule_hour,
+      scheduleMinute: row.schedule_minute,
+      timezone: row.timezone || 'America/Lima',
+      sharepointUrl: row.sharepoint_url || '',
+      lastUpdate: row.updated_at ? new Date(row.updated_at).toISOString() : null,
+      lastUpdatedBy: row.updated_by || null,
     };
+    configCache = cfg;
+    return cfg;
+  } catch (err: any) {
+    console.error('[UruguayBot] readConfig DB error:', err?.message || err);
+    // Si DB falla, devolver cache previa o defaults — nunca tirar al scheduler abajo
+    return configCache || DEFAULT_CONFIG;
   }
-  return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
 }
 
-export function writeConfig(c: UruguayBotConfig, by: string): void {
-  c.lastUpdate = new Date().toISOString();
-  c.lastUpdatedBy = by;
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(c, null, 2), 'utf-8');
+/** Versión sincrónica que solo usa cache. Para usos donde no se puede await. */
+export function readConfigSync(): UruguayBotConfig {
+  return configCache || DEFAULT_CONFIG;
+}
+
+export async function writeConfig(c: UruguayBotConfig, by: string): Promise<void> {
+  const pool = await getDbPool();
+  await pool.request()
+    .input('en', c.enabled ? 1 : 0)
+    .input('sh', c.scheduleHour)
+    .input('sm', c.scheduleMinute)
+    .input('tz', c.timezone || 'America/Lima')
+    .input('url', c.sharepointUrl || '')
+    .input('by', by)
+    .query(`
+      UPDATE dbo.intranet_uruguay_bot_config
+      SET enabled = @en,
+          schedule_hour = @sh,
+          schedule_minute = @sm,
+          timezone = @tz,
+          sharepoint_url = @url,
+          updated_by = @by,
+          updated_at = SYSDATETIME()
+      WHERE id = (SELECT TOP 1 id FROM dbo.intranet_uruguay_bot_config ORDER BY id ASC)
+    `);
+  // Invalida cache para que próximo readConfig() traiga el nuevo valor
+  configCache = null;
 }
 
 // ============================================================
@@ -327,7 +381,7 @@ export async function runBot(opts: {
       throw new Error('SharePoint/Graph no está configurado (faltan MS_TENANT_ID/MS_CLIENT_ID/MS_CLIENT_SECRET).');
     }
 
-    const cfg = readConfig();
+    const cfg = await readConfig();
     if (!cfg.sharepointUrl) throw new Error('Falta configurar la URL de SharePoint en el bot.');
 
     // Resolver SharePoint
