@@ -57,13 +57,48 @@ export default function AvanceComercialRC() {
     productos_formulados: [], nombres_producto: [],
   });
 
-  useEffect(() => {
-    loadFiltros();
-  }, []);
+  const [initialized, setInitialized] = useState(false);
 
+  // Construye los params actuales (filtros + grupo + periodo) para enviar tanto a
+  // /venta-rc/filtros (cascading) como a las queries de datos.
+  function buildFilterParams(): Record<string, any> {
+    const p: Record<string, any> = { year, month_start: monthStart, month_end: monthEnd, grupo_cliente: grupoCliente };
+    if (filtros.familias.length) p.familia = filtros.familias.join(',');
+    if (filtros.sub_familias.length) p.sub_familia = filtros.sub_familias.join(',');
+    if (filtros.ingredientes_activos.length) p.ingrediente_activo = filtros.ingredientes_activos.join(',');
+    if (filtros.vendedores.length) p.vendedor = filtros.vendedores.join(',');
+    if (filtros.zonas.length) p.zona = filtros.zonas.join(',');
+    if (filtros.tipos_documento.length) p.tipo_documento = filtros.tipos_documento.join(',');
+    if (filtros.series_documentos.length) p.division = filtros.series_documentos.join(',');
+    if (filtros.maestro_tipos.length) p.maestro_tipo = filtros.maestro_tipos.join(',');
+    if (filtros.productos_formulados.length) p.producto_formulado = filtros.productos_formulados.join(',');
+    if (filtros.nombres_producto.length) p.nombre_producto = filtros.nombres_producto.join(',');
+    return p;
+  }
+
+  // MOUNT: cargar filtros + datos iniciales una sola vez
   useEffect(() => {
+    loadFiltros({ grupo_cliente: grupoCliente });
     loadData(grupoCliente);
-  }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
+    setInitialized(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Recarga cuando cambia grupo, año o rango de meses (manteniendo filtros activos)
+  useEffect(() => {
+    if (initialized) {
+      loadData(grupoCliente);
+    }
+  }, [grupoCliente, year, monthStart, monthEnd]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // CASCADING: cuando cambia alguna selección de filtro, recarga las opciones
+  // del dropdown restringidas por las demás selecciones (debounce 300ms).
+  useEffect(() => {
+    if (!initialized) return;
+    const t = setTimeout(() => {
+      loadFiltros(buildFilterParams());
+    }, 300);
+    return () => clearTimeout(t);
+  }, [filtros, grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadData(grupo: string) {
     setLoading(true);
@@ -94,10 +129,11 @@ export default function AvanceComercialRC() {
     }
   }
 
-  async function loadFiltros() {
+  async function loadFiltros(params?: Record<string, any>) {
     try {
-      // Pasar grupo_cliente para que el dropdown de Vendedor se restrinja al grupo actual via maestro
-      const res = await ventaRCApi.getFiltros({ grupo_cliente: grupoCliente });
+      // Pasar todos los filtros activos + grupo_cliente para cascading.
+      // Cada dropdown muestra solo opciones compatibles con las otras selecciones.
+      const res = await ventaRCApi.getFiltros(params || { grupo_cliente: grupoCliente });
       setOpcionesFiltro(res.data.data);
     } catch (err) {
       console.error(err);
@@ -231,12 +267,19 @@ export default function AvanceComercialRC() {
         </div>
       )}
 
-      {loading ? (
+      {loading && vendedores.length === 0 ? (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
         </div>
       ) : (
         <>
+          {/* Indicador sutil de actualización (no bloquea la UI) */}
+          {loading && (
+            <div className="fixed top-20 right-6 z-50 bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-2 text-sm text-brand-700 border border-brand-200">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Actualizando...</span>
+            </div>
+          )}
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
