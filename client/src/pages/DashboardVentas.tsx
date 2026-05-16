@@ -89,10 +89,9 @@ export default function DashboardVentas() {
 
   // Date filters — default to current month
   const now = new Date();
-  const currentYear = (new Date(now.getFullYear(), now.getMonth() - 1, 1)).getFullYear();
-  // Default = mes anterior cerrado (CEO/Finanzas revisa mes completo)
-  const _prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const currentMonth = _prev.getMonth() + 1; // 1-12
+  // Default = mes EN CURSO (vista en vivo de ventas del mes)
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1; // 1-12
   const [year, setYear] = useState(currentYear);
   const [monthStart, setMonthStart] = useState(currentMonth);
   const [monthEnd, setMonthEnd] = useState(currentMonth);
