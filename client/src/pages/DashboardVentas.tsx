@@ -83,6 +83,9 @@ export default function DashboardVentas() {
   const [filtroCodigo, setFiltroCodigo] = useState<string>('');
   const [detallePage, setDetallePage] = useState(1);
   const [lastParams, setLastParams] = useState<any>(null);
+  // [2026-05-15] Última actualización exitosa de datos. Se actualiza en cada loadData()
+  // exitoso y se muestra en el subtitle. Auto-refresh cada 3 horas (DF también corre cada 3h).
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [opcionesFiltro, setOpcionesFiltro] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -135,6 +138,18 @@ export default function DashboardVentas() {
     return () => clearTimeout(t);
   }, [filtros, grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // [2026-05-15] AUTO-REFRESH cada 3 horas — sincronizado con el DataFactory.
+  // CEO requirió que la dashboard se actualice automáticamente cada 3h.
+  useEffect(() => {
+    if (!initialized) return;
+    const THREE_HOURS = 3 * 60 * 60 * 1000;
+    const interval = setInterval(() => {
+      console.log('[DashboardVentas] Auto-refresh cada 3h');
+      loadData({ ...buildFilterParams(), year, month_start: monthStart, month_end: monthEnd });
+    }, THREE_HOURS);
+    return () => clearInterval(interval);
+  }, [initialized, grupoCliente, year, monthStart, monthEnd, filtros]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function loadData(params?: any) {
     setLoading(true);
     try {
@@ -155,6 +170,7 @@ export default function DashboardVentas() {
       setVentasDiarias(diariaRes.data.data);
       setVentasVendedor(vendedorRes.data.data);
       setLastParams(p);
+      setLastUpdate(new Date());
       // Lanza detalle (audit) y transacciones en paralelo
       loadDetalle(p);
       loadTransacciones(p);
@@ -339,7 +355,7 @@ export default function DashboardVentas() {
       <div className="min-h-screen">
         <Header
         title="Dashboard de Ventas"
-        subtitle={`${periodLabel} - Peru`}
+        subtitle={`${periodLabel} - Peru${lastUpdate ? ` · Última actualización: ${lastUpdate.toLocaleString('es-PE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}` : ''}`}
         disclaimer="los números se obtienen desde SAP al datawarehouse, faltan algunas validaciones"
       />
         <div className="flex items-center justify-center h-96">
@@ -353,7 +369,7 @@ export default function DashboardVentas() {
     <div className="min-h-screen">
       <Header
         title="Dashboard de Ventas"
-        subtitle={`${periodLabel} - Peru`}
+        subtitle={`${periodLabel} - Peru${lastUpdate ? ` · Última actualización: ${lastUpdate.toLocaleString('es-PE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}` : ''}`}
         disclaimer="los números se obtienen desde SAP al datawarehouse, faltan algunas validaciones"
       />
 

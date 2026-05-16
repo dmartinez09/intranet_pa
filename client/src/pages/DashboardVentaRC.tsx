@@ -66,6 +66,9 @@ export default function DashboardVentaRC() {
   const [ventasVendedor, setVentasVendedor] = useState<any[]>([]);
   const [opcionesFiltro, setOpcionesFiltro] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(true);
+  // [2026-05-15] Última actualización exitosa de datos. Auto-refresh cada 3h (DF también corre cada 3h).
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [lastLoadParams, setLastLoadParams] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const now = new Date();
@@ -90,6 +93,17 @@ export default function DashboardVentaRC() {
     clearFilters();
   }, [grupoCliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // [2026-05-15] AUTO-REFRESH cada 3 horas — sincronizado con el DataFactory.
+  // CEO requirió que la dashboard se actualice automáticamente cada 3h.
+  useEffect(() => {
+    const THREE_HOURS = 3 * 60 * 60 * 1000;
+    const interval = setInterval(() => {
+      console.log('[DashboardVentaRC] Auto-refresh cada 3h');
+      loadData(lastLoadParams || undefined);
+    }, THREE_HOURS);
+    return () => clearInterval(interval);
+  }, [lastLoadParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function loadData(params?: any) {
     setLoading(true);
     try {
@@ -112,6 +126,8 @@ export default function DashboardVentaRC() {
       setVentasVendedor(vendedorRes.data.data);
       setVentasProdFormulado(pfRes.data.data || []);
       setVentasNombreProd(npRes.data.data || []);
+      setLastUpdate(new Date());
+      setLastLoadParams(params);
     } catch (err) {
       console.error('Error loading Venta RC dashboard:', err);
     } finally {
@@ -171,7 +187,7 @@ export default function DashboardVentaRC() {
   if (loading && !kpis) {
     return (
       <div className="min-h-screen">
-        <Header title="Dashboard Venta RC" subtitle={`${grupoLabel} — ${periodLabel}`} />
+        <Header title="Dashboard Venta RC" subtitle={`${grupoLabel} — ${periodLabel}${lastUpdate ? ` · Última actualización: ${lastUpdate.toLocaleString('es-PE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}` : ''}`} />
         <div className="flex items-center justify-center h-96">
           <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
         </div>
@@ -181,7 +197,7 @@ export default function DashboardVentaRC() {
 
   return (
     <div className="min-h-screen">
-      <Header title="Dashboard Venta RC" subtitle={`${grupoLabel} — ${periodLabel} - Peru`} />
+      <Header title="Dashboard Venta RC" subtitle={`${grupoLabel} — ${periodLabel} - Peru${lastUpdate ? ` · Última actualización: ${lastUpdate.toLocaleString('es-PE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}` : ''}`} />
 
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
