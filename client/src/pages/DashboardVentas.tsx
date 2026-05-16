@@ -1059,12 +1059,13 @@ function KpiCard({ icon: Icon, label, value, subtext, trend, color }: {
     purple: 'from-purple-400 to-purple-600',
     cyan: 'from-cyan-400 to-cyan-600',
     amber: 'from-amber-400 to-amber-600',
+    red: 'from-red-400 to-red-600',
   };
 
   return (
     <div className="kpi-card">
       <div className="flex items-center justify-between mb-3">
-        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colorMap[color]} flex items-center justify-center shadow-lg`}>
+        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colorMap[color] || colorMap.brand} flex items-center justify-center shadow-lg`}>
           <Icon className="w-5 h-5 text-white" />
         </div>
         {trend !== undefined && (
