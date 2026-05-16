@@ -120,12 +120,12 @@ const MOCK_VENTAS = generateMockVentas(500);
 
 // ---- Módulos disponibles (catálogo compartido) ----
 export const ALL_MODULES = [
-  'dashboard_ventas', 'presupuesto', 'avance_comercial',
-  'venta_rc', 'venta_rc_agro', 'venta_rc_sierra_selva', 'venta_rc_costa', 'venta_rc_online',
+  'dashboard_ventas', 'presupuesto', 'avance_comercial', 'venta_margenes_zona',
+  'venta_rc', 'venta_rc_agro', 'venta_rc_sierra_selva', 'venta_rc_costa', 'venta_rc_online', 'venta_rc_bioscience',
   'cartera', 'estado_cuenta',
   'facturacion', 'letras',
   'alertas', 'diccionario',
-  'inteligencia_comercial', 'mapa_interactivo', 'comex',
+  'inteligencia_comercial', 'mapa_interactivo', 'fichas_tecnicas', 'comex',
 ] as const;
 export type AppModuleCode = typeof ALL_MODULES[number];
 

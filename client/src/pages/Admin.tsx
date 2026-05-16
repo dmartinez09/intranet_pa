@@ -46,6 +46,7 @@ const MODULE_GROUPS: { group: string; icon: any; modules: { code: string; label:
     { code: 'dashboard_ventas', label: 'Dashboard' },
     { code: 'presupuesto', label: 'Presupuesto' },
     { code: 'avance_comercial', label: 'Avance Comercial' },
+    { code: 'venta_margenes_zona', label: 'Márgenes por Zona' },
   ]},
   { group: 'Venta RC', icon: Target, modules: [
     { code: 'venta_rc', label: 'Venta RC (todos los grupos)' },
@@ -53,6 +54,7 @@ const MODULE_GROUPS: { group: string; icon: any; modules: { code: string; label:
     { code: 'venta_rc_sierra_selva', label: 'Dist. Sierra / Selva' },
     { code: 'venta_rc_costa', label: 'Dist. Costa' },
     { code: 'venta_rc_online', label: 'Online' },
+    { code: 'venta_rc_bioscience', label: 'Bioscience' },
   ]},
   { group: 'Crédito', icon: DollarSign, modules: [
     { code: 'cartera', label: 'Cartera y Recaudo' },
@@ -65,6 +67,7 @@ const MODULE_GROUPS: { group: string; icon: any; modules: { code: string; label:
   { group: 'Inteligencia Comercial Beta', icon: Sprout, modules: [
     { code: 'inteligencia_comercial', label: 'Inteligencia Comercial' },
     { code: 'mapa_interactivo', label: 'Mapa Interactivo' },
+    { code: 'fichas_tecnicas', label: 'Fichas Técnicas SENASA' },
     { code: 'comex', label: 'Competidores / COMEX' },
   ]},
   { group: 'General', icon: UserCheck, modules: [

@@ -52,6 +52,7 @@ const VENTA_RC_GRUPO_MODULE: Record<string, string> = {
   'sierra-selva': 'venta_rc_sierra_selva',
   costa: 'venta_rc_costa',
   online: 'venta_rc_online',
+  bioscience: 'venta_rc_bioscience',
 };
 
 function getDefaultRoute(user: AuthUser | null): string {
@@ -138,9 +139,9 @@ export default function App() {
         {/* Ventas module — panoramic view with grupo filter */}
         <Route path="/" element={<Navigate to={defaultRoute} replace />} />
         <Route path="/ventas/dashboard" element={<ProtectedRoute module="dashboard_ventas"><DashboardVentas /></ProtectedRoute>} />
-        <Route path="/ventas/presupuesto" element={<ProtectedRoute module="dashboard_ventas"><Suspense fallback={LazyFallback}><Presupuesto /></Suspense></ProtectedRoute>} />
-        <Route path="/ventas/avance-comercial" element={<ProtectedRoute module="dashboard_ventas"><Suspense fallback={LazyFallback}><AvanceComercial /></Suspense></ProtectedRoute>} />
-        <Route path="/ventas/margenes-zona" element={<ProtectedRoute module="dashboard_ventas"><Suspense fallback={LazyFallback}><VentasMargenesZona /></Suspense></ProtectedRoute>} />
+        <Route path="/ventas/presupuesto" element={<ProtectedRoute anyOf={["presupuesto", "dashboard_ventas"]}><Suspense fallback={LazyFallback}><Presupuesto /></Suspense></ProtectedRoute>} />
+        <Route path="/ventas/avance-comercial" element={<ProtectedRoute anyOf={["avance_comercial", "dashboard_ventas"]}><Suspense fallback={LazyFallback}><AvanceComercial /></Suspense></ProtectedRoute>} />
+        <Route path="/ventas/margenes-zona" element={<ProtectedRoute anyOf={["venta_margenes_zona", "dashboard_ventas"]}><Suspense fallback={LazyFallback}><VentasMargenesZona /></Suspense></ProtectedRoute>} />
 
         {/* Venta RC module — parameterized by grupo */}
         <Route path="/venta-rc/:grupo/dashboard" element={<VentaRCGrupoRoute><DashboardVentaRC /></VentaRCGrupoRoute>} />
@@ -154,7 +155,7 @@ export default function App() {
 
         {/* Credito y Cobranzas module */}
         <Route path="/credito/cartera" element={<ProtectedRoute module="cartera"><Cartera /></ProtectedRoute>} />
-        <Route path="/credito/estado-cuenta" element={<ProtectedRoute module="cartera"><EstadoCuenta /></ProtectedRoute>} />
+        <Route path="/credito/estado-cuenta" element={<ProtectedRoute anyOf={["estado_cuenta", "cartera"]}><EstadoCuenta /></ProtectedRoute>} />
 
         {/* Logistica module */}
         <Route path="/logistica/comprobantes" element={<ProtectedRoute module="facturacion"><Facturacion /></ProtectedRoute>} />
@@ -168,7 +169,7 @@ export default function App() {
         {/* Inteligencia Comercial Beta */}
         <Route path="/inteligencia/dashboard" element={<ProtectedRoute module="inteligencia_comercial"><Suspense fallback={LazyFallback}><InteligenciaComercial /></Suspense></ProtectedRoute>} />
         <Route path="/inteligencia/mapa" element={<ProtectedRoute module="mapa_interactivo"><Suspense fallback={LazyFallback}><MapaInteractivo /></Suspense></ProtectedRoute>} />
-        <Route path="/inteligencia/fichas-tecnicas" element={<ProtectedRoute module="inteligencia_comercial"><Suspense fallback={LazyFallback}><FichasTecnicas /></Suspense></ProtectedRoute>} />
+        <Route path="/inteligencia/fichas-tecnicas" element={<ProtectedRoute anyOf={["fichas_tecnicas", "inteligencia_comercial"]}><Suspense fallback={LazyFallback}><FichasTecnicas /></Suspense></ProtectedRoute>} />
 
         {/* COMEX y Competidores */}
         <Route path="/inteligencia/comex/dashboard" element={<ProtectedRoute module="comex"><Suspense fallback={LazyFallback}><DashboardCOMEX /></Suspense></ProtectedRoute>} />
