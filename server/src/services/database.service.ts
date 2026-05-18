@@ -1503,7 +1503,7 @@ export const dbService = {
     //   3. Excluir docs con F_Vcto < 2023-12-21 (cartera muy antigua ya provisionada).
     where.push(`(Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')`);
     where.push(`(TD IS NULL OR TD <> 'ANT')`);
-    // [2026-05-18] CEO: incluir toda la cartera viva, sin corte por F_Vcto
+    where.push(`(F_Vcto IS NULL OR F_Vcto >= '2023-12-21')`);
 
     if (filtros.vendedor) {
       request.input('vendedor', sql.NVarChar, filtros.vendedor);
@@ -1609,6 +1609,7 @@ export const dbService = {
       --   3. Excluir docs con F_Vcto < 2023-12-21 (cartera muy antigua)
       WHERE (Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')
         AND (TD IS NULL OR TD <> 'ANT')
+        AND (F_Vcto IS NULL OR F_Vcto >= '2023-12-21')
     `);
     return result.recordset[0];
   },
