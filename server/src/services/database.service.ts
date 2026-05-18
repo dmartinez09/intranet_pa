@@ -1500,8 +1500,10 @@ export const dbService = {
     // [2026-05-18] Filtros FIJOS según CEO — aplican siempre (grilla, Excel, KPIs):
     //   1. Excluir vendedor "Ningún empleado de ventas/comprador" (cartera sin vendedor).
     //   2. Excluir TD='ANT' (Anticipos — no son cartera por cobrar, son saldos a favor del cliente).
+    //   3. Excluir docs con F_Vcto < 2023-12-21 (cartera muy antigua ya provisionada).
     where.push(`(Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')`);
     where.push(`(TD IS NULL OR TD <> 'ANT')`);
+    where.push(`(F_Vcto IS NULL OR F_Vcto >= '2023-12-21')`);
 
     if (filtros.vendedor) {
       request.input('vendedor', sql.NVarChar, filtros.vendedor);
@@ -1604,8 +1606,10 @@ export const dbService = {
       -- [2026-05-18] Filtros FIJOS consistentes con getEstadoCuenta:
       --   1. Excluir vendedor "Ningún empleado de ventas/comprador"
       --   2. Excluir TD='ANT' (Anticipos)
+      --   3. Excluir docs con F_Vcto < 2023-12-21 (cartera muy antigua)
       WHERE (Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')
         AND (TD IS NULL OR TD <> 'ANT')
+        AND (F_Vcto IS NULL OR F_Vcto >= '2023-12-21')
     `);
     return result.recordset[0];
   },
