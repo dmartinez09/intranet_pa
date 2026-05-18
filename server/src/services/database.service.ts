@@ -1497,6 +1497,11 @@ export const dbService = {
     const request = pool.request();
     const where: string[] = ['1=1'];
 
+    // [2026-05-18] Filtro FIJO: nunca incluir vendedor "Ningún empleado de ventas/comprador"
+    // (SAP los asigna a doc sin vendedor real; no son cartera asignable a vendedor).
+    // Aplica a grilla, Excel, KPIs — siempre.
+    where.push(`(Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')`);
+
     if (filtros.vendedor) {
       request.input('vendedor', sql.NVarChar, filtros.vendedor);
       where.push('Cli_Vendedor = @vendedor');
@@ -1563,7 +1568,7 @@ export const dbService = {
   async getEstadoCuentaFiltros(): Promise<any> {
     const pool = await getDbPool();
     const [vendedores, tiposDoc, monedas, fechaCorte] = await Promise.all([
-      pool.request().query(`SELECT DISTINCT Cli_Vendedor FROM dbo.stg_estado_cuenta_jdt WHERE Cli_Vendedor IS NOT NULL ORDER BY Cli_Vendedor`),
+      pool.request().query(`SELECT DISTINCT Cli_Vendedor FROM dbo.stg_estado_cuenta_jdt WHERE Cli_Vendedor IS NOT NULL AND Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%' ORDER BY Cli_Vendedor`),
       pool.request().query(`SELECT DISTINCT TD FROM dbo.stg_estado_cuenta_jdt WHERE TD IS NOT NULL ORDER BY TD`),
       pool.request().query(`SELECT DISTINCT Moneda FROM dbo.stg_estado_cuenta_jdt WHERE Moneda IS NOT NULL ORDER BY Moneda`),
       pool.request().query(`SELECT TOP 1 Fecha_Corte FROM dbo.stg_estado_cuenta_jdt ORDER BY Fecha_Corte DESC`),
@@ -1594,6 +1599,8 @@ export const dbService = {
         ABS(SUM(CASE WHEN CAST(Saldo AS FLOAT) < 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END)) AS notas_anticipos,
         MAX(Fecha_Corte) AS fecha_corte
       FROM dbo.stg_estado_cuenta_jdt
+      -- [2026-05-18] Filtro FIJO consistente con getEstadoCuenta
+      WHERE (Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')
     `);
     return result.recordset[0];
   },

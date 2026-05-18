@@ -232,6 +232,25 @@ router.get('/estado-cuenta/export', async (req, res) => {
       }
     });
 
+    // [2026-05-18] Fila de TOTALES al final — solo saldos POSITIVOS = cartera real ($5.97M CEO)
+    const totalRowIdx = data.length + 4;
+    const totalRow = sheet.getRow(totalRowIdx);
+    const importeTotal = data.reduce((s: number, r: any) => s + (Number(r.importe_original) || 0), 0);
+    const aCuentaTotal = data.reduce((s: number, r: any) => s + (Number(r.a_cuenta) || 0), 0);
+    const saldoCarteraTotal = data.reduce((s: number, r: any) => s + (Number(r.saldo) > 0 ? Number(r.saldo) : 0), 0);
+    totalRow.getCell(10).value = 'TOTAL CARTERA:';
+    totalRow.getCell(10).alignment = { horizontal: 'right' };
+    totalRow.getCell(12).value = importeTotal;
+    totalRow.getCell(13).value = aCuentaTotal;
+    totalRow.getCell(14).value = saldoCarteraTotal;
+    [12, 13, 14].forEach(col => {
+      const cell = totalRow.getCell(col);
+      cell.numFmt = '#,##0.00';
+      cell.font = { bold: true, color: { argb: 'FF00A651' } };
+      cell.border = { top: { style: 'double' }, bottom: { style: 'thin' } };
+    });
+    totalRow.getCell(10).font = { bold: true };
+
     // Auto filter
     sheet.autoFilter = { from: 'A3', to: `T${data.length + 3}` };
 
