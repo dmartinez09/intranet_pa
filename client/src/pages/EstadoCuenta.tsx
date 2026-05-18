@@ -246,7 +246,8 @@ export default function EstadoCuenta() {
   // Antes sumaba neto (incluía NCs/anticipos) → daba ~-$1.3M confuso.
   // Ahora coincide con cartera real ~$5.97M según CEO.
   const filteredTotals = {
-    saldo: data.reduce((s, r) => s + (Number(r.saldo) > 0 ? Number(r.saldo) : 0), 0),
+    // [2026-05-18] NETO: positivos − |NCs/negativos| (consistente con KPIs)
+    saldo: data.reduce((s, r) => s + (Number(r.saldo) || 0), 0),
     importe: data.reduce((s, r) => s + (Number(r.importe_original) || 0), 0),
     a_cuenta: data.reduce((s, r) => s + (Number(r.a_cuenta) || 0), 0),
   };

@@ -237,7 +237,8 @@ router.get('/estado-cuenta/export', async (req, res) => {
     const totalRow = sheet.getRow(totalRowIdx);
     const importeTotal = data.reduce((s: number, r: any) => s + (Number(r.importe_original) || 0), 0);
     const aCuentaTotal = data.reduce((s: number, r: any) => s + (Number(r.a_cuenta) || 0), 0);
-    const saldoCarteraTotal = data.reduce((s: number, r: any) => s + (Number(r.saldo) > 0 ? Number(r.saldo) : 0), 0);
+    // [2026-05-18] NETO: positivos − |NCs/negativos| (consistente con KPIs y grilla)
+    const saldoCarteraTotal = data.reduce((s: number, r: any) => s + (Number(r.saldo) || 0), 0);
     totalRow.getCell(10).value = 'TOTAL CARTERA:';
     totalRow.getCell(10).alignment = { horizontal: 'right' };
     totalRow.getCell(12).value = importeTotal;

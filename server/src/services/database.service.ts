@@ -1503,7 +1503,7 @@ export const dbService = {
     //   3. Excluir docs con F_Vcto < 2023-12-21 (cartera muy antigua ya provisionada).
     where.push(`(Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')`);
     where.push(`(TD IS NULL OR TD <> 'ANT')`);
-    where.push(`(F_Vcto IS NULL OR F_Vcto >= '2023-12-21')`);
+    // [2026-05-18] CEO: incluir toda la cartera viva, sin corte por F_Vcto
 
     if (filtros.vendedor) {
       request.input('vendedor', sql.NVarChar, filtros.vendedor);
@@ -1591,12 +1591,12 @@ export const dbService = {
       SELECT
         COUNT(*) AS total_registros,
         COUNT(DISTINCT CardCode) AS total_clientes,
-        -- Cartera real: solo saldos positivos (deuda del cliente)
-        SUM(CASE WHEN CAST(Saldo AS FLOAT) > 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_total,
-        -- Vencido: saldo positivo y Dias < 0 (fecha vcto pasada)
-        SUM(CASE WHEN CAST(Saldo AS FLOAT) > 0 AND Dias < 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_vencido,
-        -- Vigente: saldo positivo y Dias >= 0
-        SUM(CASE WHEN CAST(Saldo AS FLOAT) > 0 AND Dias >= 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_vigente,
+        -- [2026-05-18] Cartera NETA: positivos − |NCs y otros negativos|
+        -- Las NCs no tienen referencia explícita a FA en SAP → se descuentan del total.
+        SUM(CAST(Saldo AS FLOAT)) AS saldo_total,
+        -- [2026-05-18] NETO por bucket: respeta el signo (NCs/pagos negativos restan en su bucket)
+        SUM(CASE WHEN Dias < 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_vencido,
+        SUM(CASE WHEN Dias >= 0 OR Dias IS NULL THEN CAST(Saldo AS FLOAT) ELSE 0 END) AS saldo_vigente,
         -- Saldo neto (considerando NCs y anticipos)
         SUM(CAST(Saldo AS FLOAT)) AS saldo_neto,
         -- NCs y anticipos (saldos negativos, expresados como monto absoluto)
@@ -1609,7 +1609,6 @@ export const dbService = {
       --   3. Excluir docs con F_Vcto < 2023-12-21 (cartera muy antigua)
       WHERE (Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')
         AND (TD IS NULL OR TD <> 'ANT')
-        AND (F_Vcto IS NULL OR F_Vcto >= '2023-12-21')
     `);
     return result.recordset[0];
   },
