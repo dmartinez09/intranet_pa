@@ -55,6 +55,7 @@ export const ventasApi = {
   getPorSubFamilia: (params?: any) => api.get('/ventas/por-sub-familia', { params }),
   getDiarias: (params?: any) => api.get('/ventas/diarias', { params }),
   getFiltros: (params?: Record<string, any>) => api.get('/ventas/filtros', { params }),
+  getLastRefresh: () => api.get<{ success: boolean; data: { last_refresh: string | null; source: string } }>('/ventas/last-refresh'),
   getPorProductoZona: (params?: any) => api.get('/ventas/por-producto-zona', { params }),
   getPorDepartamento: (params?: any) => api.get('/ventas/por-departamento', { params }),
   getDetalle: (params?: any) => api.get('/ventas/detalle', { params }),

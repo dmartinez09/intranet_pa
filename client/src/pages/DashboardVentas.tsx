@@ -170,7 +170,14 @@ export default function DashboardVentas() {
       setVentasDiarias(diariaRes.data.data);
       setVentasVendedor(vendedorRes.data.data);
       setLastParams(p);
-      setLastUpdate(new Date());
+      // [2026-05-18] lastUpdate ahora viene del SQL real (sys.dm_db_index_usage_stats),
+      // refleja la última corrida del DataFactory — NO el momento del click del usuario.
+      ventasApi.getLastRefresh()
+        .then(res => {
+          const ts = res.data?.data?.last_refresh;
+          if (ts) setLastUpdate(new Date(ts));
+        })
+        .catch(err => console.error('getLastRefresh:', err));
       // Lanza detalle (audit) y transacciones en paralelo
       loadDetalle(p);
       loadTransacciones(p);

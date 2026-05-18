@@ -16,6 +16,7 @@ router.get('/diarias', ventasController.getDiarias);
 router.get('/por-sub-familia', ventasController.getPorSubFamilia);
 router.get('/por-producto-zona', ventasController.getPorProductoZona);
 router.get('/filtros', ventasController.getFiltros);
+router.get('/last-refresh', ventasController.getLastRefresh);
 router.get('/por-departamento', ventasController.getPorDepartamento);
 router.get('/detalle', ventasController.getDetalle);
 router.get('/transacciones', ventasController.getTransacciones);

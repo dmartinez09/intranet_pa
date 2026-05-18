@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import MultiSelect from '../components/filters/MultiSelect';
 import DateRangeFilter from '../components/filters/DateRangeFilter';
-import { ventaRCApi } from '../services/api';
+import { ventaRCApi, ventasApi } from '../services/api';
 import { formatUSD, formatNumber, formatPercent, getGrupoFromSlug } from '../lib/utils';
 import {
   DollarSign,
@@ -126,7 +126,14 @@ export default function DashboardVentaRC() {
       setVentasVendedor(vendedorRes.data.data);
       setVentasProdFormulado(pfRes.data.data || []);
       setVentasNombreProd(npRes.data.data || []);
-      setLastUpdate(new Date());
+      // [2026-05-18] lastUpdate ahora viene del SQL real (sys.dm_db_index_usage_stats),
+      // refleja la última corrida del DataFactory — NO el momento del click del usuario.
+      ventasApi.getLastRefresh()
+        .then(res => {
+          const ts = res.data?.data?.last_refresh;
+          if (ts) setLastUpdate(new Date(ts));
+        })
+        .catch(err => console.error('getLastRefresh:', err));
       setLastLoadParams(params);
     } catch (err) {
       console.error('Error loading Venta RC dashboard:', err);

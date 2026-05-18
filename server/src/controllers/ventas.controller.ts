@@ -103,6 +103,18 @@ export const ventasController = {
     }
   },
 
+  // [2026-05-18] Última actualización real de la tabla en SQL (DataFactory UPSERT).
+  // Se muestra en el subtitle de Venta Gerencia y Venta RC.
+  async getLastRefresh(_req: Request, res: Response) {
+    try {
+      const data = await dbService.getLastRefresh();
+      return res.json({ success: true, data });
+    } catch (error) {
+      console.error('[Ventas] LastRefresh error:', error);
+      return res.status(500).json({ success: false, message: 'Error al obtener última actualización' });
+    }
+  },
+
   async getPorProductoZona(req: Request, res: Response) {
     try {
       const data = await dbService.getVentasPorProductoZona(req.query);

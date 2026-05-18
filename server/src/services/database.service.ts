@@ -244,6 +244,36 @@ export const dbService = {
   },
 
   // ---- VENTAS ----
+  /**
+   * [2026-05-18] Última actualización REAL de la tabla stg_rpt_ventas_detallado
+   * desde sys.dm_db_index_usage_stats. Refleja la última corrida del DataFactory
+   * (DF UPSERT cada 3 horas según schedule del usuario).
+   *
+   * Nota: este timestamp se RESETEA si el SQL Server se reinicia. En ese caso
+   * volverá a llenarse en el próximo DF run.
+   */
+  async getLastRefresh(): Promise<{ last_refresh: string | null; source: string }> {
+    if (USE_MOCK_VENTAS) {
+      return { last_refresh: new Date().toISOString(), source: 'mock' };
+    }
+    try {
+      const pool = await getDbPool();
+      const r = await pool.request().query(`
+        SELECT MAX(last_user_update) AS last_user_update
+        FROM sys.dm_db_index_usage_stats
+        WHERE database_id = DB_ID() AND object_id = OBJECT_ID('dbo.stg_rpt_ventas_detallado')
+      `);
+      const ts = r.recordset[0]?.last_user_update;
+      return {
+        last_refresh: ts ? new Date(ts).toISOString() : null,
+        source: 'sys.dm_db_index_usage_stats',
+      };
+    } catch (err: any) {
+      console.error('[getLastRefresh] error:', err?.message || err);
+      return { last_refresh: null, source: 'error' };
+    }
+  },
+
   async getVentas(filtros: any) {
     if (USE_MOCK_VENTAS) {
       let data = [...MOCK_VENTAS];
