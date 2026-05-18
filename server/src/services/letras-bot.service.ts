@@ -245,9 +245,15 @@ async function buildAndSendForLetra(
     await graphService.sendEmailWithAttachments({ to, cc, subject, bodyHtml, attachments: unique });
 
     if (historyId) {
-      await pool.request().input('id', historyId).query(
-        `UPDATE dbo.intranet_letras_bot_history SET status='sent' WHERE id=@id`
-      );
+      // [2026-05-18] Guardar sample del body HTML (primeros 2000 chars) para auditar
+      // que el tracking pixel se está embebiendo correctamente. Temporal.
+      const bodySample = bodyHtml.length > 2000 ? bodyHtml.substring(0, 2000) : bodyHtml;
+      await pool.request()
+        .input('id', historyId)
+        .input('bh', bodySample)
+        .query(`UPDATE dbo.intranet_letras_bot_history
+                SET status='sent', body_html_sample=@bh
+                WHERE id=@id`);
     } else {
       await logSend({
         runDate, triggerType, letraId: letra.id, letraName: letra.name,
