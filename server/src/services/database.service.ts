@@ -1497,10 +1497,11 @@ export const dbService = {
     const request = pool.request();
     const where: string[] = ['1=1'];
 
-    // [2026-05-18] Filtro FIJO: nunca incluir vendedor "Ningún empleado de ventas/comprador"
-    // (SAP los asigna a doc sin vendedor real; no son cartera asignable a vendedor).
-    // Aplica a grilla, Excel, KPIs — siempre.
+    // [2026-05-18] Filtros FIJOS según CEO — aplican siempre (grilla, Excel, KPIs):
+    //   1. Excluir vendedor "Ningún empleado de ventas/comprador" (cartera sin vendedor).
+    //   2. Excluir TD='ANT' (Anticipos — no son cartera por cobrar, son saldos a favor del cliente).
     where.push(`(Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')`);
+    where.push(`(TD IS NULL OR TD <> 'ANT')`);
 
     if (filtros.vendedor) {
       request.input('vendedor', sql.NVarChar, filtros.vendedor);
@@ -1569,7 +1570,8 @@ export const dbService = {
     const pool = await getDbPool();
     const [vendedores, tiposDoc, monedas, fechaCorte] = await Promise.all([
       pool.request().query(`SELECT DISTINCT Cli_Vendedor FROM dbo.stg_estado_cuenta_jdt WHERE Cli_Vendedor IS NOT NULL AND Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%' ORDER BY Cli_Vendedor`),
-      pool.request().query(`SELECT DISTINCT TD FROM dbo.stg_estado_cuenta_jdt WHERE TD IS NOT NULL ORDER BY TD`),
+      // [2026-05-18] Excluir TD='ANT' del dropdown — no es cartera por cobrar
+      pool.request().query(`SELECT DISTINCT TD FROM dbo.stg_estado_cuenta_jdt WHERE TD IS NOT NULL AND TD <> 'ANT' ORDER BY TD`),
       pool.request().query(`SELECT DISTINCT Moneda FROM dbo.stg_estado_cuenta_jdt WHERE Moneda IS NOT NULL ORDER BY Moneda`),
       pool.request().query(`SELECT TOP 1 Fecha_Corte FROM dbo.stg_estado_cuenta_jdt ORDER BY Fecha_Corte DESC`),
     ]);
@@ -1599,8 +1601,11 @@ export const dbService = {
         ABS(SUM(CASE WHEN CAST(Saldo AS FLOAT) < 0 THEN CAST(Saldo AS FLOAT) ELSE 0 END)) AS notas_anticipos,
         MAX(Fecha_Corte) AS fecha_corte
       FROM dbo.stg_estado_cuenta_jdt
-      -- [2026-05-18] Filtro FIJO consistente con getEstadoCuenta
+      -- [2026-05-18] Filtros FIJOS consistentes con getEstadoCuenta:
+      --   1. Excluir vendedor "Ningún empleado de ventas/comprador"
+      --   2. Excluir TD='ANT' (Anticipos)
       WHERE (Cli_Vendedor IS NULL OR Cli_Vendedor NOT LIKE '%empleado de ventas/comprador%')
+        AND (TD IS NULL OR TD <> 'ANT')
     `);
     return result.recordset[0];
   },
