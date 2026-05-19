@@ -62,6 +62,8 @@ export interface ImportacionRow {
   pais_origen: string | null;
   pais_iso2: string | null;
   producto: string | null;
+  ingrediente_activo: string | null;
+  nombre_comercial_producto: string | null;
   periodo_year: number;
   periodo_month: number | null;
   cantidad_kg: number | null;
@@ -117,7 +119,7 @@ export interface PartidaResumen {
   total_valor_cif_usd: number;
   total_cantidad_kg: number;
   empresas_activas: number;
-  empresas_nombres: string[];   // nombres comerciales (top 5 por CIF)
+  empresas_nombres: string[];
   paises_origen: number;
 }
 
@@ -192,7 +194,7 @@ class ComexService {
     };
   }
 
-  // Fuentes externas del dominio COMEX (SUNAT, BCR, MINCETUR, etc.)
+  // Fuentes externas del dominio COMEX
   async getSources(): Promise<CxSource[]> {
     if (!(await tablesExist())) return [];
     const pool = await getDbPool();
@@ -254,7 +256,7 @@ class ComexService {
     return res.recordset;
   }
 
-  // Lista de importaciones filtrable
+  // Lista de importaciones filtrable (NULL-safe join a producto)
   async getImportaciones(filtros: {
     empresa_id?: number; partida_id?: number; pais_id?: number;
     year?: number; month?: number; familia_pa?: string;
@@ -286,6 +288,8 @@ class ComexService {
         pa.nombre AS pais_origen,
         pa.iso2 AS pais_iso2,
         pr.ingrediente_activo AS producto,
+        pr.ingrediente_activo,
+        pr.nombre_comercial AS nombre_comercial_producto,
         f.periodo_year,
         f.periodo_month,
         f.cantidad_kg,
@@ -305,26 +309,27 @@ class ComexService {
     return res.recordset;
   }
 
-  // Ranking de competidores por valor importado
-  async getRankingCompetidores(year?: number, limit = 20): Promise<RankingCompetidor[]> {
+  // Ranking de TODOS los importadores (no se filtra por es_competidor)
+  async getRankingCompetidores(year?: number, limit = 20, month?: number): Promise<RankingCompetidor[]> {
     if (!(await tablesExist())) return [];
     const pool = await getDbPool();
     const req = pool.request();
-    const where: string[] = ['e.es_competidor = 1'];
+    const where: string[] = ['1=1'];
     if (year) { req.input('year', sql.Int, year); where.push('f.periodo_year = @year'); }
+    if (month) { req.input('month', sql.Int, month); where.push('f.periodo_month = @month'); }
 
-    const cap = Math.min(Math.max(limit, 1), 100);
+    const cap = Math.min(Math.max(limit, 1), 200);
 
-    // Total general para calcular share
-    const totalRes = await pool.request()
-      .input('year', sql.Int, year ?? null)
-      .query(`
-        SELECT SUM(f.valor_cif_usd) AS total_cif
-        FROM dbo.icb_cx_fact_importacion f
-        INNER JOIN dbo.icb_cx_dim_empresa e ON f.empresa_id = e.empresa_id
-        WHERE e.es_competidor = 1
-          AND (@year IS NULL OR f.periodo_year = @year)
-      `);
+    // Total general para calcular share (sin filtro es_competidor)
+    const totReq = pool.request();
+    totReq.input('year', sql.Int, year ?? null);
+    totReq.input('month', sql.Int, month ?? null);
+    const totalRes = await totReq.query(`
+      SELECT SUM(f.valor_cif_usd) AS total_cif
+      FROM dbo.icb_cx_fact_importacion f
+      WHERE (@year IS NULL OR f.periodo_year = @year)
+        AND (@month IS NULL OR f.periodo_month = @month)
+    `);
     const totalCif = Number(totalRes.recordset[0]?.total_cif || 0);
 
     const res = await req.query(`
@@ -360,22 +365,25 @@ class ComexService {
   }
 
   // Flujos origen-destino (agregado por país)
-  async getFlows(year?: number, familiaPa?: string): Promise<FlowRow[]> {
+  async getFlows(year?: number, familiaPa?: string, month?: number): Promise<FlowRow[]> {
     if (!(await tablesExist())) return [];
     const pool = await getDbPool();
     const req = pool.request();
     const where: string[] = ['pa.active_flag = 1'];
     if (year) { req.input('year', sql.Int, year); where.push('f.periodo_year = @year'); }
+    if (month) { req.input('month', sql.Int, month); where.push('f.periodo_month = @month'); }
     if (familiaPa) { req.input('familia_pa', sql.NVarChar(40), familiaPa); where.push('p.familia_pa = @familia_pa'); }
 
     const totalRes = await pool.request()
       .input('year', sql.Int, year ?? null)
+      .input('month', sql.Int, month ?? null)
       .input('familia_pa', sql.NVarChar(40), familiaPa ?? null)
       .query(`
         SELECT SUM(f.valor_cif_usd) AS total_cif
         FROM dbo.icb_cx_fact_importacion f
         LEFT JOIN dbo.icb_cx_dim_partida p ON f.partida_id = p.partida_id
         WHERE (@year IS NULL OR f.periodo_year = @year)
+          AND (@month IS NULL OR f.periodo_month = @month)
           AND (@familia_pa IS NULL OR p.familia_pa = @familia_pa)
       `);
     const totalCif = Number(totalRes.recordset[0]?.total_cif || 0);
@@ -413,14 +421,14 @@ class ComexService {
   }
 
   // Resumen por partida arancelaria
-  async getPartidaResumen(year?: number): Promise<PartidaResumen[]> {
+  async getPartidaResumen(year?: number, month?: number): Promise<PartidaResumen[]> {
     if (!(await tablesExist())) return [];
     const pool = await getDbPool();
 
-    // Agregado principal por partida
     const reqAgg = pool.request();
     const whereAgg: string[] = ['p.active_flag = 1'];
     if (year) { reqAgg.input('year', sql.Int, year); whereAgg.push('(f.periodo_year = @year OR f.periodo_year IS NULL)'); }
+    if (month) { reqAgg.input('month', sql.Int, month); whereAgg.push('(f.periodo_month = @month OR f.periodo_month IS NULL)'); }
 
     const aggRes = await reqAgg.query(`
       SELECT
@@ -436,10 +444,10 @@ class ComexService {
       ORDER BY total_valor_cif_usd DESC
     `);
 
-    // Top empresas por partida (por CIF) — para mostrar nombres
     const reqNames = pool.request();
     const whereNames: string[] = [];
     if (year) { reqNames.input('year', sql.Int, year); whereNames.push('f.periodo_year = @year'); }
+    if (month) { reqNames.input('month', sql.Int, month); whereNames.push('f.periodo_month = @month'); }
     const namesRes = await reqNames.query(`
       SELECT partida_id, nombre_comercial, razon_social, total_cif, rn FROM (
         SELECT
@@ -456,7 +464,6 @@ class ComexService {
       WHERE rn <= 5
     `);
 
-    // Indexa por partida_id
     const namesByPartida = new Map<number, string[]>();
     for (const row of namesRes.recordset) {
       const key = row.partida_id as number;
@@ -477,8 +484,14 @@ class ComexService {
     }));
   }
 
-  // Tendencia mensual
-  async getMonthlyTrend(year?: number): Promise<Array<{
+  // Tendencia mensual (con filtros opcionales)
+  async getMonthlyTrend(
+    year?: number,
+    partidaId?: number,
+    empresaId?: number,
+    paisId?: number,
+    familiaPa?: string,
+  ): Promise<Array<{
     periodo_year: number; periodo_month: number;
     total_valor_cif_usd: number; total_cantidad_kg: number; operaciones: number;
   }>> {
@@ -487,6 +500,11 @@ class ComexService {
     const req = pool.request();
     const where: string[] = ['f.periodo_month IS NOT NULL'];
     if (year) { req.input('year', sql.Int, year); where.push('f.periodo_year = @year'); }
+    if (partidaId) { req.input('partida_id', sql.Int, partidaId); where.push('f.partida_id = @partida_id'); }
+    if (empresaId) { req.input('empresa_id', sql.Int, empresaId); where.push('f.empresa_id = @empresa_id'); }
+    if (paisId) { req.input('pais_id', sql.Int, paisId); where.push('f.pais_origen_id = @pais_id'); }
+    const joinPartida = familiaPa ? 'INNER JOIN dbo.icb_cx_dim_partida p ON f.partida_id = p.partida_id' : '';
+    if (familiaPa) { req.input('familia_pa', sql.NVarChar(40), familiaPa); where.push('p.familia_pa = @familia_pa'); }
 
     const res = await req.query(`
       SELECT
@@ -495,6 +513,7 @@ class ComexService {
         SUM(f.cantidad_kg) AS total_cantidad_kg,
         COUNT(f.import_id) AS operaciones
       FROM dbo.icb_cx_fact_importacion f
+      ${joinPartida}
       WHERE ${where.join(' AND ')}
       GROUP BY f.periodo_year, f.periodo_month
       ORDER BY f.periodo_year, f.periodo_month
@@ -508,8 +527,8 @@ class ComexService {
     }));
   }
 
-  // Distribución por familia PA (insecticidas, fungicidas, etc.)
-  async getByFamiliaPa(year?: number): Promise<Array<{
+  // Distribución por familia PA
+  async getByFamiliaPa(year?: number, month?: number): Promise<Array<{
     familia_pa: string; total_valor_cif_usd: number; total_cantidad_kg: number; empresas: number;
   }>> {
     if (!(await tablesExist())) return [];
@@ -517,6 +536,7 @@ class ComexService {
     const req = pool.request();
     const where: string[] = ['p.familia_pa IS NOT NULL'];
     if (year) { req.input('year', sql.Int, year); where.push('f.periodo_year = @year'); }
+    if (month) { req.input('month', sql.Int, month); where.push('f.periodo_month = @month'); }
     const res = await req.query(`
       SELECT
         p.familia_pa,
@@ -535,6 +555,475 @@ class ComexService {
       total_cantidad_kg: Math.round(Number(r.total_cantidad_kg || 0) * 100) / 100,
       empresas: r.empresas,
     }));
+  }
+
+  // ----------------------------------------------------------
+  // Drill-down: detalle por PARTIDA
+  // ----------------------------------------------------------
+  async getPartidaDetalle(partidaId: number, year?: number, month?: number) {
+    if (!(await tablesExist())) return null;
+    const pool = await getDbPool();
+
+    const partidaRes = await pool.request()
+      .input('partida_id', sql.Int, partidaId)
+      .query(`SELECT partida_id, hs_code, descripcion, familia_pa, tipo_grupo
+              FROM dbo.icb_cx_dim_partida WHERE partida_id = @partida_id`);
+    if (!partidaRes.recordset[0]) return null;
+    const partida = partidaRes.recordset[0];
+
+    const where = ['f.partida_id = @partida_id'];
+    const baseReq = () => {
+      const r = pool.request();
+      r.input('partida_id', sql.Int, partidaId);
+      if (year) r.input('year', sql.Int, year);
+      if (month) r.input('month', sql.Int, month);
+      return r;
+    };
+    if (year) where.push('f.periodo_year = @year');
+    if (month) where.push('f.periodo_month = @month');
+    const W = where.join(' AND ');
+
+    const totRes = await baseReq().query(`
+      SELECT
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS operaciones,
+        COUNT(DISTINCT f.empresa_id) AS empresas_distintas,
+        COUNT(DISTINCT f.pais_origen_id) AS paises_distintos
+      FROM dbo.icb_cx_fact_importacion f
+      WHERE ${W}
+    `);
+    const t = totRes.recordset[0] || {};
+    const cifTotal = Number(t.cif_usd || 0);
+
+    const topEmpresasRes = await baseReq().query(`
+      SELECT TOP 20
+        e.empresa_id, e.razon_social, e.tipo_empresa,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      INNER JOIN dbo.icb_cx_dim_empresa e ON f.empresa_id = e.empresa_id
+      WHERE ${W}
+      GROUP BY e.empresa_id, e.razon_social, e.tipo_empresa
+      ORDER BY cif_usd DESC
+    `);
+
+    const topPaisesRes = await baseReq().query(`
+      SELECT TOP 20
+        pa.pais_id, pa.nombre, pa.iso2 AS codigo_iso,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg
+      FROM dbo.icb_cx_fact_importacion f
+      INNER JOIN dbo.icb_cx_dim_pais pa ON f.pais_origen_id = pa.pais_id
+      WHERE ${W}
+      GROUP BY pa.pais_id, pa.nombre, pa.iso2
+      ORDER BY cif_usd DESC
+    `);
+
+    const topProductosRes = await baseReq().query(`
+      SELECT TOP 20
+        pr.producto_id, pr.nombre_comercial, pr.ingrediente_activo,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      LEFT JOIN dbo.icb_cx_dim_producto pr ON f.producto_id = pr.producto_id
+      WHERE ${W} AND pr.producto_id IS NOT NULL
+      GROUP BY pr.producto_id, pr.nombre_comercial, pr.ingrediente_activo
+      ORDER BY cif_usd DESC
+    `);
+
+    const trendRes = await baseReq().query(`
+      SELECT
+        f.periodo_year AS year, f.periodo_month AS month,
+        SUM(f.valor_cif_usd) AS cif_usd, SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      WHERE ${W} AND f.periodo_month IS NOT NULL
+      GROUP BY f.periodo_year, f.periodo_month
+      ORDER BY f.periodo_year, f.periodo_month
+    `);
+
+    return {
+      partida,
+      totales: {
+        cif_usd: Math.round(cifTotal * 100) / 100,
+        kg: Math.round(Number(t.kg || 0) * 100) / 100,
+        operaciones: Number(t.operaciones || 0),
+        empresas_distintas: Number(t.empresas_distintas || 0),
+        paises_distintos: Number(t.paises_distintos || 0),
+      },
+      top_empresas: topEmpresasRes.recordset.map((r: any) => ({
+        empresa_id: r.empresa_id,
+        razon_social: r.razon_social,
+        tipo_empresa: r.tipo_empresa,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+        share_pct: cifTotal > 0 ? Math.round((Number(r.cif_usd || 0) / cifTotal) * 10000) / 100 : 0,
+      })),
+      top_paises: topPaisesRes.recordset.map((r: any) => ({
+        pais_id: r.pais_id,
+        nombre: r.nombre,
+        codigo_iso: r.codigo_iso,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        share_pct: cifTotal > 0 ? Math.round((Number(r.cif_usd || 0) / cifTotal) * 10000) / 100 : 0,
+      })),
+      top_productos: topProductosRes.recordset.map((r: any) => ({
+        producto_id: r.producto_id,
+        nombre_comercial: r.nombre_comercial,
+        ingrediente_activo: r.ingrediente_activo,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+      })),
+      monthly_trend: trendRes.recordset.map((r: any) => ({
+        year: r.year, month: r.month,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+      })),
+    };
+  }
+
+  // ----------------------------------------------------------
+  // Drill-down: detalle por EMPRESA
+  // ----------------------------------------------------------
+  async getEmpresaDetalle(empresaId: number, year?: number, month?: number) {
+    if (!(await tablesExist())) return null;
+    const pool = await getDbPool();
+
+    const empRes = await pool.request()
+      .input('empresa_id', sql.Int, empresaId)
+      .query(`SELECT empresa_id, razon_social, ruc, tipo_empresa,
+                     CAST(es_competidor AS BIT) AS es_competidor,
+                     CAST(es_point_andina AS BIT) AS es_point_andina
+              FROM dbo.icb_cx_dim_empresa WHERE empresa_id = @empresa_id`);
+    if (!empRes.recordset[0]) return null;
+    const empresa = empRes.recordset[0];
+
+    const where = ['f.empresa_id = @empresa_id'];
+    const baseReq = () => {
+      const r = pool.request();
+      r.input('empresa_id', sql.Int, empresaId);
+      if (year) r.input('year', sql.Int, year);
+      if (month) r.input('month', sql.Int, month);
+      return r;
+    };
+    if (year) where.push('f.periodo_year = @year');
+    if (month) where.push('f.periodo_month = @month');
+    const W = where.join(' AND ');
+
+    const totRes = await baseReq().query(`
+      SELECT
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS operaciones,
+        COUNT(DISTINCT f.partida_id) AS partidas_distintas,
+        COUNT(DISTINCT f.pais_origen_id) AS paises_distintos,
+        COUNT(DISTINCT f.producto_id) AS productos_distintos
+      FROM dbo.icb_cx_fact_importacion f
+      WHERE ${W}
+    `);
+    const t = totRes.recordset[0] || {};
+
+    const topPartidasRes = await baseReq().query(`
+      SELECT TOP 20
+        p.partida_id, p.hs_code, p.descripcion, p.familia_pa,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      INNER JOIN dbo.icb_cx_dim_partida p ON f.partida_id = p.partida_id
+      WHERE ${W}
+      GROUP BY p.partida_id, p.hs_code, p.descripcion, p.familia_pa
+      ORDER BY cif_usd DESC
+    `);
+
+    const topProductosRes = await baseReq().query(`
+      SELECT TOP 20
+        pr.producto_id, pr.ingrediente_activo, pr.nombre_comercial, pr.familia_pa,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      LEFT JOIN dbo.icb_cx_dim_producto pr ON f.producto_id = pr.producto_id
+      WHERE ${W} AND pr.producto_id IS NOT NULL
+      GROUP BY pr.producto_id, pr.ingrediente_activo, pr.nombre_comercial, pr.familia_pa
+      ORDER BY cif_usd DESC
+    `);
+
+    const topPaisesRes = await baseReq().query(`
+      SELECT TOP 20
+        pa.pais_id, pa.iso2 AS codigo_iso, pa.nombre,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg
+      FROM dbo.icb_cx_fact_importacion f
+      INNER JOIN dbo.icb_cx_dim_pais pa ON f.pais_origen_id = pa.pais_id
+      WHERE ${W}
+      GROUP BY pa.pais_id, pa.iso2, pa.nombre
+      ORDER BY cif_usd DESC
+    `);
+
+    const trendRes = await baseReq().query(`
+      SELECT
+        f.periodo_year AS year, f.periodo_month AS month,
+        SUM(f.valor_cif_usd) AS cif_usd, SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      WHERE ${W} AND f.periodo_month IS NOT NULL
+      GROUP BY f.periodo_year, f.periodo_month
+      ORDER BY f.periodo_year, f.periodo_month
+    `);
+
+    return {
+      empresa,
+      totales: {
+        cif_usd: Math.round(Number(t.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(t.kg || 0) * 100) / 100,
+        operaciones: Number(t.operaciones || 0),
+        partidas_distintas: Number(t.partidas_distintas || 0),
+        paises_distintos: Number(t.paises_distintos || 0),
+        productos_distintos: Number(t.productos_distintos || 0),
+      },
+      top_partidas: topPartidasRes.recordset.map((r: any) => ({
+        partida_id: r.partida_id,
+        hs_code: r.hs_code,
+        descripcion: r.descripcion,
+        familia_pa: r.familia_pa,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+      })),
+      top_productos: topProductosRes.recordset.map((r: any) => ({
+        producto_id: r.producto_id,
+        ingrediente_activo: r.ingrediente_activo,
+        nombre_comercial: r.nombre_comercial,
+        familia_pa: r.familia_pa,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+      })),
+      top_paises: topPaisesRes.recordset.map((r: any) => ({
+        pais_id: r.pais_id,
+        codigo_iso: r.codigo_iso,
+        nombre: r.nombre,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+      })),
+      monthly_trend: trendRes.recordset.map((r: any) => ({
+        year: r.year, month: r.month,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+      })),
+    };
+  }
+
+  // ----------------------------------------------------------
+  // Drill-down: detalle por PAÍS
+  // ----------------------------------------------------------
+  async getPaisDetalle(paisId: number, year?: number, month?: number) {
+    if (!(await tablesExist())) return null;
+    const pool = await getDbPool();
+
+    const paisRes = await pool.request()
+      .input('pais_id', sql.Int, paisId)
+      .query(`SELECT pais_id, iso2, iso3, nombre, continente, latitude, longitude
+              FROM dbo.icb_cx_dim_pais WHERE pais_id = @pais_id`);
+    if (!paisRes.recordset[0]) return null;
+    const pais = paisRes.recordset[0];
+
+    const where = ['f.pais_origen_id = @pais_id'];
+    const baseReq = () => {
+      const r = pool.request();
+      r.input('pais_id', sql.Int, paisId);
+      if (year) r.input('year', sql.Int, year);
+      if (month) r.input('month', sql.Int, month);
+      return r;
+    };
+    if (year) where.push('f.periodo_year = @year');
+    if (month) where.push('f.periodo_month = @month');
+    const W = where.join(' AND ');
+
+    const totRes = await baseReq().query(`
+      SELECT
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS operaciones,
+        COUNT(DISTINCT f.empresa_id) AS empresas_distintas,
+        COUNT(DISTINCT f.partida_id) AS partidas_distintas,
+        COUNT(DISTINCT f.producto_id) AS productos_distintos
+      FROM dbo.icb_cx_fact_importacion f
+      WHERE ${W}
+    `);
+    const t = totRes.recordset[0] || {};
+
+    const topEmpresasRes = await baseReq().query(`
+      SELECT TOP 20
+        e.empresa_id, e.razon_social, e.tipo_empresa,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      INNER JOIN dbo.icb_cx_dim_empresa e ON f.empresa_id = e.empresa_id
+      WHERE ${W}
+      GROUP BY e.empresa_id, e.razon_social, e.tipo_empresa
+      ORDER BY cif_usd DESC
+    `);
+
+    const topPartidasRes = await baseReq().query(`
+      SELECT TOP 20
+        p.partida_id, p.hs_code, p.descripcion, p.familia_pa,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      INNER JOIN dbo.icb_cx_dim_partida p ON f.partida_id = p.partida_id
+      WHERE ${W}
+      GROUP BY p.partida_id, p.hs_code, p.descripcion, p.familia_pa
+      ORDER BY cif_usd DESC
+    `);
+
+    const topProductosRes = await baseReq().query(`
+      SELECT TOP 20
+        pr.producto_id, pr.ingrediente_activo, pr.nombre_comercial, pr.familia_pa,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      LEFT JOIN dbo.icb_cx_dim_producto pr ON f.producto_id = pr.producto_id
+      WHERE ${W} AND pr.producto_id IS NOT NULL
+      GROUP BY pr.producto_id, pr.ingrediente_activo, pr.nombre_comercial, pr.familia_pa
+      ORDER BY cif_usd DESC
+    `);
+
+    const trendRes = await baseReq().query(`
+      SELECT
+        f.periodo_year AS year, f.periodo_month AS month,
+        SUM(f.valor_cif_usd) AS cif_usd, SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops
+      FROM dbo.icb_cx_fact_importacion f
+      WHERE ${W} AND f.periodo_month IS NOT NULL
+      GROUP BY f.periodo_year, f.periodo_month
+      ORDER BY f.periodo_year, f.periodo_month
+    `);
+
+    return {
+      pais,
+      totales: {
+        cif_usd: Math.round(Number(t.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(t.kg || 0) * 100) / 100,
+        operaciones: Number(t.operaciones || 0),
+        empresas_distintas: Number(t.empresas_distintas || 0),
+        partidas_distintas: Number(t.partidas_distintas || 0),
+        productos_distintos: Number(t.productos_distintos || 0),
+      },
+      top_empresas: topEmpresasRes.recordset.map((r: any) => ({
+        empresa_id: r.empresa_id,
+        razon_social: r.razon_social,
+        tipo_empresa: r.tipo_empresa,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+      })),
+      top_partidas: topPartidasRes.recordset.map((r: any) => ({
+        partida_id: r.partida_id,
+        hs_code: r.hs_code,
+        descripcion: r.descripcion,
+        familia_pa: r.familia_pa,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+      })),
+      top_productos: topProductosRes.recordset.map((r: any) => ({
+        producto_id: r.producto_id,
+        ingrediente_activo: r.ingrediente_activo,
+        nombre_comercial: r.nombre_comercial,
+        familia_pa: r.familia_pa,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+      })),
+      monthly_trend: trendRes.recordset.map((r: any) => ({
+        year: r.year, month: r.month,
+        cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+        kg: Math.round(Number(r.kg || 0) * 100) / 100,
+        ops: Number(r.ops || 0),
+      })),
+    };
+  }
+
+  // ----------------------------------------------------------
+  // Resumen por PRODUCTO (ingrediente activo)
+  // ----------------------------------------------------------
+  async getProductosResumen(year?: number, month?: number, familiaPa?: string, limit = 100) {
+    if (!(await tablesExist())) return [];
+    const pool = await getDbPool();
+    const req = pool.request();
+    const where: string[] = ['pr.producto_id IS NOT NULL'];
+    if (year) { req.input('year', sql.Int, year); where.push('f.periodo_year = @year'); }
+    if (month) { req.input('month', sql.Int, month); where.push('f.periodo_month = @month'); }
+    if (familiaPa) { req.input('familia_pa', sql.NVarChar(40), familiaPa); where.push('pr.familia_pa = @familia_pa'); }
+    const cap = Math.min(Math.max(limit, 1), 500);
+
+    const res = await req.query(`
+      SELECT TOP ${cap}
+        pr.producto_id,
+        pr.ingrediente_activo,
+        pr.nombre_comercial,
+        pr.familia_pa,
+        SUM(f.valor_cif_usd) AS cif_usd,
+        SUM(f.cantidad_kg) AS kg,
+        COUNT(f.import_id) AS ops,
+        COUNT(DISTINCT f.empresa_id) AS empresas_distintas
+      FROM dbo.icb_cx_fact_importacion f
+      INNER JOIN dbo.icb_cx_dim_producto pr ON f.producto_id = pr.producto_id
+      WHERE ${where.join(' AND ')}
+      GROUP BY pr.producto_id, pr.ingrediente_activo, pr.nombre_comercial, pr.familia_pa
+      ORDER BY cif_usd DESC
+    `);
+    return res.recordset.map((r: any) => ({
+      producto_id: r.producto_id,
+      ingrediente_activo: r.ingrediente_activo,
+      nombre_comercial: r.nombre_comercial,
+      familia_pa: r.familia_pa,
+      cif_usd: Math.round(Number(r.cif_usd || 0) * 100) / 100,
+      kg: Math.round(Number(r.kg || 0) * 100) / 100,
+      ops: Number(r.ops || 0),
+      empresas_distintas: Number(r.empresas_distintas || 0),
+    }));
+  }
+
+  // ----------------------------------------------------------
+  // Catálogo dinámico de años / meses (para dropdowns UI)
+  // ----------------------------------------------------------
+  async getYears(): Promise<number[]> {
+    if (!(await tablesExist())) return [];
+    const pool = await getDbPool();
+    const res = await pool.request().query(`
+      SELECT DISTINCT periodo_year
+      FROM dbo.icb_cx_fact_importacion
+      WHERE periodo_year IS NOT NULL
+      ORDER BY periodo_year DESC
+    `);
+    return res.recordset.map((r: any) => Number(r.periodo_year));
+  }
+
+  async getMonths(year: number): Promise<number[]> {
+    if (!(await tablesExist())) return [];
+    const pool = await getDbPool();
+    const res = await pool.request()
+      .input('year', sql.Int, year)
+      .query(`
+        SELECT DISTINCT periodo_month
+        FROM dbo.icb_cx_fact_importacion
+        WHERE periodo_year = @year AND periodo_month IS NOT NULL
+        ORDER BY periodo_month
+      `);
+    return res.recordset.map((r: any) => Number(r.periodo_month));
   }
 }
 

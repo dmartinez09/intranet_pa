@@ -20,6 +20,14 @@ import { BaselineCropsCollector } from './collectors/baseline-crops.collector';
 import { BaselineCropsExtendedCollector } from './collectors/baseline-crops-extended.collector';
 import { CuratedSourceCollector, CURATED_DATASETS } from './collectors/curated-source.collector';
 import { SenasaSigiaFichasCollector } from './collectors/senasa-sigia-fichas.collector';
+import { BcrComexCollector } from './collectors/bcr-comex.collector';
+import { SunatTransparenciaCollector } from './collectors/sunat-transparencia.collector';
+import { SunatAduanetCollector } from './collectors/sunat-aduanet.collector';
+import { MinceturEstadisticasCollector } from './collectors/mincetur-estadisticas.collector';
+import { IneiComexCollector } from './collectors/inei-comex.collector';
+import { DatosAbiertosComexCollector } from './collectors/datos-abiertos-comex.collector';
+import { AdexEstadisticasCollector } from './collectors/adex-estadisticas.collector';
+import { CclComexCollector } from './collectors/ccl-comex.collector';
 
 // Helper para crear collectors curados
 function curated(sourceCode: string, pipelineName: string, description: string, frequency: Frequency = 'weekly') {
@@ -44,15 +52,15 @@ const COLLECTORS: BaseCollector[] = [
   // Baselines internos (siempre SUCCESS)
   new BaselineCropsCollector(),
   new BaselineCropsExtendedCollector(),
-  // COMEX + SENASA Plaguicidas — datasets curados internos
-  curated('ADEX_ESTADISTICAS',     'adex-estadisticas',     'ADEX — boletines y rankings exportadores (curado interno)'),
-  curated('BCR_COMEX',             'bcr-comex',             'BCRP — series de comercio exterior (curado interno)'),
-  curated('CCL_COMEX',             'ccl-comex',             'CCL — reportes de comercio exterior (curado interno)'),
-  curated('MINCETUR_ESTADISTICAS', 'mincetur-estadisticas', 'MINCETUR — estadísticas oficiales (curado interno)'),
-  curated('INEI_COMEX',            'inei-comex',            'INEI — estadísticas de comercio exterior (curado interno)'),
-  curated('DATOS_ABIERTOS_COMEX',  'datos-abiertos-comex',  'Datos abiertos PE — comercio exterior (curado interno)'),
-  curated('SUNAT_ADUANET',         'sunat-aduanet',         'SUNAT Aduanet — operaciones aduaneras (curado interno)'),
-  curated('SUNAT_TRANSPARENCIA',   'sunat-transparencia',   'SUNAT — transparencia aduanera (curado interno)'),
+  // COMEX — collectors reales (live fetch + fallback curado)
+  new AdexEstadisticasCollector(),
+  new BcrComexCollector(),
+  new CclComexCollector(),
+  new MinceturEstadisticasCollector(),
+  new IneiComexCollector(),
+  new DatosAbiertosComexCollector(),
+  new SunatAduanetCollector(),
+  new SunatTransparenciaCollector(),
   // SENASA Plaguicidas: collector REAL contra SIGIA (reemplaza al curated)
   new SenasaSigiaFichasCollector(),
 ];

@@ -191,11 +191,23 @@ export const comexApi = {
     empresa_id?: number; partida_id?: number; pais_id?: number;
     year?: number; month?: number; familia_pa?: string; limit?: number;
   }) => api.get('/inteligencia/comex/importaciones', { params }),
-  getRanking: (year?: number, limit = 20) => api.get('/inteligencia/comex/ranking', { params: { year, limit } }),
-  getFlows: (year?: number, familia_pa?: string) => api.get('/inteligencia/comex/flows', { params: { year, familia_pa } }),
-  getPartidaResumen: (year?: number) => api.get('/inteligencia/comex/partida-resumen', { params: { year } }),
-  getMonthlyTrend: (year?: number) => api.get('/inteligencia/comex/monthly-trend', { params: { year } }),
-  getByFamilia: (year?: number) => api.get('/inteligencia/comex/by-familia', { params: { year } }),
+  getRanking: (year?: number, limit = 20, month?: number) => api.get('/inteligencia/comex/ranking', { params: { year, limit, month } }),
+  getFlows: (year?: number, familia_pa?: string, month?: number) => api.get('/inteligencia/comex/flows', { params: { year, familia_pa, month } }),
+  getPartidaResumen: (year?: number, month?: number) => api.get('/inteligencia/comex/partida-resumen', { params: { year, month } }),
+  getMonthlyTrend: (year?: number, partida_id?: number, empresa_id?: number, pais_id?: number, familia_pa?: string) =>
+    api.get('/inteligencia/comex/monthly-trend', { params: { year, partida_id, empresa_id, pais_id, familia_pa } }),
+  getByFamilia: (year?: number, month?: number) => api.get('/inteligencia/comex/by-familia', { params: { year, month } }),
+  // Drill-down + dynamic filters
+  getYears: () => api.get('/inteligencia/comex/years'),
+  getMonths: (year: number) => api.get('/inteligencia/comex/months', { params: { year } }),
+  getPartidaDetalle: (partidaId: number, params?: { year?: number; month?: number }) =>
+    api.get(`/inteligencia/comex/partida-detalle/${partidaId}`, { params }),
+  getEmpresaDetalle: (empresaId: number, params?: { year?: number; month?: number }) =>
+    api.get(`/inteligencia/comex/empresa-detalle/${empresaId}`, { params }),
+  getPaisDetalle: (paisId: number, params?: { year?: number; month?: number }) =>
+    api.get(`/inteligencia/comex/pais-detalle/${paisId}`, { params }),
+  getProductosResumen: (params?: { year?: number; month?: number; familia_pa?: string; limit?: number }) =>
+    api.get('/inteligencia/comex/productos-resumen', { params }),
 };
 
 // Config

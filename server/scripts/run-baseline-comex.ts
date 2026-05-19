@@ -124,6 +124,17 @@ async function main() {
     partidasByFamilia.get(fam)!.push(p.partida_id);
   }
 
+  // Productos por familia (para asignar producto_id en cada importación)
+  const productosRes = await pool.request().query(
+    `SELECT producto_id, familia_pa FROM dbo.icb_cx_dim_producto WHERE active_flag = 1`
+  );
+  const productosByFamilia = new Map<string, number[]>();
+  for (const pr of productosRes.recordset) {
+    const fam = pr.familia_pa || 'OTROS';
+    if (!productosByFamilia.has(fam)) productosByFamilia.set(fam, []);
+    productosByFamilia.get(fam)!.push(pr.producto_id);
+  }
+
   // 2) Generar snapshots de importaciones
   const years = [2024, 2025, 2026];
   let inserted = 0;
@@ -169,6 +180,12 @@ async function main() {
             const kg = cif / pricePerKg;
             const fob = cif * 0.92;
 
+            // Asigna producto_id aleatorio dentro de la misma familia (si existe)
+            const productosFam = productosByFamilia.get(familia) || [];
+            const productoId = productosFam.length > 0
+              ? productosFam[Math.floor(Math.random() * productosFam.length)]
+              : null;
+
             const hash = sha256(`baseline|${sourceId}|${year}|${month}|${empId}|${partidaId}|${paisId}`);
 
             // Upsert
@@ -182,8 +199,10 @@ async function main() {
                 .input('cif', sql.Decimal(18, 2), Math.round(cif * 100) / 100)
                 .input('fob', sql.Decimal(18, 2), Math.round(fob * 100) / 100)
                 .input('kg',  sql.Decimal(18, 2), Math.round(kg * 100) / 100)
+                .input('producto_id', sql.Int, productoId)
                 .query(`UPDATE dbo.icb_cx_fact_importacion
-                        SET valor_cif_usd = @cif, valor_fob_usd = @fob, cantidad_kg = @kg
+                        SET valor_cif_usd = @cif, valor_fob_usd = @fob, cantidad_kg = @kg,
+                            producto_id = COALESCE(producto_id, @producto_id)
                         WHERE record_hash = @hash`);
               skipped++;
             } else {
@@ -192,6 +211,7 @@ async function main() {
                 .input('empresa_id', sql.Int, empId)
                 .input('partida_id', sql.Int, partidaId)
                 .input('pais_id', sql.Int, paisId)
+                .input('producto_id', sql.Int, productoId)
                 .input('year', sql.Int, year)
                 .input('month', sql.Int, month)
                 .input('cif', sql.Decimal(18, 2), Math.round(cif * 100) / 100)
@@ -201,11 +221,11 @@ async function main() {
                 .input('note', sql.NVarChar(800), `Baseline representativo ${empComercial} ${familia} desde ${iso} en ${year}-${String(month).padStart(2,'0')}`)
                 .query(`
                   INSERT INTO dbo.icb_cx_fact_importacion
-                    (source_id, empresa_id, partida_id, pais_origen_id,
+                    (source_id, empresa_id, partida_id, pais_origen_id, producto_id,
                      periodo_year, periodo_month, cantidad_kg, valor_cif_usd, valor_fob_usd,
                      record_hash, notas)
                   VALUES
-                    (@source_id, @empresa_id, @partida_id, @pais_id,
+                    (@source_id, @empresa_id, @partida_id, @pais_id, @producto_id,
                      @year, @month, @kg, @cif, @fob,
                      @hash, @note)
                 `);

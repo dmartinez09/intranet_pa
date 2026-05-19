@@ -413,8 +413,9 @@ router.get('/comex/importaciones', canReadComex, async (req: Request, res: Respo
 router.get('/comex/ranking', canReadComex, async (req: Request, res: Response) => {
   try {
     const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
+    const month = req.query.month ? parseInt(String(req.query.month)) : undefined;
     const limit = req.query.limit ? parseInt(String(req.query.limit)) : 20;
-    const data = await comexService.getRankingCompetidores(year, limit);
+    const data = await comexService.getRankingCompetidores(year, limit, month);
     res.json({ success: true, data });
   } catch (err: any) {
     console.error('[COMEX] getRanking error:', err);
@@ -425,8 +426,9 @@ router.get('/comex/ranking', canReadComex, async (req: Request, res: Response) =
 router.get('/comex/flows', canReadComex, async (req: Request, res: Response) => {
   try {
     const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
+    const month = req.query.month ? parseInt(String(req.query.month)) : undefined;
     const familia_pa = req.query.familia_pa ? String(req.query.familia_pa) : undefined;
-    const data = await comexService.getFlows(year, familia_pa);
+    const data = await comexService.getFlows(year, familia_pa, month);
     res.json({ success: true, data });
   } catch (err: any) {
     console.error('[COMEX] getFlows error:', err);
@@ -437,7 +439,8 @@ router.get('/comex/flows', canReadComex, async (req: Request, res: Response) => 
 router.get('/comex/partida-resumen', canReadComex, async (req: Request, res: Response) => {
   try {
     const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
-    const data = await comexService.getPartidaResumen(year);
+    const month = req.query.month ? parseInt(String(req.query.month)) : undefined;
+    const data = await comexService.getPartidaResumen(year, month);
     res.json({ success: true, data });
   } catch (err: any) {
     console.error('[COMEX] getPartidaResumen error:', err);
@@ -448,7 +451,11 @@ router.get('/comex/partida-resumen', canReadComex, async (req: Request, res: Res
 router.get('/comex/monthly-trend', canReadComex, async (req: Request, res: Response) => {
   try {
     const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
-    const data = await comexService.getMonthlyTrend(year);
+    const partida_id = req.query.partida_id ? parseInt(String(req.query.partida_id)) : undefined;
+    const empresa_id = req.query.empresa_id ? parseInt(String(req.query.empresa_id)) : undefined;
+    const pais_id = req.query.pais_id ? parseInt(String(req.query.pais_id)) : undefined;
+    const familia_pa = req.query.familia_pa ? String(req.query.familia_pa) : undefined;
+    const data = await comexService.getMonthlyTrend(year, partida_id, empresa_id, pais_id, familia_pa);
     res.json({ success: true, data });
   } catch (err: any) {
     console.error('[COMEX] getMonthlyTrend error:', err);
@@ -459,11 +466,99 @@ router.get('/comex/monthly-trend', canReadComex, async (req: Request, res: Respo
 router.get('/comex/by-familia', canReadComex, async (req: Request, res: Response) => {
   try {
     const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
-    const data = await comexService.getByFamiliaPa(year);
+    const month = req.query.month ? parseInt(String(req.query.month)) : undefined;
+    const data = await comexService.getByFamiliaPa(year, month);
     res.json({ success: true, data });
   } catch (err: any) {
     console.error('[COMEX] getByFamilia error:', err);
     res.status(500).json({ success: false, message: 'Error al obtener distribucion por familia' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Catálogos dinámicos (años / meses)
+// ---------------------------------------------------------------------------
+router.get('/comex/years', canReadComex, async (_req: Request, res: Response) => {
+  try {
+    const data = await comexService.getYears();
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[COMEX] getYears error:', err);
+    res.status(500).json({ success: false, message: 'Error al obtener años' });
+  }
+});
+
+router.get('/comex/months', canReadComex, async (req: Request, res: Response) => {
+  try {
+    const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
+    if (!year) { res.status(400).json({ success: false, message: 'year requerido' }); return; }
+    const data = await comexService.getMonths(year);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[COMEX] getMonths error:', err);
+    res.status(500).json({ success: false, message: 'Error al obtener meses' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Drill-down detalle (partida / empresa / país) + resumen productos
+// ---------------------------------------------------------------------------
+router.get('/comex/partida-detalle/:partidaId', canReadComex, async (req: Request, res: Response) => {
+  try {
+    const partidaId = parseInt(req.params.partidaId, 10);
+    if (isNaN(partidaId)) { res.status(400).json({ success: false, message: 'partidaId inválido' }); return; }
+    const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
+    const month = req.query.month ? parseInt(String(req.query.month)) : undefined;
+    const data = await comexService.getPartidaDetalle(partidaId, year, month);
+    if (!data) { res.status(404).json({ success: false, message: 'Partida no encontrada' }); return; }
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[COMEX] getPartidaDetalle error:', err);
+    res.status(500).json({ success: false, message: 'Error al obtener detalle de partida' });
+  }
+});
+
+router.get('/comex/empresa-detalle/:empresaId', canReadComex, async (req: Request, res: Response) => {
+  try {
+    const empresaId = parseInt(req.params.empresaId, 10);
+    if (isNaN(empresaId)) { res.status(400).json({ success: false, message: 'empresaId inválido' }); return; }
+    const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
+    const month = req.query.month ? parseInt(String(req.query.month)) : undefined;
+    const data = await comexService.getEmpresaDetalle(empresaId, year, month);
+    if (!data) { res.status(404).json({ success: false, message: 'Empresa no encontrada' }); return; }
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[COMEX] getEmpresaDetalle error:', err);
+    res.status(500).json({ success: false, message: 'Error al obtener detalle de empresa' });
+  }
+});
+
+router.get('/comex/pais-detalle/:paisId', canReadComex, async (req: Request, res: Response) => {
+  try {
+    const paisId = parseInt(req.params.paisId, 10);
+    if (isNaN(paisId)) { res.status(400).json({ success: false, message: 'paisId inválido' }); return; }
+    const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
+    const month = req.query.month ? parseInt(String(req.query.month)) : undefined;
+    const data = await comexService.getPaisDetalle(paisId, year, month);
+    if (!data) { res.status(404).json({ success: false, message: 'País no encontrado' }); return; }
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[COMEX] getPaisDetalle error:', err);
+    res.status(500).json({ success: false, message: 'Error al obtener detalle de país' });
+  }
+});
+
+router.get('/comex/productos-resumen', canReadComex, async (req: Request, res: Response) => {
+  try {
+    const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
+    const month = req.query.month ? parseInt(String(req.query.month)) : undefined;
+    const familia_pa = req.query.familia_pa ? String(req.query.familia_pa) : undefined;
+    const limit = req.query.limit ? parseInt(String(req.query.limit)) : 100;
+    const data = await comexService.getProductosResumen(year, month, familia_pa, limit);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[COMEX] getProductosResumen error:', err);
+    res.status(500).json({ success: false, message: 'Error al obtener resumen de productos' });
   }
 });
 
