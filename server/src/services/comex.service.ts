@@ -202,14 +202,26 @@ class ComexService {
       SELECT
         s.source_id, s.source_code, s.source_name, s.source_url,
         s.source_owner, s.source_type, s.extraction_method, s.active_flag,
-        r.finished_at AS last_run_at, r.status AS last_run_status, r.records_inserted AS last_run_records
+        r.finished_at AS last_run_at, r.status AS last_run_status,
+        (COALESCE(fc.snap_count, 0) + COALESCE(ic.imp_count, 0)) AS last_run_records
       FROM dbo.icb_dim_source s
       OUTER APPLY (
-        SELECT TOP 1 finished_at, status, records_inserted
+        SELECT TOP 1 finished_at, status
         FROM dbo.icb_etl_run_log
         WHERE source_id = s.source_id AND finished_at IS NOT NULL
-        ORDER BY finished_at DESC
+          AND (error_message IS NULL OR error_message NOT LIKE '%cleanup%')
+        ORDER BY CASE status WHEN 'SUCCESS' THEN 1 WHEN 'PARTIAL' THEN 2 ELSE 3 END, finished_at DESC
       ) r
+      OUTER APPLY (
+        SELECT COUNT(*) AS snap_count
+        FROM dbo.icb_fact_agri_market_snapshot
+        WHERE source_id = s.source_id
+      ) fc
+      OUTER APPLY (
+        SELECT COUNT(*) AS imp_count
+        FROM dbo.icb_cx_fact_importacion
+        WHERE source_id = s.source_id
+      ) ic
       WHERE s.active_flag = 1
         AND s.source_code IN (
           'SUNAT_TRANSPARENCIA','SUNAT_ADUANET','BCR_COMEX',

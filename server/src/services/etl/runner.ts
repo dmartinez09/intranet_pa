@@ -101,13 +101,16 @@ async function persistSnapshots(
       const regionId = s.regionCode ? maps.regionByCode.get(s.regionCode) || null : null;
       const categoryId = s.categoryCode ? maps.categoryByCode.get(s.categoryCode.toUpperCase()) || null : null;
 
-      // Hash para deduplicación (usa source + url + período como clave natural)
+      // Hash para deduplicación (usa source + url + título + período como clave natural)
+      // Incluye documentTitle para distinguir snapshots curados que comparten la misma URL raíz
       const keyParts = [
         sourceId,
-        s.documentUrl || s.documentTitle || '',
+        s.documentUrl || '',
+        s.documentTitle || '',
         s.periodLabel || '',
         cropId || '',
         regionId || '',
+        categoryId || '',
       ].join('|');
       const hash = sha256(keyParts);
 
