@@ -121,6 +121,8 @@ export interface PartidaResumen {
   empresas_activas: number;
   empresas_nombres: string[];
   paises_origen: number;
+  top_ingredientes: string[];     // top 3 ingredientes activos por CIF
+  top_formulaciones: string[];    // tags de formulación detectados (GL, EC, SC, ...)
 }
 
 // ------------------------------------------------------------
@@ -483,6 +485,44 @@ class ComexService {
       namesByPartida.get(key)!.push(row.nombre_comercial || row.razon_social);
     }
 
+    // Top 3 ingredientes activos por partida (por CIF) + nombres comerciales para detectar formulación
+    const reqIng = pool.request();
+    const whereIng: string[] = ['pr.producto_id IS NOT NULL'];
+    if (year) { reqIng.input('year', sql.Int, year); whereIng.push('f.periodo_year = @year'); }
+    if (month) { reqIng.input('month', sql.Int, month); whereIng.push('f.periodo_month = @month'); }
+    const ingRes = await reqIng.query(`
+      SELECT partida_id, ingrediente_activo, nombre_comercial, total_cif, rn FROM (
+        SELECT
+          f.partida_id,
+          pr.ingrediente_activo,
+          MAX(pr.nombre_comercial) AS nombre_comercial,
+          SUM(f.valor_cif_usd) AS total_cif,
+          ROW_NUMBER() OVER (PARTITION BY f.partida_id ORDER BY SUM(f.valor_cif_usd) DESC) AS rn
+        FROM dbo.icb_cx_fact_importacion f
+        INNER JOIN dbo.icb_cx_dim_producto pr ON f.producto_id = pr.producto_id
+        WHERE ${whereIng.join(' AND ')}
+        GROUP BY f.partida_id, pr.ingrediente_activo
+      ) x
+      WHERE rn <= 3
+    `);
+
+    const ingByPartida = new Map<number, string[]>();
+    const formByPartida = new Map<number, Set<string>>();
+    // Códigos comunes de formulación de agroquímicos
+    const FORM_RE = /\b(GL|EC|SC|SL|WP|WG|WDG|DF|ULV|OD|ME|CS|SE|FS|DC|EW|GR|DP|TC|TK)\b/gi;
+    for (const row of ingRes.recordset) {
+      const key = row.partida_id as number;
+      if (!ingByPartida.has(key)) ingByPartida.set(key, []);
+      if (row.ingrediente_activo) ingByPartida.get(key)!.push(String(row.ingrediente_activo));
+      const nc: string = row.nombre_comercial || '';
+      const matches = nc.match(FORM_RE);
+      if (matches) {
+        if (!formByPartida.has(key)) formByPartida.set(key, new Set());
+        const set = formByPartida.get(key)!;
+        matches.forEach(m => set.add(m.toUpperCase()));
+      }
+    }
+
     return aggRes.recordset.map((r: any) => ({
       partida_id: r.partida_id,
       hs_code: r.hs_code,
@@ -493,6 +533,8 @@ class ComexService {
       empresas_activas: r.empresas_activas,
       empresas_nombres: namesByPartida.get(r.partida_id) || [],
       paises_origen: r.paises_origen,
+      top_ingredientes: ingByPartida.get(r.partida_id) || [],
+      top_formulaciones: Array.from(formByPartida.get(r.partida_id) || []),
     }));
   }
 

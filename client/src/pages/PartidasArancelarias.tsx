@@ -25,6 +25,8 @@ interface PartidaResumen {
   empresas_nombres: string[];
   paises_origen: number;
   ingrediente_activo?: string;
+  top_ingredientes?: string[];
+  top_formulaciones?: string[];
 }
 
 interface ProductoRow {
@@ -94,7 +96,9 @@ export default function PartidasArancelarias() {
       result = result.filter(p =>
         p.hs_code.toLowerCase().includes(q) ||
         p.descripcion.toLowerCase().includes(q) ||
-        (p.ingrediente_activo || '').toLowerCase().includes(q)
+        (p.ingrediente_activo || '').toLowerCase().includes(q) ||
+        (p.top_ingredientes || []).some(i => i.toLowerCase().includes(q)) ||
+        (p.top_formulaciones || []).some(f => f.toLowerCase().includes(q))
       );
     }
     return result;
@@ -202,6 +206,7 @@ export default function PartidasArancelarias() {
                   <tr>
                     <th>HS Code</th>
                     <th>Descripción</th>
+                    <th>Ingredientes / Formulado</th>
                     <th>Familia PA</th>
                     <th>Tipo grupo</th>
                     <th className="text-right">CIF USD</th>
@@ -217,6 +222,24 @@ export default function PartidasArancelarias() {
                     <tr key={p.partida_id} className="hover:bg-gray-50">
                       <td className="font-mono text-xs font-bold text-brand-700">{p.hs_code}</td>
                       <td className="max-w-md text-sm">{p.descripcion}</td>
+                      <td className="max-w-xs">
+                        {(p.top_ingredientes && p.top_ingredientes.length > 0) ? (
+                          <div className="flex flex-wrap gap-1">
+                            {p.top_ingredientes.slice(0, 3).map((ing, i) => (
+                              <span key={i} className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200" title={ing}>{ing}</span>
+                            ))}
+                            {(p.top_formulaciones && p.top_formulaciones.length > 0) && (
+                              <span className="inline-flex items-center gap-0.5 ml-0.5">
+                                {p.top_formulaciones.slice(0, 4).map((f, i) => (
+                                  <span key={i} className="inline-block px-1 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200" title={`Formulación ${f}`}>{f}</span>
+                                ))}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-gray-400">—</span>
+                        )}
+                      </td>
                       <td>
                         {p.familia_pa ? (
                           <span className={`badge text-[10px] ${FAMILIA_COLORS[p.familia_pa] || 'bg-gray-100 text-gray-700'}`}>{p.familia_pa}</span>
@@ -238,7 +261,7 @@ export default function PartidasArancelarias() {
                 </tbody>
                 <tfoot>
                   <tr className="font-bold bg-gray-50">
-                    <td colSpan={4}>Totales ({filtered.length})</td>
+                    <td colSpan={5}>Totales ({filtered.length})</td>
                     <td className="text-right font-mono">{fmtUSD(totalCIF)}</td>
                     <td className="text-right font-mono text-xs">{Number(totalKg).toLocaleString('es-PE', { maximumFractionDigits: 0 })}</td>
                     <td className="text-right font-mono text-xs">{totalOps.toLocaleString('es-PE')}</td>

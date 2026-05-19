@@ -166,7 +166,7 @@ export default function MapaFlujosCOMEX() {
               </div>
 
               <div className="relative" style={{ minHeight: 500 }}>
-                <ComposableMap projection="geoMercator" projectionConfig={{ scale: 140, center: [0, 10] }} style={{ width: '100%', height: 500 }}>
+                <ComposableMap projection="geoMercator" projectionConfig={{ scale: 130, center: [-60, 10] }} style={{ width: '100%', height: 500 }}>
                   <ZoomableGroup minZoom={1} maxZoom={4}>
                     <Geographies geography={WORLD_GEO_URL}>
                       {({ geographies }: { geographies: any[] }) =>
@@ -202,20 +202,28 @@ export default function MapaFlujosCOMEX() {
                       }
                     </Geographies>
 
-                    {/* Líneas/arcos desde cada país de origen a Perú */}
-                    {top.slice(0, 10).map((f) => (
-                      f.latitude && f.longitude ? (
+                    {/* Líneas/arcos desde cada país de origen a Perú.
+                        Para países del hemisferio oriental (lon > 0), restamos 360°
+                        para que la línea cruce el Pacífico (ruta visualmente más corta hacia Perú)
+                        en vez de dar la vuelta por Europa/Atlántico. */}
+                    {top.slice(0, 10).map((f) => {
+                      if (!f.latitude || !f.longitude) return null;
+                      const lat = Number(f.latitude);
+                      const lon = Number(f.longitude);
+                      if (!isFinite(lat) || !isFinite(lon)) return null;
+                      const fromLon = lon > 25 ? lon - 360 : lon;
+                      return (
                         <Line
                           key={`line-${f.iso2}`}
-                          from={[f.longitude, f.latitude]}
+                          from={[fromLon, lat]}
                           to={PERU_COORD}
                           stroke="#EF4444"
                           strokeWidth={Math.max(1, Math.min(3, (Number(f.share_pct) || 0) / 8))}
                           strokeLinecap="round"
                           strokeOpacity={0.6}
                         />
-                      ) : null
-                    ))}
+                      );
+                    })}
 
                     {/* Marker Perú */}
                     <Marker coordinates={PERU_COORD}>

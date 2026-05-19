@@ -47,6 +47,33 @@ export default function DashboardCOMEX() {
   const [year, setYear] = useState<number | undefined>();
   const [month, setMonth] = useState<number | undefined>();
 
+  // Bootstrap: cargar años y elegir el más reciente si no hay año seteado.
+  // Sin esto, el spinner se queda eterno porque el ComexPeriodFilter (que setea year)
+  // está renderizado DEBAJO del spinner-guard.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const yrs = await comexApi.getYears();
+        const list: number[] = yrs.data?.data || [];
+        if (!cancelled) {
+          if (list.length > 0) {
+            setYear(list[0]);
+          } else {
+            // sin data en BD: no nos quedamos colgados — solo carga meta.
+            const m = await comexApi.getMeta();
+            setMeta(m.data.data);
+            setLoading(false);
+          }
+        }
+      } catch (err) {
+        console.error('[COMEX Dashboard] bootstrap error:', err);
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => { if (year) void load(); /* eslint-disable-next-line */ }, [year, month]);
 
   async function load() {
