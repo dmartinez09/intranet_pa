@@ -152,9 +152,18 @@ async function main() {
     `);
   const runId = openRes.recordset[0].run_id;
 
+  // Mes/año actual — para NO sembrar meses futuros (irreal)
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1; // 1..12
+
   for (const year of years) {
     const yearMult = year === 2024 ? 0.90 : year === 2025 ? 1.00 : 1.08;
-    for (let month = 1; month <= 12; month++) {
+    // Para el año en curso, solo hasta el mes anterior (mes completo)
+    const maxMonth = year > currentYear ? 0
+                   : year < currentYear ? 12
+                   : Math.max(0, currentMonth - 1);
+    for (let month = 1; month <= maxMonth; month++) {
       const monthCif = TOTAL_CIF_USD_ANUAL * yearMult * MONTH_DISTRIBUTION[month - 1];
 
       for (const [empComercial, share] of COMPETITOR_SHARE) {
