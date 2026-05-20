@@ -6,7 +6,7 @@ import ComexSourcesPanel from '../components/ComexSourcesPanel';
 import ComexPeriodFilter from '../components/filters/ComexPeriodFilter';
 import ComexDetailModal from '../components/ComexDetailModal';
 import {
-  ComposableMap, Geographies, Geography, ZoomableGroup, Marker, Line,
+  ComposableMap, Geographies, Geography, ZoomableGroup, Marker,
 } from 'react-simple-maps';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie,
@@ -26,11 +26,6 @@ interface FlowRow {
 }
 
 const FAMILIAS = ['FUNGICIDAS', 'INSECTICIDAS', 'HERBICIDAS', 'NUTRICIONALES', 'BIOLOGICOS', 'COADYUVANTES', 'ORGANICOS', 'OTROS'];
-const COUNTRY_FLAGS: Record<string, string> = {
-  CN: '🇨🇳', IN: '🇮🇳', US: '🇺🇸', DE: '🇩🇪', BR: '🇧🇷', AR: '🇦🇷', ES: '🇪🇸',
-  IT: '🇮🇹', IL: '🇮🇱', MX: '🇲🇽', JP: '🇯🇵', GB: '🇬🇧', FR: '🇫🇷', BE: '🇧🇪',
-  NL: '🇳🇱', CH: '🇨🇭', CL: '🇨🇱', CO: '🇨🇴', EC: '🇪🇨', TR: '🇹🇷', KR: '🇰🇷', AU: '🇦🇺', PE: '🇵🇪',
-};
 const BAR_COLORS = ['#00A651', '#008C44', '#007038', '#34D67B', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899', '#10B981', '#84CC16', '#A855F7'];
 
 // World map TopoJSON (countries-110m)
@@ -156,13 +151,14 @@ export default function MapaFlujosCOMEX() {
               </div>
 
               {/* Legend */}
-              <div className="flex items-center gap-3 text-xs text-gray-600 mb-2">
-                <span>CIF:</span>
+              <div className="flex items-center gap-3 text-xs text-gray-600 mb-2 flex-wrap">
+                <span className="font-semibold">CIF país origen:</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ backgroundColor: '#FEF3C7' }} />Bajo</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ backgroundColor: '#FCD34D' }} />Medio</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ backgroundColor: '#F59E0B' }} />Alto</span>
                 <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ backgroundColor: '#D97706' }} />Muy alto</span>
-                <span className="flex items-center gap-1 ml-2"><span className="w-3 h-3 rounded" style={{ backgroundColor: '#00A651' }} />Perú (destino)</span>
+                <span className="flex items-center gap-1 ml-2"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#00A651' }} />Perú</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EF444499', border: '1px solid #B91C1C' }} />Origen (tamaño ∝ share CIF)</span>
               </div>
 
               <div className="relative" style={{ minHeight: 500 }}>
@@ -202,43 +198,30 @@ export default function MapaFlujosCOMEX() {
                       }
                     </Geographies>
 
-                    {/* Líneas/arcos desde cada país de origen a Perú.
-                        Para países del hemisferio oriental (lon > 0), restamos 360°
-                        para que la línea cruce el Pacífico (ruta visualmente más corta hacia Perú)
-                        en vez de dar la vuelta por Europa/Atlántico. */}
-                    {top.slice(0, 10).map((f) => {
+                    {/* Marker Perú (destino) */}
+                    <Marker coordinates={PERU_COORD}>
+                      <circle r={6} fill="#00A651" stroke="#fff" strokeWidth={2} />
+                      <text textAnchor="middle" y={-12} style={{ fontSize: 12, fontWeight: 700, fill: '#00A651' }}>Perú</text>
+                    </Marker>
+
+                    {/* Markers proporcionales por país de origen (size = share CIF) */}
+                    {top.map((f) => {
                       if (!f.latitude || !f.longitude) return null;
                       const lat = Number(f.latitude);
                       const lon = Number(f.longitude);
                       if (!isFinite(lat) || !isFinite(lon)) return null;
-                      const fromLon = lon > 25 ? lon - 360 : lon;
+                      const size = Math.max(4, Math.min(20, Math.sqrt(Number(f.share_pct) || 0) * 4));
                       return (
-                        <Line
-                          key={`line-${f.iso2}`}
-                          from={[fromLon, lat]}
-                          to={PERU_COORD}
-                          stroke="#EF4444"
-                          strokeWidth={Math.max(1, Math.min(3, (Number(f.share_pct) || 0) / 8))}
-                          strokeLinecap="round"
-                          strokeOpacity={0.6}
-                        />
+                        <Marker key={`m-${f.iso2}`} coordinates={[lon, lat]}>
+                          <circle r={size} fill="#EF4444" fillOpacity={0.55} stroke="#B91C1C" strokeWidth={1} />
+                          {Number(f.share_pct) >= 5 && (
+                            <text textAnchor="middle" y={size + 10} style={{ fontSize: 10, fontWeight: 600, fill: '#7F1D1D' }}>
+                              {f.iso2}
+                            </text>
+                          )}
+                        </Marker>
                       );
                     })}
-
-                    {/* Marker Perú */}
-                    <Marker coordinates={PERU_COORD}>
-                      <circle r={5} fill="#00A651" stroke="#fff" strokeWidth={2} />
-                      <text textAnchor="middle" y={-10} style={{ fontSize: 11, fontWeight: 700, fill: '#00A651' }}>Perú</text>
-                    </Marker>
-
-                    {/* Markers para top países origen */}
-                    {top.slice(0, 8).map((f) => (
-                      f.latitude && f.longitude ? (
-                        <Marker key={`m-${f.iso2}`} coordinates={[f.longitude, f.latitude]}>
-                          <circle r={3} fill="#EF4444" />
-                        </Marker>
-                      ) : null
-                    ))}
                   </ZoomableGroup>
                 </ComposableMap>
 
@@ -246,7 +229,7 @@ export default function MapaFlujosCOMEX() {
                   <div className="fixed z-50 pointer-events-none bg-white rounded-xl shadow-2xl border border-gray-200 p-3 text-xs min-w-[240px]"
                        style={{ left: tooltipPos.x + 14, top: tooltipPos.y + 14 }}>
                     <div className="font-bold text-gray-900 mb-1.5 flex items-center gap-1.5">
-                      <span className="text-base">{COUNTRY_FLAGS[hovered.iso2] || '🌎'}</span>
+                      <span className="text-base"><span className="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-mono text-[11px] font-bold">{hovered.iso2}</span></span>
                       {hovered.pais_origen}
                       <span className="text-[10px] text-gray-400">{hovered.iso2}</span>
                     </div>
@@ -323,7 +306,7 @@ export default function MapaFlujosCOMEX() {
                     {data.map((f, i) => (
                       <tr key={f.iso2} className="hover:bg-gray-50">
                         <td className="px-3 py-1.5 text-gray-500">{i + 1}</td>
-                        <td className="px-3 py-1.5 font-semibold"><span className="mr-1">{COUNTRY_FLAGS[f.iso2] || '🌎'}</span>{f.pais_origen}</td>
+                        <td className="px-3 py-1.5 font-semibold"><span className="mr-1"><span className="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-mono text-[10px] font-bold">{f.iso2}</span></span>{f.pais_origen}</td>
                         <td className="px-3 py-1.5 text-gray-400 font-mono">{f.iso2}</td>
                         <td className="px-3 py-1.5 text-gray-600">{continentMap[f.iso2] || 'Otros'}</td>
                         <td className="px-3 py-1.5 text-right font-mono font-bold text-gray-900">{fmtUSD(f.total_valor_cif_usd)}</td>

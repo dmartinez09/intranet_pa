@@ -3,7 +3,7 @@ import { X, ExternalLink } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTip, ResponsiveContainer } from 'recharts';
 import { comexApi } from '../services/api';
 
-type Kind = 'partida' | 'empresa' | 'pais';
+type Kind = 'partida' | 'empresa' | 'pais' | 'producto';
 interface Props {
   kind: Kind;
   id: number | null;
@@ -27,6 +27,7 @@ export default function ComexDetailModal({ kind, id, year, month, onClose }: Pro
     const p =
       kind === 'partida' ? comexApi.getPartidaDetalle(id, params)
       : kind === 'empresa' ? comexApi.getEmpresaDetalle(id, params)
+      : kind === 'producto' ? comexApi.getProductoDetalle(id, params)
       : comexApi.getPaisDetalle(id, params);
     p.then((res: any) => setData(res.data?.data || res.data))
      .catch(() => setData(null))
@@ -37,13 +38,15 @@ export default function ComexDetailModal({ kind, id, year, month, onClose }: Pro
 
   const title = data?.partida ? `Partida ${data.partida.hs_code} — ${data.partida.descripcion}`
     : data?.empresa ? `${data.empresa.razon_social}${data.empresa.ruc ? ` · RUC ${data.empresa.ruc}` : ''}`
+    : data?.producto ? `${data.producto.ingrediente_activo}${data.producto.nombre_comercial ? ` · ${data.producto.nombre_comercial}` : ''}`
     : data?.pais ? `${data.pais.nombre || data.pais.codigo_iso}`
     : 'Detalle';
 
   const headerColor =
     kind === 'partida' ? 'from-amber-50 to-orange-50 border-amber-200'
     : kind === 'empresa' ? 'from-blue-50 to-indigo-50 border-blue-200'
-    : 'from-emerald-50 to-teal-50 border-emerald-200';
+    : kind === 'producto' ? 'from-emerald-50 to-green-50 border-emerald-200'
+    : 'from-cyan-50 to-teal-50 border-cyan-200';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
@@ -54,6 +57,7 @@ export default function ComexDetailModal({ kind, id, year, month, onClose }: Pro
             <div className="text-xs uppercase tracking-wide text-gray-500 font-medium mb-1">
               {kind === 'partida' && 'Partida Arancelaria'}
               {kind === 'empresa' && 'Competidor / Importador'}
+              {kind === 'producto' && 'Ingrediente Activo / Producto'}
               {kind === 'pais' && 'País de Origen'}
               {year && ` · ${year}${month ? `-${String(month).padStart(2, '0')}` : ''}`}
             </div>
@@ -67,7 +71,14 @@ export default function ComexDetailModal({ kind, id, year, month, onClose }: Pro
               <div className="text-sm text-gray-600 mt-1">
                 Tipo: {data.empresa.tipo_empresa || 'N/A'}
                 {data.empresa.pais_origen && ` · Origen: ${data.empresa.pais_origen}`}
-                {data.empresa.es_point_andina ? ' · 🏆 POINT ANDINA' : data.empresa.es_competidor ? ' · Competidor activo' : ''}
+                {data.empresa.es_point_andina ? ' · POINT ANDINA' : data.empresa.es_competidor ? ' · Competidor activo' : ''}
+              </div>
+            )}
+            {data?.producto && (
+              <div className="text-sm text-gray-600 mt-1">
+                Familia: <span className="font-semibold text-emerald-700">{data.producto.familia_pa}</span>
+                {data.producto.concentracion && ` · ${data.producto.concentracion}`}
+                {data.producto.unidad && ` (${data.producto.unidad})`}
               </div>
             )}
           </div>

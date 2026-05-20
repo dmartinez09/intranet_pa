@@ -208,6 +208,8 @@ export const comexApi = {
     api.get(`/inteligencia/comex/pais-detalle/${paisId}`, { params }),
   getProductosResumen: (params?: { year?: number; month?: number; familia_pa?: string; limit?: number }) =>
     api.get('/inteligencia/comex/productos-resumen', { params }),
+  getProductoDetalle: (productoId: number, params?: { year?: number; month?: number }) =>
+    api.get(`/inteligencia/comex/producto-detalle/${productoId}`, { params }),
 };
 
 // Config

@@ -3,10 +3,11 @@ import Header from '../components/layout/Header';
 import { comexApi } from '../services/api';
 import {
   Globe, Briefcase, Landmark, DollarSign, TrendingUp,
-  AlertCircle, CheckCircle2, Clock, RefreshCw, Package, Trophy,
+  AlertCircle, CheckCircle2, Clock, RefreshCw, Package, Trophy, Eye,
 } from 'lucide-react';
 import ComexSourcesPanel from '../components/ComexSourcesPanel';
 import ComexPeriodFilter from '../components/filters/ComexPeriodFilter';
+import ComexDetailModal from '../components/ComexDetailModal';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Area,
@@ -46,6 +47,7 @@ export default function DashboardCOMEX() {
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState<number | undefined>();
   const [month, setMonth] = useState<number | undefined>();
+  const [detail, setDetail] = useState<{ kind: 'partida' | 'empresa' | 'pais'; id: number } | null>(null);
 
   // Bootstrap: cargar años y elegir el más reciente si no hay año seteado.
   // Sin esto, el spinner se queda eterno porque el ComexPeriodFilter (que setea year)
@@ -291,24 +293,32 @@ export default function DashboardCOMEX() {
                       <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Periodo</th>
                       <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Empresa</th>
                       <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Partida</th>
-                      <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Producto</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Ingrediente</th>
                       <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Familia</th>
                       <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">País</th>
                       <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">Kg</th>
                       <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">CIF USD</th>
+                      <th className="px-3 py-2 text-center font-semibold text-gray-600 uppercase tracking-wide">Detalle</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {ops.map((o: any, i: number) => (
                       <tr key={i} className="hover:bg-gray-50">
                         <td className="px-3 py-1.5">{o.periodo_year}-{String(o.periodo_month).padStart(2,'0')}</td>
-                        <td className="px-3 py-1.5 font-medium text-gray-800 truncate max-w-[180px]" title={o.empresa_razon_social || o.razon_social}>{o.empresa_razon_social || o.razon_social || '—'}</td>
-                        <td className="px-3 py-1.5 font-mono text-[10px]">{o.hs_code || '—'}</td>
-                        <td className="px-3 py-1.5 text-emerald-700">{o.ingrediente_activo || o.producto || '—'}</td>
+                        <td className="px-3 py-1.5 font-medium text-gray-800 truncate max-w-[180px]" title={o.empresa}>{o.empresa || '—'}</td>
+                        <td className="px-3 py-1.5 font-mono text-[10px]" title={o.partida_descripcion}>{o.partida || '—'}</td>
+                        <td className="px-3 py-1.5 text-emerald-700">{o.ingrediente_activo || '—'}</td>
                         <td className="px-3 py-1.5"><span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: (FAMILIA_COLORS[o.familia_pa] || '#64748B') + '22', color: FAMILIA_COLORS[o.familia_pa] || '#64748B' }}>{o.familia_pa || '—'}</span></td>
-                        <td className="px-3 py-1.5">{o.pais_origen || o.codigo_iso || '—'}</td>
+                        <td className="px-3 py-1.5">{o.pais_origen || o.pais_iso2 || '—'}</td>
                         <td className="px-3 py-1.5 text-right tabular-nums">{fmtKg(o.cantidad_kg)}</td>
                         <td className="px-3 py-1.5 text-right tabular-nums font-semibold text-gray-900">{fmtUSD(o.valor_cif_usd)}</td>
+                        <td className="px-3 py-1.5 text-center">
+                          {o.empresa_id && (
+                            <button onClick={() => setDetail({ kind: 'empresa', id: o.empresa_id })} className="p-1 hover:bg-brand-50 rounded text-brand-600 hover:text-brand-800" title="Ver detalle de la empresa">
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -320,6 +330,10 @@ export default function DashboardCOMEX() {
 
         <ComexSourcesPanel />
       </div>
+
+      {detail && (
+        <ComexDetailModal kind={detail.kind} id={detail.id} year={year} month={month} onClose={() => setDetail(null)} />
+      )}
     </div>
   );
 }

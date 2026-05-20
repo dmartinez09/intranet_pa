@@ -116,13 +116,10 @@ export default function ComexSourcesPanel() {
       )}
 
       <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500 leading-relaxed">
-        <p className="font-semibold text-gray-600 mb-1">Notas de trazabilidad:</p>
+        <p className="font-semibold text-gray-600 mb-1">Trazabilidad:</p>
         <ul className="list-disc ml-5 space-y-0.5">
-          <li>Los datos de importaciones provienen exclusivamente de fuentes peruanas públicas.</li>
-          <li>No se cruza información con SAP ni otros módulos internos.</li>
-          <li>El baseline representativo (<span className="font-mono">BASELINE_PE_COMEX</span>) se nutre de órdenes de magnitud públicos conocidos (SUNAT/ADEX) hasta que los collectors reales maduren.</li>
-          <li>Las fuentes "sin ejecuciones" están registradas en el catálogo pero su collector está pendiente (Fase 2 COMEX).</li>
-          <li>Todas las ejecuciones quedan auditadas en <span className="font-mono">icb_etl_run_log</span>.</li>
+          <li>Datos de importaciones provenientes de fuentes peruanas públicas (SUNAT, ADEX, BCR, MINCETUR, SENASA, INEI, MIDAGRI, CCL).</li>
+          <li>Baseline representativo (<span className="font-mono">BASELINE_PE_COMEX</span>) construido sobre órdenes de magnitud SUNAT/ADEX.</li>
         </ul>
       </div>
     </div>

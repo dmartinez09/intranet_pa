@@ -562,6 +562,20 @@ router.get('/comex/productos-resumen', canReadComex, async (req: Request, res: R
   }
 });
 
+router.get('/comex/producto-detalle/:productoId', canReadComex, async (req: Request, res: Response) => {
+  try {
+    const productoId = parseInt(String(req.params.productoId));
+    const year = req.query.year ? parseInt(String(req.query.year)) : undefined;
+    const month = req.query.month ? parseInt(String(req.query.month)) : undefined;
+    const data = await comexService.getProductoDetalle(productoId, year, month);
+    if (!data) return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    console.error('[COMEX] getProductoDetalle error:', err);
+    res.status(500).json({ success: false, message: 'Error al obtener detalle de producto' });
+  }
+});
+
 // ===========================================================================
 // ENDPOINTS ETL (solo admin)
 // ===========================================================================

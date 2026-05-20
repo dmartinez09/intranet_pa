@@ -9,7 +9,6 @@ import ComexPeriodFilter from '../components/filters/ComexPeriodFilter';
 import ComexDetailModal from '../components/ComexDetailModal';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-  PieChart, Pie,
 } from 'recharts';
 
 interface RankingRow {
@@ -27,6 +26,7 @@ interface RankingRow {
 }
 
 interface ProductoRow {
+  producto_id: number;
   ingrediente_activo: string;
   nombre_comercial: string;
   familia_pa: string;
@@ -37,9 +37,6 @@ interface ProductoRow {
 }
 
 const BAR_COLORS = ['#00A651', '#008C44', '#007038', '#34D67B', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899', '#10B981'];
-const TIPO_COLORS: Record<string, string> = {
-  Multinacional: '#8B5CF6', Nacional: '#00A651', Distribuidor: '#F59E0B', Formulador: '#06B6D4',
-};
 const FAMILIA_COLORS: Record<string, string> = {
   FUNGICIDAS: 'bg-green-100 text-green-700',
   INSECTICIDAS: 'bg-red-100 text-red-700',
@@ -63,6 +60,7 @@ export default function Competidores() {
   const [search, setSearch] = useState('');
   const [tipoFilter, setTipoFilter] = useState<string>('');
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [productoDetailId, setProductoDetailId] = useState<number | null>(null);
 
   useEffect(() => { if (year) void load(); /* eslint-disable-next-line */ }, [year, month]);
 
@@ -104,13 +102,19 @@ export default function Competidores() {
   const totalCIF = filtered.reduce((s, r) => s + (Number(r.total_valor_cif_usd) || 0), 0);
   const totalOps = filtered.reduce((s, r) => s + (Number(r.operaciones) || 0), 0);
 
-  const tipoDistribution = useMemo(() => {
-    const grouped = new Map<string, number>();
-    filtered.forEach(r => {
-      const t = r.tipo_empresa || 'Otros';
-      grouped.set(t, (grouped.get(t) || 0) + Number(r.total_valor_cif_usd || 0));
-    });
-    return Array.from(grouped.entries()).map(([tipo, cif]) => ({ tipo, cif }));
+  const cumulativeShare = useMemo(() => {
+    // Buckets de concentración: Top 3, Top 5, Top 10, Top 20, Resto
+    const totalCif = filtered.reduce((s, r) => s + Number(r.total_valor_cif_usd || 0), 0);
+    if (totalCif === 0) return [];
+    const sorted = [...filtered].sort((a, b) => Number(b.total_valor_cif_usd) - Number(a.total_valor_cif_usd));
+    const sumTo = (n: number) => sorted.slice(0, n).reduce((s, r) => s + Number(r.total_valor_cif_usd || 0), 0);
+    return [
+      { bucket: 'Top 3', cumshare: (sumTo(3) / totalCif) * 100 },
+      { bucket: 'Top 5', cumshare: (sumTo(5) / totalCif) * 100 },
+      { bucket: 'Top 10', cumshare: (sumTo(10) / totalCif) * 100 },
+      { bucket: 'Top 20', cumshare: (sumTo(20) / totalCif) * 100 },
+      { bucket: 'Total', cumshare: 100 },
+    ];
   }, [filtered]);
 
   return (
@@ -168,15 +172,16 @@ export default function Competidores() {
             </ResponsiveContainer>
           </div>
           <div className="chart-container">
-            <h3 className="text-base font-bold text-gray-900 mb-1">Distribución por Tipo de Empresa</h3>
-            <p className="text-xs text-gray-400 mb-4">Cuota CIF según naturaleza</p>
+            <h3 className="text-base font-bold text-gray-900 mb-1">Concentración del Mercado · Share acumulado</h3>
+            <p className="text-xs text-gray-400 mb-4">¿Cuántos competidores controlan qué % del CIF total?</p>
             <ResponsiveContainer width="100%" height={320}>
-              <PieChart>
-                <Pie data={tipoDistribution} dataKey="cif" nameKey="tipo" cx="50%" cy="50%" outerRadius={110} innerRadius={60} stroke="none" label={(e: any) => `${e.tipo}: ${fmtUSD(e.cif)}`}>
-                  {tipoDistribution.map((t, i) => <Cell key={i} fill={TIPO_COLORS[t.tipo] || BAR_COLORS[i]} />)}
-                </Pie>
-                <Tooltip formatter={(v: any) => fmtUSD(v)} />
-              </PieChart>
+              <BarChart data={cumulativeShare} margin={{ left: 10, right: 20, top: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="bucket" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                <Tooltip formatter={(v: any) => `${Number(v).toFixed(1)}%`} />
+                <Bar dataKey="cumshare" fill="#8B5CF6" radius={[6, 6, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -221,7 +226,7 @@ export default function Competidores() {
                         <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i < 3 ? 'bg-amber-100 text-amber-700' : i < 10 ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-500'}`}>{i + 1}</span>
                       </td>
                       <td>
-                        <div className="font-semibold">{r.nombre_comercial || r.razon_social}{r.es_point_andina ? <span className="ml-2 text-[10px] text-brand-700 font-bold">🏆 POINT ANDINA</span> : ''}</div>
+                        <div className="font-semibold">{r.nombre_comercial || r.razon_social}{r.es_point_andina ? <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-800 border border-brand-300">POINT ANDINA</span> : ''}</div>
                         {r.nombre_comercial && <div className="text-xs text-gray-400">{r.razon_social}</div>}
                       </td>
                       <td>{r.tipo_empresa && <span className={`badge text-[10px] ${r.tipo_empresa === 'Multinacional' ? 'bg-purple-50 text-purple-700' : r.tipo_empresa === 'Nacional' ? 'bg-brand-50 text-brand-700' : 'bg-gray-100 text-gray-700'}`}>{r.tipo_empresa}</span>}</td>
@@ -256,8 +261,8 @@ export default function Competidores() {
           <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-cyan-50 to-emerald-50 flex items-center gap-3">
             <FlaskConical className="w-5 h-5 text-emerald-600" />
             <div>
-              <h3 className="text-base font-bold text-gray-900">¿Qué está trayendo la competencia? — Ingredientes activos y productos formulados</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Inteligencia comercial: qué moléculas/formulados están siendo importadas y cuántas empresas las traen</p>
+              <h3 className="text-base font-bold text-gray-900">¿Qué está trayendo la competencia?</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Inteligencia comercial: qué ingredientes/moléculas están entrando y cuántas empresas las traen</p>
             </div>
           </div>
           <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
@@ -266,12 +271,12 @@ export default function Competidores() {
                 <tr>
                   <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">#</th>
                   <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Ingrediente Activo</th>
-                  <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Producto Comercial</th>
                   <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Familia PA</th>
                   <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">CIF USD</th>
                   <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">Kg</th>
                   <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">Ops</th>
                   <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">Empresas</th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 uppercase tracking-wide">Detalle</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -279,12 +284,16 @@ export default function Competidores() {
                   <tr key={i} className="hover:bg-gray-50">
                     <td className="px-3 py-1.5 text-gray-500">{i + 1}</td>
                     <td className="px-3 py-1.5 font-semibold text-emerald-700">{p.ingrediente_activo}</td>
-                    <td className="px-3 py-1.5 text-gray-700">{p.nombre_comercial || '—'}</td>
                     <td className="px-3 py-1.5"><span className={`badge text-[10px] ${FAMILIA_COLORS[p.familia_pa] || 'bg-gray-100 text-gray-700'}`}>{p.familia_pa}</span></td>
                     <td className="px-3 py-1.5 text-right tabular-nums font-semibold">{fmtUSD(p.cif_usd)}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums text-xs">{Number(p.kg || 0).toLocaleString('es-PE', { maximumFractionDigits: 0 })}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums text-xs">{p.ops}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums">{p.empresas_distintas}</td>
+                    <td className="px-3 py-1.5 text-center">
+                      <button onClick={() => setProductoDetailId(p.producto_id)} className="p-1 hover:bg-emerald-50 rounded text-emerald-600 hover:text-emerald-800" title="Ver empresas, partidas y países que mueven este ingrediente">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -297,6 +306,9 @@ export default function Competidores() {
 
       {detailId !== null && (
         <ComexDetailModal kind="empresa" id={detailId} year={year} month={month} onClose={() => setDetailId(null)} />
+      )}
+      {productoDetailId !== null && (
+        <ComexDetailModal kind="producto" id={productoDetailId} year={year} month={month} onClose={() => setProductoDetailId(null)} />
       )}
     </div>
   );

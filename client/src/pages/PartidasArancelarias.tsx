@@ -69,6 +69,7 @@ export default function PartidasArancelarias() {
   const [search, setSearch] = useState('');
   const [familiaFilter, setFamiliaFilter] = useState<string>('');
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [productoDetailId, setProductoDetailId] = useState<number | null>(null);
 
   useEffect(() => { if (year) void load(); /* eslint-disable-next-line */ }, [year, month]);
 
@@ -117,7 +118,17 @@ export default function PartidasArancelarias() {
     return Array.from(grouped.entries()).map(([familia_pa, cif]) => ({ familia_pa, cif }));
   }, [filtered]);
 
-  const top10Partidas = useMemo(() => [...filtered].sort((a, b) => Number(b.total_valor_cif_usd) - Number(a.total_valor_cif_usd)).slice(0, 10), [filtered]);
+  const tipoGrupoChart = useMemo(() => {
+    const grouped = new Map<string, { cif: number; count: number }>();
+    filtered.forEach(p => {
+      const g = p.tipo_grupo || 'Sin grupo';
+      const e = grouped.get(g) || { cif: 0, count: 0 };
+      e.cif += Number(p.total_valor_cif_usd || 0);
+      e.count += 1;
+      grouped.set(g, e);
+    });
+    return Array.from(grouped.entries()).map(([tipo_grupo, v]) => ({ tipo_grupo, cif: v.cif, partidas: v.count }));
+  }, [filtered]);
 
   return (
     <div className="min-h-screen">
@@ -173,15 +184,15 @@ export default function PartidasArancelarias() {
             </ResponsiveContainer>
           </div>
           <div className="chart-container">
-            <h3 className="text-base font-bold text-gray-900 mb-1">Top 10 Partidas Arancelarias</h3>
-            <p className="text-xs text-gray-400 mb-4">CIF USD</p>
+            <h3 className="text-base font-bold text-gray-900 mb-1">CIF por Tipo de Grupo</h3>
+            <p className="text-xs text-gray-400 mb-4">Plaguicidas · Fertilizantes · Biológicos · Precursores</p>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={top10Partidas} layout="vertical" margin={{ left: 80 }}>
+              <BarChart data={tipoGrupoChart} margin={{ left: 10, right: 20, top: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="hs_code" tick={{ fontSize: 10 }} width={80} />
-                <Tooltip formatter={(v: any) => fmtUSD(v)} labelFormatter={(_l, p: any) => p?.[0]?.payload?.descripcion?.slice(0, 60)} />
-                <Bar dataKey="total_valor_cif_usd" fill="#F59E0B" radius={[0, 6, 6, 0]} />
+                <XAxis dataKey="tipo_grupo" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(v: any, n: any) => n === 'cif' ? fmtUSD(v) : `${v} partidas`} />
+                <Bar dataKey="cif" fill="#0EA5E9" name="cif" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -273,11 +284,11 @@ export default function PartidasArancelarias() {
           )}
         </div>
 
-        {/* TABLA: Ingredientes Activos / Productos Formulados */}
+        {/* TABLA: Ingredientes Activos — Mayor importación */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-green-50">
-            <h3 className="text-base font-bold text-gray-900">Ingredientes Activos / Productos Formulados — Mayor importación</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Datos clave para inteligencia comercial: qué ingredientes químicos están entrando y por quién</p>
+            <h3 className="text-base font-bold text-gray-900">Ingredientes Activos — Mayor importación</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Qué moléculas/ingredientes químicos están entrando al país y por quién</p>
           </div>
           <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
             <table className="w-full text-xs">
@@ -285,12 +296,12 @@ export default function PartidasArancelarias() {
                 <tr>
                   <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">#</th>
                   <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Ingrediente Activo</th>
-                  <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Producto Formulado</th>
                   <th className="px-3 py-2 text-left font-semibold text-gray-600 uppercase tracking-wide">Familia</th>
                   <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">CIF USD</th>
                   <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">Kg</th>
                   <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">Ops</th>
                   <th className="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wide">Empresas</th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-600 uppercase tracking-wide">Detalle</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -298,12 +309,16 @@ export default function PartidasArancelarias() {
                   <tr key={p.producto_id || i} className="hover:bg-gray-50">
                     <td className="px-3 py-1.5 text-gray-500">{i + 1}</td>
                     <td className="px-3 py-1.5 font-semibold text-emerald-700">{p.ingrediente_activo}</td>
-                    <td className="px-3 py-1.5 text-gray-700">{p.nombre_comercial || '—'}</td>
                     <td className="px-3 py-1.5"><span className={`badge text-[10px] ${FAMILIA_COLORS[p.familia_pa] || 'bg-gray-100 text-gray-700'}`}>{p.familia_pa}</span></td>
                     <td className="px-3 py-1.5 text-right tabular-nums font-semibold">{fmtUSD(p.cif_usd)}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums text-xs">{Number(p.kg || 0).toLocaleString('es-PE', { maximumFractionDigits: 0 })}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums text-xs">{p.ops}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums">{p.empresas_distintas}</td>
+                    <td className="px-3 py-1.5 text-center">
+                      <button onClick={() => setProductoDetailId(p.producto_id)} className="p-1 hover:bg-emerald-50 rounded text-emerald-600 hover:text-emerald-800" title="Ver empresas, partidas y países que mueven este ingrediente">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -316,6 +331,9 @@ export default function PartidasArancelarias() {
 
       {detailId !== null && (
         <ComexDetailModal kind="partida" id={detailId} year={year} month={month} onClose={() => setDetailId(null)} />
+      )}
+      {productoDetailId !== null && (
+        <ComexDetailModal kind="producto" id={productoDetailId} year={year} month={month} onClose={() => setProductoDetailId(null)} />
       )}
     </div>
   );
